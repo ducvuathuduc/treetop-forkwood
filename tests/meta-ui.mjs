@@ -66,10 +66,13 @@ await p.screenshot({ path: OUT + 'meta-02-gameover-rewards.png' });
 await p.click('#btn-menu');
 await p.waitForTimeout(600);
 ok(await p.isVisible('#dock') && await p.isVisible('#metabar'), 'after the first run the title shows the wallet and the dock');
+// pass 5: finishing a run counts for the streak, so the first run already opened today's gift
+const gs = await fw(p, () => ({ st: window.forkwood.save.streak, last: window.forkwood.save.streak.last }));
+ok(gs.st.count === 1 && await p.isHidden('#btn-gift'), `the first run opened day 1 of the gift streak (streak ${gs.st.count})`);
 const before = await fw(p, () => window.forkwood.save.acorns);
-if (await p.isVisible('#btn-gift')) { await p.click('#btn-gift'); await p.waitForTimeout(900); }
+const again = await fw(p, () => window.forkwood.ui.claim());
 const afterGift = await fw(p, () => window.forkwood.save.acorns);
-ok(afterGift === before + 20 && await p.isHidden('#btn-gift'), `daily gift claimed once (+${afterGift - before})`);
+ok(afterGift === before, `daily gift cannot be claimed twice (+${afterGift - before})`);
 await p.screenshot({ path: OUT + 'meta-03-title-after.png' });
 await fw(p, () => { window.forkwood.save.acorns += 3000; });
 await p.click('#dock [data-tab="shop"]');
