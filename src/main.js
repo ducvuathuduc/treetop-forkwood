@@ -6,12 +6,14 @@ import { createBot, botInput } from './bot.js';
 import { renderCard, shareCard, downloadCard } from './share.js';
 import { dailySeed, dailyLabel } from './rng.js';
 import * as M from './meta.js';
-import { applyLoadout } from './skins.js';
+import { applyLoadout, SKIN } from './skins.js';
 import { createMetaUI } from './ui-meta.js';
 import { MODE, STAKE, STAKES, rulesFor, stakeOf, weekKey, weekSeed, weekCode, parseWeek } from './modes.js';
 import { LEVEL, LEVELS, levelRules, goalText, goalMet, nextLevel, worldOf } from './campaign.js';
 import * as Q from './quest.js';
 import { ICON } from './icons.js';
+import { preloadArt } from './art.js';
+import * as R from './retention.js';
 const ICON_STAR = ICON.star, ICON_STAR_OFF = ICON.starOff;
 
 const $ = (id) => document.getElementById(id);
@@ -25,11 +27,15 @@ const LINK_LVL = LEVEL[params.get('lvl')] ? params.get('lvl') : null;
 const LINK_WEEK = parseWeek(params.get('week'));
 const LINK_MODE = MODE[params.get('mode')] && params.get('mode') !== 'weekly' ? params.get('mode') : null;
 // challenge links: ?seed=&beat=[&mode=&stake=] (a course), ?lvl=&beat= (a quest level's score), ?week=&beat= (this week's tree)
-const CHALLENGE = params.has('beat') && (FIXED_SEED != null || LINK_LVL || LINK_WEEK)
+// duel links: ?duel=<code> (course + height + pace + avatar, checksummed; see retention.js)
+const DUEL = params.has('duel') ? R.decodeDuel(params.get('duel')) : null;
+const CHALLENGE = DUEL ? { seed: DUEL.seed, m: Math.max(1, DUEL.h), lvl: null, week: null, mode: MODE[DUEL.mode] && DUEL.mode !== 'weekly' ? DUEL.mode : 'classic', stake: STAKE[DUEL.stake] ? DUEL.stake : 'sapling', duel: DUEL }
+  : params.has('beat') && (FIXED_SEED != null || LINK_LVL || LINK_WEEK)
   ? { seed: FIXED_SEED, m: BEAT, lvl: LINK_LVL, week: LINK_WEEK, mode: LINK_MODE || 'classic', stake: LINK_STAKE } : null;
 
 const canvas = $('game');
 const renderer = new Renderer(canvas);
+preloadArt();
 const sound = new Sound();
 
 const store = {
@@ -40,7 +46,13 @@ const store = {
 // one save object for everything (meta.js migrates the first build's keys)
 let S = M.loadSave((k) => store.get(k, null));
 const persist = (apply = true) => { if (!BOT_MODE) store.set(M.SAVE_KEY, S); if (apply) applyLoadout(S.loadout); };
+// session start: comeback gift, last week's league result, season rollover; a duel answer settles here
+const SESSION = R.startSession(S);
+const REPLY = DUEL && DUEL.r ? R.settleReply(S, DUEL) : null;
 persist();
+// first launch: the story plays, then the first run starts with no menu in between
+// (automated browsers skip it unless the URL says ?intro=1, so headless tests stay on the title)
+const FIRST_LAUNCH = !BOT_MODE && !CHALLENGE && !LINK_LVL && !LINK_WEEK && !LINK_MODE && S.stats.runs === 0 && !S.ret.introSeen && (!navigator.webdriver || params.get('intro') === '1');
 const motionQuery = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
 const isCalm = () => (S.calm == null ? !!(motionQuery && motionQuery.matches) : S.calm);
 
@@ -80,6 +92,36 @@ const qui = {
   hide() { if (questUI) questUI.hide(); },
   show(...a) { return loadQuestUI().then((q) => q.show(...a)); },
 };
+// the Grove (streak, season, league, duels, profile) loads on first open
+let groveUI = null, groveLoading = null;
+function loadGroveUI() {
+  if (groveUI) return Promise.resolve(groveUI);
+  groveLoading = groveLoading || import('./ui-grove.js').then(({ createGroveUI }) => {
+    groveUI = createGroveUI({ getSave: () => S, persist, sound,
+      onOpen: () => { $('title').classList.remove('show'); $('over').classList.remove('show'); ui.refreshBar('quest'); },
+      onClose: () => { if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } else if (mode === 'over') { $('over').classList.add('show'); ui.refreshBar(mode); } },
+      onStory: () => replayStory(), onShop: () => ui.show('shop'), onAvatar: () => refreshGroveChip() });
+    groveUI.setAchNames((id) => (M.ACH[id] ? M.ACH[id].name : id));
+    return groveUI;
+  });
+  return groveLoading;
+}
+const gui = {
+  get isOpen() { return !!(groveUI && groveUI.isOpen); },
+  hide() { if (groveUI) groveUI.hide(); },
+  show(t) { return loadGroveUI().then((g) => g.show(t)); },
+};
+function refreshGroveChip() {
+  const A = S.ret.avatar;
+  $('av-chip').innerHTML = R.avatarHTML(A.portrait, A.frame, 30);
+  $('streak-n').textContent = S.streak.count;
+}
+function replayStory() {
+  import('./intro.js').then(({ playIntro }) => {
+    $('title').classList.remove('show'); document.body.classList.add('intro-hold');
+    playIntro({ calm: isCalm(), sound, onDone: () => { document.body.classList.remove('intro-hold'); if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } } });
+  });
+}
 if (CHALLENGE) run = CHALLENGE.lvl ? { mode: 'classic', stake: 'sapling', level: CHALLENGE.lvl, week: null }
   : CHALLENGE.week ? { mode: 'weekly', stake: 'oak', level: null, week: CHALLENGE.week }
   : { mode: CHALLENGE.mode, stake: CHALLENGE.stake, level: null, week: null };
@@ -212,10 +254,16 @@ function refreshTitle() {
   $('btn-calm').setAttribute('aria-pressed', String(isCalm()));
   if (CHALLENGE) {
     $('challenge').hidden = false;
-    $('challenge').textContent = CHALLENGE.lvl ? `A friend scored ${CHALLENGE.m.toLocaleString('en-US')} on quest level ${CHALLENGE.lvl} (${LEVEL[CHALLENGE.lvl].name}). Can you beat it?`
+    if (CHALLENGE.duel) {
+      const d = CHALLENGE.duel;
+      $('challenge').innerHTML = `${R.avatarHTML(R.PORTRAITS[d.p].id, R.FRAMES[d.f].id, 34)}<span></span>`;
+      $('challenge').querySelector('span:last-child').textContent = `${d.n || 'A friend'} challenged you to a duel: beat ${d.h} m on this exact course. Their rival tip climbs beside you.`;
+      $('challenge').classList.add('duel');
+      $('btn-play-label').textContent = 'Accept the duel';
+    } else $('challenge').textContent = CHALLENGE.lvl ? `A friend scored ${CHALLENGE.m.toLocaleString('en-US')} on quest level ${CHALLENGE.lvl} (${LEVEL[CHALLENGE.lvl].name}). Can you beat it?`
       : CHALLENGE.week ? `A friend grew ${CHALLENGE.m} m on the weekly tree ${weekCode(CHALLENGE.week)}. Can you beat it?`
       : `A friend grew ${CHALLENGE.m} m on this course${CHALLENGE.mode !== 'classic' ? ` in ${MODE[CHALLENGE.mode].name}` : CHALLENGE.stake !== 'sapling' ? ` on ${STAKE[CHALLENGE.stake].name}` : ''}. Can you beat it?`;
-    $('btn-play-label').textContent = 'Take the challenge';
+    if (!CHALLENGE.duel) $('btn-play-label').textContent = 'Take the challenge';
   } else {
     const k = STAKE[S.quest.stake];
     $('btn-play-label').textContent = S.quest.stake === 'sapling' ? 'Grow' : `Grow · ${k.name}`;
@@ -229,6 +277,7 @@ function refreshTitle() {
   $('quest-n').classList.toggle('new', st === 0);
   const d = store.get('forkwood.daily.' + dailySeed(), null);
   $('daily-best').textContent = d ? `· today ${d.height} m` : `· ${dailyLabel()}`;
+  refreshGroveChip();
 }
 
 // ------------------------------------------------------------------ effects
@@ -512,6 +561,15 @@ function showGameOver() {
     lastQuest = q;
     rewards.quest = q;
     rewards.unlocked.push(...M.unlockEarned(S));
+    // retention: rings for the season and league, the daily gift, streak milestones, duel result
+    const ret = R.afterRun(S, sum, rewards, M.claimGift);
+    rewards.unlocked.push(...M.unlockEarned(S));
+    rewards.extra = retStamps(ret);
+    if (challengeRun && CHALLENGE.duel) {
+      const dr = R.settleDuelRun(S, CHALLENGE.duel, sum);
+      rewards.extra.unshift({ k: 'level', t: dr.won ? 'Duel won' : 'Duel played', s: dr.acorns ? `+${dr.acorns}` : 'again' });
+    }
+    rewards.rings = ret.rings;
     rewards.total = S.acorns;
     if (lv) newBest = !!q.levelBest && sum.won;
     else if (run.mode !== 'classic' || run.stake !== 'sapling') newBest = q.modeBest || q.stakeBest;
@@ -572,7 +630,19 @@ function showGameOver() {
   $('share-msg').textContent = '';
   setMode('over');
   ui.showRewards(rewards, { before });
+  refreshGroveChip();
   if (input.kind !== 'touch') $('btn-again').focus({ preventScroll: true });
+}
+
+function retStamps(ret) {
+  const out = [];
+  if (ret.gift) out.push({ k: 'daily', t: `Day ${ret.gift.day} gift`, s: `+${ret.gift.amount}` });
+  for (const m of ret.milestones) out.push({ k: 'badge', t: `${m.d}-day streak`, s: `+${m.acorns}` });
+  for (const t of ret.tiers.slice(-2)) out.push({ k: 'level', t: `Season tier ${t.tier}`, s: t.acorns ? `+${t.acorns}` : 'prize' });
+  for (const id of ret.items.slice(0, 2)) { const [k, v] = id.split('.'); out.push({ k: 'skin', t: k === 'portrait' ? `Portrait: ${R.PORTRAIT[v].name}` : k === 'frame' ? `Frame: ${R.FRAME[v].name}` : (SKIN[id] ? SKIN[id].name : id), s: 'unlocked' }); }
+  if (ret.league) out.push({ k: 'weekly', t: ret.league.to > ret.league.from ? `Up to ${R.TIERS[ret.league.to]}` : `League week: #${ret.league.rank}`, s: `+${ret.league.acorns}` });
+  else if (ret.rank && ret.prevRank && ret.rank < ret.prevRank) out.push({ k: 'weekly', t: `League #${ret.rank}`, s: `up ${ret.prevRank - ret.rank}` });
+  return out;
 }
 
 let countRaf = 0;
@@ -612,6 +682,17 @@ function challengeUrl() {
   if (run.mode === 'weekly' && !daily) return `${base}?week=${run.week}&beat=${lastSum.height}`;
   const extra = daily ? '' : `${run.mode !== 'classic' ? `&mode=${run.mode}` : ''}${run.mode === 'classic' && run.stake !== 'sapling' ? `&stake=${run.stake}` : ''}`;
   return `${base}?seed=${sim.seed}&beat=${lastSum.height}${extra}`;
+}
+
+/** A duel link for endless and daily runs; quest levels and weekly trees keep their own links. */
+function duelUrl() {
+  if ((run.level || run.mode === 'weekly') && !daily) return null;
+  const base = location.origin && location.origin !== 'null' ? location.origin + location.pathname : 'Forkwood';
+  const prev = isChallengeRun() && CHALLENGE.duel ? CHALLENGE.duel : null;
+  const d = { id: R.newDuelId(), seed: sim.seed, h: lastSum.height, sc: lastSum.score, t: lastSum.time, mode: daily ? 'classic' : run.mode, stake: daily ? 'sapling' : run.stake,
+    p: (R.PORTRAIT[S.ret.avatar.portrait] || R.PORTRAIT.sparrow).i, f: (R.FRAME[S.ret.avatar.frame] || R.FRAME.twig).i, n: S.ret.name, r: prev ? prev.id : '', rh: prev ? prev.h : 0 };
+  R.registerSent(S, d); persist(false);
+  return `${base}?duel=${R.encodeDuel(d)}`;
 }
 
 function shareText() {
@@ -679,6 +760,8 @@ window.addEventListener('keydown', (e) => {
   if (['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D', ' ', 'ArrowUp', 'w', 'W'].includes(k)) input.kind = 'key';
   if (ui.isOpen) { if (k === 'Escape') ui.hide(); return; }
   if (qui.isOpen) { if (k === 'Escape') qui.hide(); return; }
+  if (gui.isOpen) { if (k === 'Escape') gui.hide(); return; }
+  if (document.body.classList.contains('in-intro')) return;
   if (k === 'm' || k === 'M') { toggleMute(); return; }
   if (k === 'r' || k === 'R') { startRun(daily && mode !== 'title'); return; }
   if (mode === 'title') { if (k === 'Enter' || k === ' ') playMain(); else if (k === 'd' || k === 'D') startRun(true); return; }
@@ -736,10 +819,13 @@ $('btn-menu-p').addEventListener('click', toMenu);
 $('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); S.calm = !isCalm(); persist(false); sound.unlock(); sound.toggle(); refreshTitle(); });
 $('btn-challenge').addEventListener('click', async () => {
   if (!lastSum) return;
-  const url = challengeUrl();
+  const durl = duelUrl(), url = durl || challengeUrl();
+  const answer = durl && isChallengeRun() && CHALLENGE.duel;
+  const text = durl ? (answer ? `My answer to your Forkwood duel: ${lastSum.height} m vs your ${CHALLENGE.duel.h} m. Open it to settle (and race me back): ${url}` : `Duel me in Forkwood: beat my ${lastSum.height} m on the same course. ${url}`) : `Beat my ${lastSum.height} m tree in Forkwood: ${url}`;
   let ok = false;
-  try { await navigator.clipboard.writeText(`Beat my ${lastSum.height} m tree in Forkwood: ${url}`); ok = true; } catch { /* ignore */ }
-  $('share-msg').textContent = ok ? 'Challenge link copied: same course, beat my height.' : url;
+  if (navigator.share && input.kind === 'touch') { try { await navigator.share({ text }); ok = true; } catch { /* cancelled */ } }
+  if (!ok) { try { await navigator.clipboard.writeText(text); ok = true; } catch { /* ignore */ } }
+  $('share-msg').textContent = ok ? (durl ? (answer ? 'Answer link ready: when your friend opens it, the duel settles on their device.' : 'Duel link ready: your friend races your rival tip on this exact course.') : 'Challenge link copied: same course, beat my height.') : url;
 });
 $('btn-resume').addEventListener('click', resume);
 $('pause').addEventListener('pointerdown', (e) => { if (e.target === $('pause')) resume(); });
@@ -845,6 +931,7 @@ function frame(nowMs) {
     calm: isCalm(),
     acornPulse: fx.acornPulse || 0,
     touch: input.kind === 'touch',
+    ghostM: mode === 'play' && CHALLENGE && CHALLENGE.duel && isChallengeRun() ? R.ghostHeight(CHALLENGE.duel, sim.t) : null,
   });
   frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
   requestAnimationFrame(frame);
@@ -877,6 +964,13 @@ window.forkwood = {
   get run() { return run; },
   get quest() { return Q; },
   get qui() { return qui; },
+  get gui() { return gui; },
+  get retention() { return R; },
+  get duel() { return DUEL; },
+  get session() { return SESSION; },
+  duelUrl: () => duelUrl(),
+  loadGroveUI,
+  replayStory: () => replayStory(),
   loadQuestUI,
   startLevel: (id) => startLevel(id),
   startMode: (id) => startMode(id),
@@ -913,7 +1007,31 @@ window.forkwood = {
 startDemo();
 setMode('title');
 refreshTitle();
-// the print pull: the paper sheet lifts off the first frame (skipped in calm mode)
-setTimeout(() => $('press').classList.add('done'), BOT_MODE || isCalm() ? 0 : 1400);
+document.querySelector('#btn-grove .fl').innerHTML = ICON.flame;
+$('btn-grove').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); sound.startMenu(); sound.page(); gui.show('streak'); });
+$('btn-story').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); replayStory(); });
+if (FIRST_LAUNCH) {
+  // the story, then straight into the first (tutorial) run; the menu appears only after it
+  document.body.classList.add('intro-hold');
+  $('title').classList.remove('show');
+  $('press').classList.add('done');
+  import('./intro.js').then(({ playIntro }) => playIntro({ calm: isCalm(), sound, onDone: (why) => {
+    S.ret.introSeen = true; persist(false);
+    document.body.classList.remove('intro-hold');
+    window.forkwood.introEnd = why;
+    startMode('classic');
+  } })).catch(() => { document.body.classList.remove('intro-hold'); $('title').classList.add('show'); });
+} else {
+  // the print pull: the paper sheet lifts off the first frame (skipped in calm mode)
+  setTimeout(() => $('press').classList.add('done'), BOT_MODE || isCalm() ? 0 : 1400);
+}
+{
+  // what happened while you were away (shown once the title is up)
+  const notes = [];
+  if (SESSION.comeback) notes.push([`Welcome back after ${SESSION.comeback.days} days: +${SESSION.comeback.acorns} acorns${SESSION.comeback.freeze ? ' and a frost guard' : ''}`, 'gift']);
+  if (SESSION.league) { const L = SESSION.league; notes.push([`League week over: #${L.rank} in ${R.TIERS[L.from]}${L.to > L.from ? `, promoted to ${R.TIERS[L.to]}` : L.to < L.from ? `, down to ${R.TIERS[L.to]}` : ''} · +${L.acorns} acorns`, 'badge']); }
+  if (REPLY) notes.push([`${REPLY.from} answered your duel: ${REPLY.theirs} m vs your ${REPLY.mine} m. ${REPLY.won ? 'You win' : 'They win'}: +${REPLY.acorns} acorns`, 'gift']);
+  if (notes.length && !FIRST_LAUNCH) { persist(false); notes.forEach(([t, k], i) => setTimeout(() => ui.toast(t, k), 1700 + i * 900)); }
+}
 if (S.migrationBonus) { const n = S.migrationBonus; delete S.migrationBonus; persist(false); setTimeout(() => ui.toast(`Welcome back: +${n} acorns for the ${S.stats.meters.toLocaleString('en-US')} m you already grew`, 'gift'), 1600); }
 requestAnimationFrame((t) => { last = t; frame(t); });
