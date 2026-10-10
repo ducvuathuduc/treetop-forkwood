@@ -10,7 +10,7 @@ import { CHARMS } from './sim.js';
 import * as Q from './quest.js';
 import { MODE, STAKE } from './modes.js';
 import { WORLDS } from './campaign.js';
-import { drawBud, skinLeaf, blossom, drawCharmIcon, drawAcorn, INK, PAPER, OCHRE } from './render.js';
+import { drawBud, skinLeaf, blossom, drawCharmIcon, drawAcorn, trailBit, INK, PAPER, OCHRE } from './render.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -79,6 +79,13 @@ export function drawPreview(cv, item) {
       blossom(ctx, w * 0.42, h * 0.48, 9, 0.3, item.petal, 1);
       blossom(ctx, w * 0.62, h * 0.3, 8, 1.1, item.alt, 1);
       blossom(ctx, w * 0.66, h * 0.66, 7, 2.2, item.petal, 1);
+      return;
+    }
+    if (item.slot === 'trail') {
+      branch(w * 0.5, h + 6, w * 0.5, h * 0.32, 6);
+      ctx.save(); ctx.translate(w * 0.5, h * 0.26); drawBud(ctx, false, 1.2); ctx.restore();
+      if (item.kind === 'none') { ctx.fillStyle = 'rgba(30,26,22,0.45)'; ctx.font = '700 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('none', w * 0.5, h * 0.9); return; }
+      for (let i = 0; i < 9; i++) { const k = 1 - i / 10, a = i * 1.7; trailBit(ctx, item.kind, item.c, w * 0.5 + Math.sin(a) * (6 + i * 2.6), h * 0.42 + i * 4.2, k, a, 0.9); }
       return;
     }
     if (item.slot === 'bud') {
@@ -218,7 +225,9 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
     countWallet(S.acorns - r.amount, S.acorns);
     toast(`Day ${r.day} gift: +${r.amount} acorns${r.freeze ? ' and a frost guard' : ''}${r.usedFreeze ? ' (a frost guard kept your streak)' : ''}`, 'gift');
     for (const a of r.achs) toast(`Badge: ${M.ACH[a].name} +${M.ACH[a].reward}`, 'badge');
+    for (const m of r.milestones || []) toast(`${m.d}-day streak milestone: +${m.acorns} acorns`, 'gift');
     if (open && tab === 'goals') render(); else refreshBar('title');
+    const sn = $('streak-n'); if (sn) sn.textContent = S.streak.count;
   }
 
   // ---- shop
@@ -322,6 +331,8 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
     for (const a of out.achs) stamps.push({ k: 'badge', t: M.ACH[a].name, s: `+${M.ACH[a].reward}` });
     for (const c of out.daily) stamps.push({ k: 'daily', t: 'Daily done', s: `+${c.reward}` });
     for (const c of out.weekly) stamps.push({ k: 'weekly', t: 'Weekly done', s: `+${c.reward}` });
+    if (out.extra && out.extra.length) stamps.unshift(...out.extra);
+    if (out.rings) $('rw-parts').textContent += ` · +${out.rings.total} rings`;
     const q = out.quest;
     if (q) {
       // quest: chests, titles and unlocks stamp in first; they matter most
