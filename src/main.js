@@ -40,8 +40,8 @@ let lastSum = null;
 let cardCanvas = null;
 let deathShown = false;
 
-const cam = { x: W / 2, y: -200, scale: 1, anchor: 0.7, shake: 0 };
-const fx = { particles: [], floaters: [], flash: 0, flashColor: '255,80,80', banner: null, shownScore: 0, shownSap: SAP_MAX, multPulse: 0, hitStop: 0 };
+const cam = { x: W / 2, y: -200, scale: 1, anchor: 0.7, trauma: 0, punch: 0 };
+const fx = { particles: [], floaters: [], sparks: [], flash: 0, flashColor: '255,80,80', banner: null, shownScore: 0, shownSap: SAP_MAX, multPulse: 0, sapPulse: 0, squash: 0, hitStop: 0 };
 const input = { targetX: null, dir: 0, toggle: false, keys: new Set(), pointerId: null, downT: 0, downX: 0, downY: 0, moved: 0, anchor: W / 2, kind: window.matchMedia && matchMedia('(pointer: coarse)').matches ? 'touch' : 'mouse' };
 // first-run coach: steer -> fork -> merge, taught by doing (screen-space, never overlaps the world)
 const coach = { step: null, t: 0, collects: 0, retry: false, slow: false };
@@ -50,7 +50,7 @@ const TREETOP_IDX = STAGES.findIndex((st) => st.name === 'Treetop');
 
 function setMode(m) {
   mode = m;
-  document.body.className = 'state-' + m;
+  document.body.className = 'state-' + m + (isCalm() ? ' calm' : '');
   $('title').classList.toggle('show', m === 'title');
   $('over').classList.toggle('show', m === 'over');
   $('pause').classList.remove('show');
@@ -65,8 +65,8 @@ function startDemo() {
 }
 
 function resetFx() {
-  fx.particles.length = 0; fx.floaters.length = 0; fx.flash = 0; fx.banner = null; fx.multPulse = 0;
-  fx.shownScore = 0; fx.shownSap = SAP_MAX; fx.hitStop = 0; cam.shake = 0; cam.punch = 0;
+  fx.particles.length = 0; fx.floaters.length = 0; fx.sparks.length = 0; fx.flash = 0; fx.banner = null; fx.multPulse = 0; fx.sapPulse = 0; fx.squash = 0;
+  fx.shownScore = 0; fx.shownSap = SAP_MAX; fx.hitStop = 0; cam.trauma = 0; cam.punch = 0;
 }
 
 function startRun(isDaily = daily) {
@@ -78,14 +78,19 @@ function startRun(isDaily = daily) {
   coach.step = sim.tutorial ? 'steer' : null; coach.t = 0; coach.collects = 0; coach.retry = false; coach.slow = false;
   timeScale = 1;
   bot = createBot(botSkill, seed & 0xffff);
-  cam.y = sim.cy - 60; cam.scale = renderer.baseScale(); cam.anchor = 0.7;
+  cam.y = sim.cy - 60; cam.scale = renderer.baseScale() * (isCalm() ? 1 : 0.86); cam.anchor = 0.7;
   resetFx();
   deathShown = false;
   input.toggle = false;
   setMode('play');
   sound.setStage(0);
   sound.start();
-  sound.click();
+  sound.sprout();
+  // opening beat: the seed bursts out of the soil
+  ring(W / 2, -4, '#a9cf5a', 120, 0.8); ring(W / 2, -4, '#f4ecd8', 70, 0.5);
+  burst(W / 2, -6, 16, '#8fb14a', 260, 9, 1.3, 'leaf'); burst(W / 2, -6, 8, '#c4e88a', 200, 7, 1.1, 'leaf');
+  burst(W / 2, -10, 10, '#ffe08a', 240, 8, 0.7, 'spark');
+  shake(5); fx.squash = 1;
   if (!sim.tutorial) {
     const goal = CHALLENGE && !daily ? { text: `BEAT ${CHALLENGE.m} m`, sub: 'same course as your friend' }
       : best.height < STAGES[TREETOP_IDX].m ? { text: 'REACH THE TREETOP', sub: `${STAGES[TREETOP_IDX].m} m · fork, merge, climb` }
@@ -105,14 +110,15 @@ function refreshTitle() {
   const bits = [];
   if (best.score > 0) bits.push(`best ${best.height} m · ${best.score.toLocaleString('en-US')} pts`);
   if (stats.runs > 0) bits.push(`${stats.runs} run${stats.runs === 1 ? '' : 's'}`);
-  if (stats.treetops > 0) bits.push(`🌳 treetop ×${stats.treetops}`);
+  if (stats.treetops > 0) bits.push(`treetop ×${stats.treetops}`);
   $('title-best').textContent = bits.join(' · ');
-  $('btn-calm').textContent = `Calm mode: ${isCalm() ? 'on' : 'off'}`;
+  $('btn-calm').querySelector('.lbl').textContent = `Calm mode: ${isCalm() ? 'on' : 'off'}`;
+  document.body.classList.toggle('calm', isCalm());
   $('btn-calm').setAttribute('aria-pressed', String(isCalm()));
   if (CHALLENGE) {
     $('challenge').hidden = false;
     $('challenge').textContent = `A friend grew ${CHALLENGE.m} m on this course. Can you beat it?`;
-    $('btn-play').innerHTML = '▶&nbsp; Take the challenge';
+    $('btn-play-label').textContent = 'Take the challenge';
   }
   const d = store.get('forkwood.daily.' + dailySeed(), null);
   $('daily-best').textContent = d ? `· today ${d.height} m` : `· ${dailyLabel()}`;
@@ -127,11 +133,13 @@ function burst(x, y, n, color, speed = 160, size = 4, life = 0.6, kind = 'dot') 
   if (fx.particles.length > 500) fx.particles.splice(0, fx.particles.length - 500);
 }
 function ring(x, y, color, size = 60, life = 0.5) { fx.particles.push({ x, y, vx: 0, vy: 0, life, max: life, color, size, kind: 'ring' }); }
-function floater(x, y, text, color = '#ffffff', size = 20, life = 0.9) {
-  fx.floaters.push({ x: Math.max(60, Math.min(W - 60, x)), y, text, color, size, life, max: life, vy: -70 });
+function floater(x, y, text, color = '#f4ecd8', size = 20, life = 0.9) {
+  fx.floaters.push({ x: Math.max(60, Math.min(W - 60, x)), y, text, color, size, life, max: life, vy: -70, rot: size >= 26 ? (Math.random() - 0.5) * 0.12 : 0 });
   if (fx.floaters.length > 24) fx.floaters.shift();
 }
-function shake(a) { if (!isCalm()) cam.shake = Math.max(cam.shake, a); }
+// trauma-based shake (Eiserloh, GDC 2016): events add trauma, shake = trauma^2 with smooth noise
+function shake(a) { if (!isCalm()) cam.trauma = Math.min(1, cam.trauma + a / 26); }
+function spark(x, y) { fx.sparks.push({ wx: x, wy: y, t: 0, max: 0.42 + Math.random() * 0.12 }); if (fx.sparks.length > 24) fx.sparks.shift(); }
 function flash(color, a = 1) { fx.flashColor = color; fx.flash = Math.max(fx.flash, isCalm() ? a * 0.3 : a); }
 function hitStop(sec) { fx.hitStop = Math.max(fx.hitStop || 0, sec); }
 function vibrate(ms) { if (navigator.vibrate && !BOT_MODE && !isCalm()) try { navigator.vibrate(ms); } catch { /* ignore */ } }
@@ -146,11 +154,11 @@ function coachEvent(type, e, s) {
 
 /** Coach text for the current step, worded for the device being used. */
 function coachView(s) {
-  if (!coach.step || mode !== 'play') return null;
+  if (!coach.step || mode !== 'play' || s.dead) return null;
   const tap = input.kind === 'touch' ? 'TAP' : input.kind === 'key' ? 'SPACE' : 'CLICK';
   const steer = input.kind === 'touch' ? 'Drag anywhere to steer' : input.kind === 'key' ? '← → to steer' : 'Move the mouse to steer';
   switch (coach.step) {
-    case 'steer': return { title: steer, sub: 'Grab sunlight ☀ to refill your sap', n: 1 };
+    case 'steer': return { title: steer, sub: 'Catch sunlight to refill your sap', n: 1 };
     case 'fork': return { title: `${tap} to fork`, sub: coach.retry === 'emptymerge' ? 'Grab sunlight on both branches before merging' : coach.retry === 'revert' ? 'A hit reverts a branch. Fork again!' : 'Split into two branches: one per gap', n: 2, urgent: coach.slow, cue: coach.slow };
     case 'merge': {
       const staged = s.tips.length === 2 ? s.tips[0].staged + s.tips[1].staged : 0;
@@ -165,7 +173,7 @@ function coachView(s) {
 
 function updateCoach(s, dt) {
   coach.slow = false;
-  if (!coach.step) return 1;
+  if (!coach.step || s.dead) return 1;
   coach.t += dt;
   const y = s.cy;
   if (coach.step === 'steer' && s.brambles.some((b) => b.kind === 'split' && b.y < y && b.y > y - 520)) { coach.step = 'fork'; coach.t = 0; }
@@ -183,71 +191,85 @@ function handleEvents(s, quiet) {
     switch (e.type) {
       case 'collect':
         if (!quiet) coachEvent('collect', e, s);
-        burst(e.x, e.y, 7, '#ffe27a', 150, 3.5, 0.5);
-        if (!quiet) { sound.collect(e.chain, e.forked); floater(e.x, e.y - 14, `+${e.pts}`, '#fff3b0', 16 + Math.min(8, e.chain), 0.7); }
+        burst(e.x, e.y, 6, '#ffe08a', 170, 7, 0.45, 'spark');
+        if (!quiet) { sound.collect(e.chain, e.forked); spark(e.x, e.y); floater(e.x + (e.chain % 2 ? 26 : -26), e.y - 10, `+${e.pts}`, '#fbe3a4', 15 + Math.min(7, e.chain), 0.6); }
         break;
       case 'fork':
-        for (const t of s.tips) { ring(t.x, s.cy, '#9fe8ff', 50); burst(t.x, s.cy, 8, '#c9f59a', 120, 3, 0.5); }
-        if (!quiet) { coachEvent('fork', e, s); sound.fork(); floater(e.x, e.y - 40, 'fork', '#9fe8ff', 18, 0.6); shake(3); cam.punch = 0.035; }
+        for (const t of s.tips) { ring(t.x, s.cy, '#8fd0e6', 50); burst(t.x, s.cy, 5, '#a9cf5a', 130, 6, 0.6, 'leaf'); }
+        if (!quiet && coach.step && coach.step !== 'merge') { hitStop(0.08); flash('159,232,255', 0.35); floater(e.x, e.y - 76, 'forked!', '#8fd0e6', 34, 1.1); }
+        if (!quiet) { coachEvent('fork', e, s); sound.fork(); fx.squash = 1; floater(e.x, e.y - 40, 'fork', '#8fd0e6', 18, 0.6); shake(3); cam.punch = 0.035; }
         break;
       case 'merge':
-        ring(e.x, e.y, '#ffd76a', 110, 0.7); ring(e.x, e.y, '#ffffff', 60, 0.45);
-        burst(e.x, e.y, 18, '#ffd76a', 260, 4, 0.8);
+        ring(e.x, e.y, '#f2b33d', 110 + e.mult * 8, 0.7); ring(e.x, e.y, '#f4ecd8', 60, 0.45);
+        burst(e.x, e.y, 12 + e.mult * 2, '#ffe08a', 280, 9, 0.7, 'spark');
         burst(e.x, e.y, 10, STAGES[s.stageIdx].leaf, 200, 7, 1.2, 'leaf');
         if (!quiet) {
           coachEvent('merge', e, s);
-          sound.merge(e.mult); shake(5 + e.mult); flash('255,215,106', 0.5); fx.multPulse = 1; vibrate(25);
-          hitStop(0.045); cam.punch = 0.05 + 0.01 * e.mult;
-          burst(e.x, e.y, 6 + e.mult * 3, '#ffffff', 320, 3, 0.6);
-          floater(e.x, e.y - 50, `MERGE ×${e.mult}`, '#ffd76a', 28 + e.mult * 2, 1.2);
-          floater(e.x, e.y - 18, `+${e.bonus}`, '#ffffff', 20, 1.0);
+          sound.merge(e.mult); shake(5 + e.mult); flash('255,215,106', 0.4); fx.multPulse = 1; fx.squash = 1; vibrate(25);
+          hitStop(0.04 + 0.006 * e.mult); cam.punch = 0.05 + 0.01 * e.mult;
+          floater(e.x, e.y - 50, `merge ×${e.mult}`, '#f2b33d', 28 + e.mult * 2, 1.2);
+          floater(e.x, e.y - 18, `+${e.bonus}`, '#f4ecd8', 20, 1.0);
         }
         break;
       case 'emptymerge':
-        if (!quiet) { coachEvent('emptymerge', e, s); sound.emptyMerge(); floater(e.x, e.y - 34, 'merged (no commits)', 'rgba(255,255,255,0.8)', 14, 0.7); }
+        if (!quiet) { coachEvent('emptymerge', e, s); sound.emptyMerge(); floater(e.x, e.y - 34, 'merged, no commits', '#e8dcc0', 14, 0.7); }
         break;
       case 'revert':
-        burst(e.x, e.y, 16, '#ff6b6b', 220, 4, 0.7);
-        if (!quiet) { coachEvent('revert', e, s); hitStop(0.07); sound.revert(); shake(9); flash('255,70,70', 0.6); vibrate(60); floater(e.x, e.y - 30, e.lost ? `REVERTED −${e.lost}` : 'REVERTED', '#ff8a8a', 24, 1.0); }
+        burst(e.x, e.y, 10, '#e2603f', 220, 7, 0.8, 'leaf');
+        if (!quiet) { coachEvent('revert', e, s); hitStop(0.07); sound.revert(); shake(9); flash('255,70,70', 0.6); vibrate(60); floater(e.x, e.y - 30, e.lost ? `reverted −${e.lost}` : 'reverted', '#ff9a86', 24, 1.0); }
         break;
       case 'hit':
-        burst(e.x, e.y, 12, '#7b5236', 200, 4, 0.7);
+        burst(e.x, e.y, 10, '#6b4429', 200, 4, 0.7);
         burst(e.x, e.y, 6, STAGES[s.stageIdx].leaf, 160, 7, 1.2, 'leaf');
-        if (!quiet) { hitStop(0.09); sound.hit(); shake(12); flash('255,60,60', 0.8); vibrate(70); floater(e.x, e.y - 30, `−${e.dmg} sap`, '#ff8a8a', 22, 0.9); }
+        if (!quiet) { hitStop(0.09); sound.hit(); shake(12); flash('255,60,60', 0.8); vibrate(70); floater(e.x, e.y - 30, `−${e.dmg} sap`, '#ff9a86', 22, 0.9); }
         break;
       case 'near':
-        if (!quiet) { sound.near(); floater(e.x, e.y - 20, `close! +${e.bonus}`, '#c9f59a', 17, 0.8); }
+        if (!quiet) { sound.near(); floater(e.x, e.y - 20, `close +${e.bonus}`, '#c4e88a', 17, 0.8); }
         break;
       case 'splitpass':
-        ring(e.x, e.y, '#c9f59a', 90, 0.6);
-        if (!quiet) { sound.collect(8, true); floater(e.x, e.y - 40, `both lanes +${e.bonus}`, '#c9f59a', 20, 1.0); }
+        ring(e.x, e.y, '#a9cf5a', 90, 0.6);
+        if (!quiet) { sound.collect(8, true); floater(e.x, e.y - 40, `both lanes +${e.bonus}`, '#c4e88a', 20, 1.0); }
+        break;
+      case 'bloom':
+        ring(e.x, e.y, '#f7b6c8', 80, 0.6);
+        burst(e.x, e.y, 12, '#f7b6c8', 230, 7, 1.1, 'leaf');
+        burst(e.x, e.y, 5, '#fff4ec', 180, 6, 1.0, 'leaf');
+        if (!quiet) { sound.bloom(e.n); shake(2); floater(e.x, e.y - 44, `full bloom +${e.bonus}`, '#f7b6c8', 22, 1.1); }
+        break;
+      case 'golden':
+        ring(e.x, e.y, '#f2b33d', 220, 0.9); ring(e.x, e.y, '#f4ecd8', 140, 0.7);
+        burst(e.x, e.y, 30, '#ffe08a', 420, 10, 1.1, 'spark');
+        if (!quiet) { sound.goldenStart(); flash('255,205,90', 0.7); shake(10); vibrate(60); hitStop(0.09); fx.banner = { text: 'GOLDEN HOUR', sub: 'sunlight comes to you · double points', t: 0, max: 2.6, gold: true }; }
+        break;
+      case 'goldenend':
+        if (!quiet) { sound.goldenEnd(); floater(s.cx, s.cy - 50, 'dusk · ×4', '#f2b33d', 20, 1.0); }
         break;
       case 'dew':
-        burst(e.x, e.y, 14, '#8fd3ff', 180, 4, 0.7); ring(e.x, e.y, '#8fd3ff', 60);
-        if (!quiet) { sound.dew(); floater(e.x, e.y - 20, '+30 sap', '#bfe7ff', 18, 0.9); }
+        burst(e.x, e.y, 12, '#9fd6ef', 180, 4, 0.7); ring(e.x, e.y, '#78bfe0', 60);
+        if (!quiet) { sound.dew(); floater(e.x, e.y - 20, '+30 sap', '#cdeaf7', 18, 0.9); }
         break;
       case 'shield':
-        ring(e.x, e.y, '#ffb347', 70);
-        if (!quiet) { sound.shield(); floater(e.x, e.y - 20, 'bark shield', '#ffd08a', 18, 0.9); }
+        ring(e.x, e.y, '#c98a4a', 70);
+        if (!quiet) { sound.shield(); floater(e.x, e.y - 20, 'bark shield', '#e9b77e', 18, 0.9); }
         break;
       case 'shieldbreak':
-        burst(e.x, e.y, 14, '#ffb347', 200, 4, 0.6);
-        if (!quiet) { sound.shieldBreak(); shake(5); floater(e.x, e.y - 24, 'blocked!', '#ffd08a', 20, 0.8); }
+        burst(e.x, e.y, 10, '#c98a4a', 200, 6, 0.6, 'leaf');
+        if (!quiet) { sound.shieldBreak(); shake(5); floater(e.x, e.y - 24, 'blocked', '#e9b77e', 20, 0.8); }
         break;
       case 'stage': {
         const st = STAGES[e.idx];
         sound.setStage(e.idx);
         if (!quiet && e.idx === TREETOP_IDX) {
           sound.stageUp(); sound.newBest();
-          fx.banner = { text: 'TREETOP!', sub: 'you grew a whole tree · now reach the stars', t: 0, max: 3.4, gold: true };
+          fx.banner = { text: 'Treetop', sub: 'you grew a whole tree · now reach the stars', t: 0, max: 3.4, gold: true };
           flash('255,215,106', 0.6); shake(8); vibrate(80);
           for (let k = 0; k < 5; k++) burst(s.cx + (k - 2) * 70, s.cy - 80 - k * 20, 12, STAGES[e.idx].leaf, 340, 8, 1.8, 'leaf');
-          burst(s.cx, s.cy - 60, 30, '#ffd76a', 420, 4, 1.0);
-        } else if (!quiet) { sound.stageUp(); fx.banner = { text: st.name.toUpperCase(), sub: `${st.m} m · +15 sap`, t: 0, max: 2.4 }; }
+          burst(s.cx, s.cy - 60, 26, '#ffe08a', 420, 10, 1.0, 'spark');
+        } else if (!quiet) { sound.stageUp(); fx.banner = { text: st.name, sub: `${st.m} m · +15 sap`, t: 0, max: 2.4 }; }
         break;
       }
       case 'newbest':
-        if (!quiet) { sound.newBest(); floater(s.cx, s.cy - 60, CHALLENGE && !daily ? 'FRIEND BEATEN!' : 'NEW BEST!', '#ffd76a', 28, 1.4); flash('255,215,106', 0.35); }
+        if (!quiet) { sound.newBest(); floater(s.cx, s.cy - 60, CHALLENGE && !daily ? 'friend beaten' : 'new best', '#f2b33d', 28, 1.4); flash('255,215,106', 0.35); }
         break;
       case 'death':
         for (const t of s.tips) burst(t.x, s.cy, 14, STAGES[s.stageIdx].leaf, 140, 7, 1.6, 'leaf');
@@ -266,7 +288,11 @@ function updateFx(dt) {
   fx.floaters = fx.floaters.filter((f) => f.life > 0);
   fx.flash = Math.max(0, fx.flash - dt * 3);
   fx.multPulse = Math.max(0, fx.multPulse - dt * 3);
-  cam.shake = Math.max(0, cam.shake - dt * 40);
+  cam.trauma = Math.max(0, cam.trauma - dt * 1.5);
+  for (const sp of fx.sparks) sp.t += dt;
+  if (fx.sparks.length && fx.sparks[0].t >= fx.sparks[0].max) { fx.sparks = fx.sparks.filter((sp) => sp.t < sp.max); fx.sapPulse = 1; }
+  fx.sapPulse = Math.max(0, fx.sapPulse - dt * 4);
+  fx.squash = Math.max(0, fx.squash - dt * 5);
   cam.punch = Math.max(0, (cam.punch || 0) - dt * 0.25);
   if (fx.banner) { fx.banner.t += dt; if (fx.banner.t > fx.banner.max) fx.banner = null; }
   if (sim) {
@@ -311,18 +337,40 @@ function showGameOver() {
     : newBest ? '★ NEW BEST' : daily ? `DAILY TREE · ${dailyLabel()}` : `reached ${sum.stage.toUpperCase()}`;
   $('over-tip').textContent = toGo > 0 ? `${toGo} m to the Treetop. ${runTip(sum)}`
     : (sum.height > prevBest && prevBest >= STAGES[TREETOP_IDX].m) ? 'Above the treetop and climbing. Stars next.' : runTip(sum);
-  $('over-height').textContent = `${sum.height} m`;
+  countUp(sum.height);
+  $('over-kicker').classList.toggle('gold', !!(newBest || (challenge && challenge.won)));
   $('over-score').textContent = `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(best.score, sum.score).toLocaleString('en-US')}`;
   $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}`;
   $('share-msg').textContent = '';
   setMode('over');
-  $('btn-again').focus({ preventScroll: true });
+  if (input.kind !== 'touch') $('btn-again').focus({ preventScroll: true });
+}
+
+let countRaf = 0;
+function countUp(target) {
+  // the height counts up with soft ticks, then settles (instant in calm mode)
+  const el = $('over-height');
+  cancelAnimationFrame(countRaf);
+  const set = (v) => { el.innerHTML = `${v}<small>m</small>`; };
+  if (isCalm() || BOT_MODE || target < 2) { set(target); return; }
+  const t0 = performance.now(), dur = Math.min(1100, 380 + target * 2);
+  let lastTick = -1;
+  const stepFn = (now) => {
+    const k = Math.min(1, (now - t0) / dur), v = Math.round(target * (1 - Math.pow(1 - k, 3)));
+    set(v);
+    const tick = Math.floor(v / Math.max(1, Math.round(target / 14)));
+    if (tick !== lastTick) { lastTick = tick; sound.tick(tick); }
+    if (k < 1) countRaf = requestAnimationFrame(stepFn);
+  };
+  set(0);
+  countRaf = requestAnimationFrame(stepFn);
 }
 
 function runTip(sum) {
   if (sum.merges === 0) return 'Tip: fork, grab sunlight on both branches, then merge for a combo.';
   if (sum.reverts >= 2) return 'Tip: merge before thorn gates. A hit on a fork reverts that branch.';
-  if (sum.maxMult < 4) return 'Tip: merge often. Every merge raises the multiplier (max ×8).';
+  if (sum.maxMult < 4) return 'Tip: merge often. Every merge raises the multiplier, and ×8 starts golden hour.';
+  if (sum.blooms === 0) return 'Tip: catch every sunlight in a trail and that branch bursts into full bloom.';
   return 'Tip: split gates reward forked trees with a both-lanes bonus.';
 }
 
@@ -333,7 +381,7 @@ function challengeUrl() {
 
 function shareText() {
   const s = lastSum;
-  return `I grew a ${s.height} m tree in Forkwood 🌳 (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
+  return `I grew a ${s.height} m tree in Forkwood (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
 }
 
 // ------------------------------------------------------------------ input
@@ -426,12 +474,12 @@ $('btn-daily').addEventListener('click', (e) => { e.stopPropagation(); startRun(
 $('btn-again').addEventListener('click', () => startRun(daily));
 $('btn-menu').addEventListener('click', toMenu);
 $('btn-menu-p').addEventListener('click', toMenu);
-$('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); calm = !isCalm(); store.set('forkwood.calm', calm); refreshTitle(); });
+$('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); calm = !isCalm(); store.set('forkwood.calm', calm); sound.unlock(); sound.toggle(); refreshTitle(); });
 $('btn-challenge').addEventListener('click', async () => {
   if (!lastSum) return;
   const url = challengeUrl();
   let ok = false;
-  try { await navigator.clipboard.writeText(`Beat my ${lastSum.height} m tree in Forkwood 🌳 ${url}`); ok = true; } catch { /* ignore */ }
+  try { await navigator.clipboard.writeText(`Beat my ${lastSum.height} m tree in Forkwood: ${url}`); ok = true; } catch { /* ignore */ }
   $('share-msg').textContent = ok ? 'Challenge link copied: same course, beat my height.' : url;
 });
 $('btn-resume').addEventListener('click', resume);
@@ -458,6 +506,10 @@ $('title').addEventListener('pointerdown', (e) => {
 });
 
 window.addEventListener('resize', () => { renderer.resize(); });
+// iOS only unlocks WebAudio inside touchend/click, so listen there as well
+for (const ev of ['touchend', 'click']) window.addEventListener(ev, () => sound.unlock(), { capture: true, passive: true });
+// a soft click on every menu button
+document.querySelectorAll('.btn, .icon').forEach((b) => b.addEventListener('pointerdown', () => { sound.unlock(); sound.click(); }));
 
 // ------------------------------------------------------------------ loop
 /** One gameplay tick: coach slow-mo + hit-stop, then the sim and its events. */
@@ -499,6 +551,7 @@ function frame(nowMs) {
     input.toggle = false;
     playTick(dt, inp);
     sound.setFrost(sim.inFrost && !sim.dead);
+    sound.setLowSap(sim.dead ? 1 : sim.sap / SAP_MAX);
     sound.update(Math.min(1, heightM(sim) / 600) * 0.8 + (sim.mult / 8) * 0.2, sim.mult);
     if (!sim.dead) {
       cam.scale += (base * (1 + (cam.punch || 0)) - cam.scale) * Math.min(1, dt * 4);
@@ -541,6 +594,10 @@ window.forkwood = {
   get coach() { return coach.step; },
   get timeScale() { return timeScale; },
   get banner() { return fx.banner; },
+  get fx() { return fx; },
+  get audio() { return { state: sound.ctx ? sound.ctx.state : 'none', sprite: !!sound.buf, muted: sound.muted }; },
+  get calm() { return isCalm(); },
+  get cam() { return cam; },
   get layout() { return renderer.layout; },
   summary: () => sim && summary(sim),
   start: (d = false) => startRun(d),
