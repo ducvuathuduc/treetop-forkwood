@@ -1,7 +1,8 @@
 // End-of-run share card: the player's tree as a printed postcard, with height,
 // score and a commit-style hash. Same woodblock style as the game.
 import { PX_PER_M, STAGES, SKY_STOPS, stageIndexFor } from './sim.js';
-import { roundRect, INK, PAPER, OCHRE, MOSS, FONT, skyAt, flagPath } from './render.js';
+import { roundRect, INK, PAPER, OCHRE, MOSS, FONT, skyAt, flagPath, skinLeaf, drawBud } from './render.js';
+import { THEME, leafColor } from './skins.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -14,15 +15,7 @@ function shade(hex, k) {
   return `rgb(${g((n >> 16) & 255)},${g((n >> 8) & 255)},${g(n & 255)})`;
 }
 
-function leaf(ctx, x, y, len, ang, fill) {
-  const c = Math.cos(ang), s = Math.sin(ang);
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.quadraticCurveTo(x + c * len * 0.5 + s * len * 0.42, y + s * len * 0.5 - c * len * 0.42, x + c * len, y + s * len);
-  ctx.quadraticCurveTo(x + c * len * 0.5 - s * len * 0.42, y + s * len * 0.5 + c * len * 0.42, x, y);
-  ctx.lineWidth = 2.6; ctx.strokeStyle = INK; ctx.stroke();
-  ctx.fillStyle = fill; ctx.fill();
-}
+function leaf(ctx, x, y, len, ang, fill) { skinLeaf(ctx, x, y, len, ang, fill, 2.6); }
 
 function flower(ctx, x, y, r, rot, petal) {
   for (const pass of [0, 1]) {
@@ -32,7 +25,7 @@ function flower(ctx, x, y, r, rot, petal) {
     ctx.fill();
   }
   ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, y, r * 0.42 + 2, 0, TAU); ctx.fill();
-  ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(x, y, r * 0.42, 0, TAU); ctx.fill();
+  ctx.fillStyle = THEME.blossom.center; ctx.beginPath(); ctx.arc(x, y, r * 0.42, 0, TAU); ctx.fill();
 }
 
 /**
@@ -69,7 +62,8 @@ export function drawTreeCompact(ctx, s, rect, opts = {}) {
       const h = hash(c.i * 3.1 + p.id * 7 + j);
       const side = j % 2 ? -1 : 1;
       const ang = -Math.PI / 2 + side * (0.6 + h * 0.8);
-      leaf(ctx, X, Y, leafLen * (0.7 + h * 0.5), ang, j % 2 ? shade(st.leaf, 0.78) : st.leaf);
+      const lc = THEME.leaf.leaves ? leafColor(st, j) : (j % 2 ? shade(st.leaf, 0.78) : st.leaf);
+      leaf(ctx, X, Y, leafLen * (0.7 + h * 0.5), ang, lc);
     }
   }
   // wood: ink outline, bark, light edge
@@ -89,7 +83,7 @@ export function drawTreeCompact(ctx, s, rect, opts = {}) {
         else {
           if (bk !== bucket && bucket !== -1) { ctx.stroke(); ctx.beginPath(); ctx.moveTo(lastX - (pass === 2 ? w * 0.6 : 0), lastY); }
           ctx.lineWidth = w;
-          ctx.strokeStyle = pass === 0 ? INK : pass === 1 ? '#6b4429' : '#a8744a';
+          ctx.strokeStyle = pass === 0 ? INK : pass === 1 ? THEME.bark.wood : THEME.bark.light;
           ctx.lineTo(X - (pass === 2 ? w * 0.6 : 0), Y);
         }
         bucket = bk; lastX = X; lastY = Y;
@@ -97,7 +91,7 @@ export function drawTreeCompact(ctx, s, rect, opts = {}) {
       ctx.stroke();
     }
   }
-  for (const b of blooms) for (let k = 0; k < 3; k++) flower(ctx, b.X + (k - 1) * 13, b.Y - 6 - (k % 2) * 10, 8 + hash(b.seed + k) * 3, hash(b.seed * 2 + k) * 6, k === 1 ? '#fff4ec' : '#f7b6c8');
+  for (const b of blooms) for (let k = 0; k < 3; k++) flower(ctx, b.X + (k - 1) * 13, b.Y - 6 - (k % 2) * 10, 8 + hash(b.seed + k) * 3, hash(b.seed * 2 + k) * 6, k === 1 ? THEME.blossom.alt : THEME.blossom.petal);
   // commit dots
   for (const p of paths) for (const c of p.commits) {
     if (c.kind === 'bloom') continue;
@@ -110,9 +104,7 @@ export function drawTreeCompact(ctx, s, rect, opts = {}) {
   }
   // the bud at the very top
   const tx = mapX(s.cx), ty = mapY(s.cy);
-  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(tx, ty - 6, 11, 15, 0, 0, TAU); ctx.fill();
-  ctx.fillStyle = '#6faa3c'; ctx.beginPath(); ctx.ellipse(tx, ty - 6, 8, 12, 0, 0, TAU); ctx.fill();
-  ctx.fillStyle = '#c4e88a'; ctx.beginPath(); ctx.ellipse(tx - 2.5, ty - 10, 3, 5.5, 0, 0, TAU); ctx.fill();
+  ctx.save(); ctx.translate(tx, ty - 4); drawBud(ctx, false, 1.15); ctx.restore();
   return { mapY, sy };
 }
 
@@ -131,8 +123,10 @@ export function renderCard(s, sum, meta) {
   c.width = Wc; c.height = Hc;
   const ctx = c.getContext('2d');
   const reached = stageIndexFor(sum.height);
-  // paper
-  ctx.fillStyle = PAPER; ctx.fillRect(0, 0, Wc, Hc);
+  // paper (postcard skin)
+  const CARD = THEME.card, CI = CARD.ink;
+  const inkA = (a) => { const n = parseInt(CI.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
+  ctx.fillStyle = CARD.paper; ctx.fillRect(0, 0, Wc, Hc);
   // print window: posterised sky through every stage the tree climbed
   const P = { x: 56, y: 262, w: Wc - 112, h: 930 };
   ctx.save();
@@ -179,10 +173,10 @@ export function renderCard(s, sum, meta) {
     if (goal) { flagPath(ctx, P.x + tw + 50, y - 22, 12); ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.fillStyle = OCHRE; ctx.fill(); ctx.strokeStyle = INK; ctx.stroke(); }
   }
   ctx.restore();
-  ctx.strokeStyle = INK; ctx.lineWidth = 5; roundRect(ctx, P.x, P.y, P.w, P.h, 22); ctx.stroke();
+  ctx.strokeStyle = CI; ctx.lineWidth = 5; roundRect(ctx, P.x, P.y, P.w, P.h, 22); ctx.stroke();
 
   // header on the paper
-  ctx.fillStyle = INK; ctx.textAlign = 'left';
+  ctx.fillStyle = CI; ctx.textAlign = 'left';
   ctx.font = f(800, 26); ctx.fillText('F O R K W O O D', 62, 86);
   ctx.font = f(800, 168, 'display');
   const ht = `${sum.height}`;
@@ -191,7 +185,7 @@ export function renderCard(s, sum, meta) {
   ctx.font = f(800, 70, 'display'); ctx.fillText('m', 70 + hw, 236);
   ctx.textAlign = 'right';
   ctx.font = f(700, 34, 'mono'); ctx.fillText(`${sum.score.toLocaleString('en-US')} pts`, Wc - 60, 92);
-  ctx.font = f(600, 26); ctx.fillStyle = 'rgba(30,26,22,0.8)';
+  ctx.font = f(600, 26); ctx.fillStyle = inkA(0.8);
   ctx.fillText(`reached ${sum.stage}`, Wc - 60, 134);
   let ry = 170;
   if (meta.daily) { ctx.fillText(`Daily tree · ${meta.dailyLabel}`, Wc - 60, ry); ry += 36; }
@@ -208,12 +202,23 @@ export function renderCard(s, sum, meta) {
   ctx.textAlign = 'left';
   ctx.font = f(700, 27, 'mono');
   const h1 = `tree ${sum.hash}`;
-  ctx.fillStyle = INK; ctx.fillText(h1, 62, 1252);
-  ctx.fillStyle = 'rgba(30,26,22,0.78)';
-  ctx.fillText(` · ${sum.commits} commits · ${sum.merges} merges${sum.blooms ? ` · ${sum.blooms} blooms` : ''} · ×${sum.maxMult}`, 62 + ctx.measureText(h1).width, 1252, Wc - 140 - ctx.measureText(h1).width);
-  ctx.font = f(600, 21); ctx.fillStyle = 'rgba(30,26,22,0.68)';
-  ctx.fillText(`${meta.url || 'Forkwood'}${meta.seed != null ? `  ·  course #${meta.seed}` : ''}`, 62, 1296, Wc - 124);
+  ctx.fillStyle = CI; ctx.fillText(h1, 62, 1252);
+  ctx.fillStyle = inkA(0.78);
+  ctx.fillText(` · ${sum.commits} commits · ${sum.merges} merges${sum.blooms ? ` · ${sum.blooms} blooms` : ''} · ×${sum.maxMult}`, 62 + ctx.measureText(h1).width, 1252, 850 - 62 - ctx.measureText(h1).width);
+  ctx.font = f(600, 21); ctx.fillStyle = inkA(0.68);
+  ctx.fillText(`${meta.url || 'Forkwood'}${meta.seed != null ? `  ·  course #${meta.seed}` : ''}`, 62, 1296, Wc - 300);
+  // hanko-style seal: the grower's level and this print's number
+  seal(ctx, Wc - 150, 1250, CARD, meta);
+  if (CARD.edge === 'perforated') {
+    ctx.strokeStyle = inkA(0.5); ctx.lineWidth = 3; ctx.setLineDash([2, 9]); roundRect(ctx, 26, 26, Wc - 52, Hc - 52, 8); ctx.stroke(); ctx.setLineDash([]);
+  }
   grain(ctx, Wc, Hc);
+  if (CARD.edge === 'perforated') {
+    ctx.globalCompositeOperation = 'destination-out';
+    for (let x = 18; x < Wc; x += 36) { ctx.beginPath(); ctx.arc(x, 0, 11, 0, TAU); ctx.arc(x, Hc, 11, 0, TAU); ctx.fill(); }
+    for (let y = 18; y < Hc; y += 36) { ctx.beginPath(); ctx.arc(0, y, 11, 0, TAU); ctx.arc(Wc, y, 11, 0, TAU); ctx.fill(); }
+    ctx.globalCompositeOperation = 'source-over';
+  }
   return c;
 }
 
@@ -250,4 +255,21 @@ function downloadBlob(blob, filename) {
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function seal(ctx, x, y, CARD, meta) {
+  const lv = meta.level || 1, no = meta.printNo || 1;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-0.07);
+  const sz = 104;
+  ctx.fillStyle = CARD.seal; roundRect(ctx, -sz / 2, -sz / 2, sz, sz, 14); ctx.fill();
+  // worn print edge: knock a few flecks out of the seal
+  ctx.fillStyle = CARD.paper;
+  for (let i = 0; i < 26; i++) { const h1 = hash(i * 3.3 + lv), h2 = hash(i * 7.1 + no); ctx.fillRect(-sz / 2 + h1 * sz, -sz / 2 + h2 * sz, 2.2, 2.2); }
+  ctx.strokeStyle = CARD.paper; ctx.lineWidth = 3.5; roundRect(ctx, -sz / 2 + 7, -sz / 2 + 7, sz - 14, sz - 14, 9); ctx.stroke();
+  ctx.fillStyle = CARD.paper; ctx.textAlign = 'center';
+  ctx.font = f(800, 15); ctx.fillText('GROWER', 0, -22);
+  ctx.font = f(800, 40, 'display'); ctx.fillText(`${lv}`, 0, 16);
+  ctx.font = f(700, 13, 'mono'); ctx.fillText(`PRINT ${no}`, 0, 38);
+  ctx.restore();
+  ctx.textAlign = 'left';
 }
