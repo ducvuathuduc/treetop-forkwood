@@ -37,6 +37,12 @@
     </button>
   </div>
 
+  <div id="metabar" class="metabar" hidden>
+    <button id="btn-wallet" class="chip" aria-label="Acorns: open the shop"><span id="acorn-ico" class="ci"></span><span id="acorn-n" class="num">0</span></button>
+    <button id="btn-lvl" class="chip" aria-label="Level and goals"><span class="lv">Lv <b id="lvl-n">1</b></span><span id="lvl-pips" class="pips"></span></button>
+    <button id="btn-gift" class="chip gift" hidden><span id="gift-ico" class="ci"></span><span>Daily gift</span></button>
+  </div>
+
   <section id="title" class="overlay show">
     <div class="title-card paper">
       <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
@@ -62,6 +68,30 @@
     </div>
   </section>
 
+  <nav id="dock" class="dock paper" aria-label="Progress" hidden>
+    <button data-tab="goals"><span class="di"></span><span>Goals</span></button>
+    <button data-tab="shop"><span class="di"></span><span>Shop</span></button>
+    <button data-tab="charms"><span class="di"></span><span>Charms</span></button>
+    <button data-tab="badges"><span class="di"></span><span>Badges</span></button>
+    <button data-tab="profile"><span class="di"></span><span>Rings</span></button>
+  </nav>
+
+  <section id="meta" class="overlay" aria-label="Goals, shop and progress">
+    <div class="panel paper meta-panel">
+      <header class="meta-head">
+        <div class="tabs" role="tablist">
+          <button data-tab="goals" role="tab"><span class="ti"></span><span>Goals</span></button>
+          <button data-tab="shop" role="tab"><span class="ti"></span><span>Shop</span></button>
+          <button data-tab="charms" role="tab"><span class="ti"></span><span>Charms</span></button>
+          <button data-tab="badges" role="tab"><span class="ti"></span><span>Badges</span></button>
+          <button data-tab="profile" role="tab"><span class="ti"></span><span>Rings</span></button>
+        </div>
+        <button id="btn-meta-close" class="icon" aria-label="Close" title="Close (Esc)"></button>
+      </header>
+      <div id="meta-body" class="meta-body"></div>
+    </div>
+  </section>
+
   <section id="pause" class="overlay">
     <div class="panel paper small-panel">
       <h2>Paused</h2>
@@ -72,13 +102,18 @@
 
   <section id="over" class="overlay">
     <div class="panel paper over-panel">
-      <div class="over-left"><img id="card-img" alt="Your tree as a postcard" /></div>
+      <div class="over-left"><div class="print"><img id="card-img" alt="Your tree as a postcard" /></div></div>
       <div class="over-right">
         <p id="over-kicker" class="kicker"></p>
         <h2 id="over-height"></h2>
         <p id="over-score" class="over-score"></p>
         <p id="over-hash" class="hash"></p>
         <p id="over-tip" class="over-tip"></p>
+        <div id="rewards" class="rewards" hidden>
+          <p class="rw-line"><span id="rw-acorn-ico" class="rw-ico"></span><span class="rw-n">+<b id="rw-acorns">0</b></span><span id="rw-parts" class="rw-parts"></span></p>
+          <div id="rw-goals" class="rw-goals"></div>
+          <ul id="rw-stamps" class="rw-stamps" hidden></ul>
+        </div>
         <div class="row">
           <button id="btn-again" class="btn primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4.5h-4.5"/></svg>Grow again <kbd>R</kbd></button>
         </div>
@@ -92,6 +127,9 @@
       </div>
     </div>
   </section>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="press" class="press" aria-hidden="true"><i class="roller"></i></div>
 
   <noscript><p style="position:fixed;inset:0;display:grid;place-items:center;color:#1e1a16;background:#f4ecd8">Forkwood needs JavaScript.</p></noscript>
   <script type="module" src="src/main.js"></script>
