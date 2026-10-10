@@ -223,7 +223,7 @@ export function drawTree(ctx, s, now, topY, botY, px) {
       if (!pt || pt.y < topY - 60 || pt.y > botY + 60) continue;
       const grow = Math.min(1, (now - c.born) / 0.35);
       const pop = grow < 1 ? easeBack(grow) : 1;
-      const m = -pt.y / PX_PER_M;
+      const m = -pt.y / PX_PER_M + ((s.R && s.R.biome) || 0);
       const st = STAGES[stageIndexFor(m)];
       if (c.kind === 'bloom') {
         if (!rev) {
@@ -321,7 +321,9 @@ export class Renderer {
     const topY = (0 - this.oy) / sc - pad, botY = (ch - this.oy) / sc + pad;
     const leftX = (0 - this.ox) / sc - pad, rightX = (cw - this.ox) / sc + pad;
     const now = s.t;
-    const camM = Math.max(0, -cam.y / PX_PER_M);
+    // quest worlds start in their biome: the look is offset, the physics is not
+    const VO = (s.R && s.R.biome) || 0;
+    const camM = Math.max(0, -cam.y / PX_PER_M) + VO;
     const sb = stageBlend(camM);
     const px = 1 / sc;
     const night = Math.min(1, Math.max(0, (camM - 520) / 300));
@@ -332,7 +334,7 @@ export class Renderer {
     const BAND = 180;
     const b0 = Math.floor(topY / BAND), b1 = Math.ceil(botY / BAND);
     for (let b = b0; b <= b1; b++) {
-      const m = Math.max(0, -(b + 0.5) * BAND / PX_PER_M);
+      const m = Math.max(0, -(b + 0.5) * BAND / PX_PER_M) + VO;
       ctx.fillStyle = css(skyAt(m));
       ctx.fillRect(leftX - 20, b * BAND, rightX - leftX + 40, BAND + 1);
     }
@@ -359,6 +361,7 @@ export class Renderer {
     this.drawGround(ctx, leftX, rightX, botY);
     for (const w of s.winds) this.drawWind(ctx, w, now, topY, botY);
     if (ui.bestM > 3) this.drawBestLine(ctx, -ui.bestM * PX_PER_M, topY, botY, s.newBest, now, ui.bestLabel);
+    if (ui.finishM) this.drawFinish(ctx, -ui.finishM * PX_PER_M, topY, botY, now);
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
@@ -634,6 +637,7 @@ export class Renderer {
     const wide = (cw - W * this.baseScale()) / 2 >= 150;
     const x = wide ? cw - 46 : cw - 13;
     const y0 = wide ? ch - 70 : ch * 0.66, y1 = wide ? 96 : (ui.coach ? 214 : 132);
+    if (ui.finishM) return this.drawFinishLadder(ctx, s, ui, x, y0, y1, wide);
     const n = STAGES.length - 1;
     const pos = (m) => {
       const i = stageIndexFor(m);
@@ -676,6 +680,53 @@ export class Renderer {
     const yy = Y(fr);
     ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(x, yy - 1, 6.5, 9, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = '#a9cf5a'; ctx.beginPath(); ctx.ellipse(x, yy - 1, 4, 6.5, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+
+  drawFinishLadder(ctx, s, ui, x, y0, y1, wide) {
+    // quest levels: a single rule from the soil to the finish ribbon
+    const fr = Math.min(1, heightM(s) / ui.finishM), Y = (k) => y0 + (y1 - y0) * k;
+    ctx.save(); ctx.lineCap = 'round';
+    ctx.strokeStyle = INK; ctx.lineWidth = wide ? 10 : 8; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    ctx.strokeStyle = PAPER; ctx.lineWidth = wide ? 5 : 3.5; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    ctx.strokeStyle = OCHRE; ctx.lineWidth = wide ? 5 : 3.5; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, Y(fr)); ctx.stroke();
+    flagPath(ctx, x + (wide ? 9 : -2), y1 - 9, 6); ctx.lineJoin = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.fillStyle = OCHRE; ctx.fill(); ctx.stroke();
+    if (wide) {
+      ctx.font = f(700, 11); ctx.textAlign = 'right';
+      ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(30,26,22,0.9)'; ctx.strokeText(`FINISH ${ui.finishM} m`, x - 13, y1 + 4);
+      ctx.fillStyle = OCHRE; ctx.fillText(`FINISH ${ui.finishM} m`, x - 13, y1 + 4);
+    }
+    const yy = Y(fr);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(x, yy - 1, 6.5, 9, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#a9cf5a'; ctx.beginPath(); ctx.ellipse(x, yy - 1, 4, 6.5, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+
+  drawFinish(ctx, y, topY, botY, now) {
+    // the finish ribbon: a chequered print band across the playfield
+    if (y < topY - 40 || y > botY + 40) return;
+    ctx.save();
+    const sq = 14;
+    ctx.fillStyle = INK; ctx.fillRect(0, y - sq - 3, W, sq * 2 + 6);
+    for (let i = 0; i * sq < W; i++) for (let r = 0; r < 2; r++) { ctx.fillStyle = (i + r) % 2 ? PAPER : OCHRE; ctx.fillRect(i * sq, y - sq + r * sq, sq, sq); }
+    ctx.font = f(800, 15);
+    const label = 'FINISH', tw = ctx.measureText(label).width + 18;
+    const wob = Math.sin(now * 3) * 2;
+    this.card(ctx, W / 2 - tw / 2, y - 46 + wob, tw, 24, 7, OCHRE, 2.5);
+    ctx.fillStyle = INK; ctx.textAlign = 'center'; ctx.fillText(label, W / 2, y - 29 + wob);
+    ctx.restore();
+  }
+
+  drawClock(ctx, left, x, y, now) {
+    // sprint clock: a stamped seconds counter that blinks in the last 10 s
+    const sec = Math.ceil(left), urgent = left < 10;
+    const blink = urgent && Math.sin(now * 14) > 0;
+    ctx.save();
+    ctx.font = f(800, 22, 'display'); ctx.textAlign = 'center';
+    const t = `0:${String(Math.min(59, sec)).padStart(2, '0')}`;
+    const w = ctx.measureText(t).width + 22;
+    this.card(ctx, x - w / 2, y - 22, w, 30, 9, urgent ? (blink ? CORAL : '#ffc2b0') : PAPER, 2.5);
+    ctx.fillStyle = INK; ctx.fillText(sec >= 60 ? '1:00' : t, x, y);
     ctx.restore();
   }
 
@@ -1140,7 +1191,7 @@ export class Renderer {
     ctx.font = f(800, small ? 18 : 21, 'display');
     ctx.lineWidth = 5; ctx.strokeText('m', 22 + hw, hy); ctx.fillText('m', 22 + hw, hy);
     ctx.font = f(800, 12);
-    const label = STAGES[s.stageIdx].name.toUpperCase() + (ui.daily ? '  ·  DAILY' : '');
+    const label = (ui.modeLabel && ui.finishM ? ui.modeLabel : STAGES[s.stageIdx].name.toUpperCase() + (ui.daily ? '  ·  DAILY' : ui.modeLabel ? '  ·  ' + ui.modeLabel : '')) + (ui.mirror ? '  ·  MIRRORED' : '');
     ctx.lineWidth = 3.5; ctx.strokeText(label, 18, hy + 19);
     ctx.fillStyle = PAPER; ctx.fillText(label, 18, hy + 19);
     // score + stamped multiplier badge
@@ -1186,17 +1237,25 @@ export class Renderer {
     ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(st, bcx, by + bh + 17);
     ctx.fillStyle = s.golden > 0 ? '#ffe08a' : low ? '#ffc2b0' : PAPER; ctx.fillText(st, bcx, by + bh + 17);
     ctx.textAlign = 'left';
+    if (ui.clock != null) this.drawClock(ctx, ui.clock, small ? cw - 18 - bw / 2 : bcx, by + bh + (small ? 44 : 50), now);
     // acorns picked up this run
-    if (s.acorns > 0 || ui.acornPulse > 0) {
-      const ay = sy + (small ? 26 : 30), ap = 1 + (ui.acornPulse || 0) * 0.35;
+    const showAc = s.acorns > 0 || ui.acornPulse > 0, ay = sy + (small ? 26 : 30);
+    let acW = 0;
+    if (showAc) {
+      const ap = 1 + (ui.acornPulse || 0) * 0.35;
       ctx.save(); ctx.translate(30, ay - 6); ctx.scale(ap, ap); drawAcorn(ctx, 0.85); ctx.restore();
       ctx.font = f(700, small ? 15 : 16, 'mono');
       ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.strokeText(`${s.acorns}`, 46, ay);
       ctx.fillStyle = '#f3cf8e'; ctx.fillText(`${s.acorns}`, 46, ay);
+      acW = ctx.measureText(`${s.acorns}`).width;
     }
-    // on phones the first-run coach card owns the band under the HUD
+    // on phones the first-run coach card owns the band under the HUD; grafts
+    // share the acorn row so the left column stays three lines tall
     const band = !(small && ui.coach);
-    if (band && s.grafts && s.grafts.length) this.drawGraftHud(ctx, s, 30, sy + (small ? 26 : 30) + (s.acorns > 0 || ui.acornPulse > 0 ? 26 : 0));
+    if (band && s.grafts && s.grafts.length) {
+      if (small && showAc) this.drawGraftHud(ctx, s, 46 + acW + 26, ay - 6);
+      else this.drawGraftHud(ctx, s, 30, ay + (showAc ? 26 : 0) - (small ? 0 : 0));
+    }
     if (band && s.pu) this.drawPowerHud(ctx, s, bcx, by + bh + 28, now);
     this.layout.charm = null;
     if (s.charm) this.drawCharm(ctx, s, ui, now);
