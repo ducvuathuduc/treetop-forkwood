@@ -114,6 +114,7 @@ await run('mobile', { ...devices['iPhone 13'] }, async (page) => {
   // a tap forks without yanking the tip toward the tap point
   const before = await page.evaluate(() => window.forkwood.sim.cx);
   await page.tap('canvas', { position: { x: 30, y: 560 } });
+  await sleep(80); // let the game loop consume the tap before stepping synchronously
   await page.evaluate(() => window.forkwood.advance(0.3, {}));
   const after = await page.evaluate(() => ({ tips: window.forkwood.sim.tips.length, cx: window.forkwood.sim.cx }));
   if (after.tips !== 2) errors.push('[mobile] tap did not fork');
