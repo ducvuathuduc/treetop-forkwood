@@ -40,6 +40,7 @@ async function playRun(p, sec = 30, daily = false) {
   await fw(p, (s) => window.forkwood.advance(s, 'bot'), sec);
   await fw(p, () => window.forkwood.killNow());
   await p.waitForTimeout(2600);
+  for (let i = 0; i < 20 && (await fw(p, () => window.forkwood.mode)) !== 'over'; i++) await p.waitForTimeout(250);
 }
 
 // 1. first visit: nothing extra on the title, the print pull lifts away
@@ -107,13 +108,13 @@ ok(await p.isHidden('#meta') && await p.isVisible('#title'), 'Esc closes the boo
 // 4. charm in play, skins in play, frame time
 await fw(p, () => window.forkwood.start(false));
 await fw(p, () => window.forkwood.advance(6, 'bot'));
-const c1 = await fw(p, () => { const s = window.forkwood.sim; s.charge = 4; s.shield = false; return s.charm; });
+const c1 = await fw(p, () => { const s = window.forkwood.sim; s.charge = 9; s.shield = false; return s.charm; });
 ok(c1 === 'ward', 'equipped charm is in the run');
 await p.keyboard.press('e');
 await p.waitForTimeout(200);
 const c2 = await fw(p, () => ({ uses: window.forkwood.sim.charmUses, shield: window.forkwood.sim.shield, charge: window.forkwood.sim.charge }));
 ok(c2.uses === 1 && c2.shield && c2.charge === 0, 'E fires the charm: shield up, charge spent');
-await fw(p, () => { window.forkwood.sim.charge = 4; });
+await fw(p, () => { window.forkwood.sim.charge = 9; });
 await p.waitForTimeout(150);
 const cz = await fw(p, () => window.forkwood.layout.charm);
 ok(!!cz, 'charm badge is laid out on the HUD');
