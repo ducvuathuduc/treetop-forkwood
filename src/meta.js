@@ -7,6 +7,7 @@ import { SKINS, SKIN, DEFAULT_LOADOUT } from './skins.js';
 import { CHARMS } from './sim.js';
 import { mulberry32 } from './rng.js';
 import { freshQuest, repairQuest, PRIZES } from './quest.js';
+import { freshRet, ensure as ensureRet, streakMilestones, itemUnlocked, unlockLabel } from './retention.js';
 
 export const SAVE_KEY = 'forkwood.save.v2';
 export const SAVE_VERSION = 2;
@@ -169,6 +170,7 @@ export function freshSave(today = dayKey()) {
     tutorial: false,
     calm: null,
     quest: freshQuest(),
+    ret: freshRet(),
   };
 }
 
@@ -220,6 +222,7 @@ export function repair(S, today = dayKey()) {
   if (!goalsOk) S.goals = levelGoals(lvl);
   else if (RETIRED[lvl]) S.goals = S.goals.map((g) => (RETIRED[lvl][g.k] && !LEVELS[lvl - 1].some((t) => t.k === g.k && t.n === g.n && t.run === g.run) ? (g.done ? { ...RETIRED[lvl][g.k], p: RETIRED[lvl][g.k].n, done: true } : { ...RETIRED[lvl][g.k], p: 0, done: false }) : g));
   repairQuest(S);
+  ensureRet(S);
   unlockEarned(S);
   rollover(S, new Date(today + 'T12:00:00Z'));
   return S;
@@ -249,8 +252,10 @@ export function claimGift(S, today = dayKey()) {
   let freeze = false;
   if (st.count % 7 === 0 && st.freezes < 2) { st.freezes++; freeze = true; }
   gain(S, amount);
+  const milestones = streakMilestones(S);
+  unlockEarned(S);
   const achs = checkAchievements(S, null, {});
-  return { amount, day: st.count, usedFreeze, freeze, achs };
+  return { amount, day: st.count, usedFreeze, freeze, achs, milestones };
 }
 
 function gain(S, n) { S.acorns += n; S.earned += n; }
@@ -290,13 +295,13 @@ export function unlockText(it) {
   if (u.level) return `Reach level ${u.level}`;
   if (u.ach) return `Badge: ${ACH[u.ach] ? ACH[u.ach].name : u.ach}`;
   if (u.prize) return `Quest: ${PRIZES[u.prize] ? PRIZES[u.prize].text : u.prize}`;
-  return '';
+  return unlockLabel(u);
 }
 export function unlockEarned(S) {
   const got = [];
   for (const it of SKINS) {
     if (S.owned.includes(it.id)) continue;
-    if ((it.unlock.level && S.level >= it.unlock.level) || (it.unlock.ach && S.ach[it.unlock.ach]) || (it.unlock.prize && S.quest && S.quest.prizes.includes(it.unlock.prize))) { S.owned.push(it.id); got.push(it.id); }
+    if ((it.unlock.level && S.level >= it.unlock.level) || (it.unlock.ach && S.ach[it.unlock.ach]) || (it.unlock.prize && S.quest && S.quest.prizes.includes(it.unlock.prize)) || ((it.unlock.season || it.unlock.streak || it.unlock.league) && S.ret && itemUnlocked(S, it.unlock))) { S.owned.push(it.id); got.push(it.id); }
   }
   return got;
 }
