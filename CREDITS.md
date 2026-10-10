@@ -23,11 +23,20 @@ Nine clips, trimmed and packed into one 37 KB sprite (`assets/audio/sfx.mp3`), l
 
 Licence texts: [assets/audio/LICENSE-Kenney-Impact-Sounds.txt](assets/audio/LICENSE-Kenney-Impact-Sounds.txt), [assets/audio/LICENSE-Kenney-Interface-Sounds.txt](assets/audio/LICENSE-Kenney-Interface-Sounds.txt). Crediting Kenney is not required; we do it gladly.
 
+## Code library (MIT)
+
+| Library | Used for | Source | Licence |
+|---|---|---|---|
+| ZzFX 1.4.0 by Frank Force | rendering the short menu, shop and charm sound effects (acorn, buy, stamp, page turn, sparkle, charms) | https://github.com/KilledByAPixel/ZzFX | MIT, [src/vendor/LICENSE-ZzFX.txt](src/vendor/LICENSE-ZzFX.txt) |
+
+Vendored as `src/vendor/zzfx.js` with one change, noted at the top of the file: it no longer creates an AudioContext when imported (browsers warn about audio before a user gesture). Forkwood only calls `ZZFX.buildSamples` and plays the result through its own mixer.
+
 ## Ideas and references
 
 * Trauma-based screen shake: Squirrel Eiserloh, "Math for Game Programmers: Juicing Your Cameras With Math", GDC 2016.
 * Game feel: Martin Jonasson & Petri Purho, "Juice it or lose it" (2012); Jan Willem Nijman, "The Art of Screenshake" (2013).
+* Progression design: levels of three goals after Alto's Adventure (Snowman); cosmetic-only unlocks so scores stay comparable after Crossy Road (Hipster Whale, GDC 2015); quests as an "endless tutorial" after David Fox, "Don't Pass on Battle Pass" (GDC 2022); streak freeze after Duolingo. Ideas only, no assets.
 
 ## Not shipped
 
-Playwright and Chromium are used only to test the game locally. No libraries, trackers or third-party requests are included in the game.
+Playwright and Chromium are used only to test the game locally. Apart from ZzFX above, no libraries, trackers or third-party requests are included in the game. All skins, icons and the acorn are drawn in code or as inline SVG made for Forkwood.
