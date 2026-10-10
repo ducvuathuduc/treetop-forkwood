@@ -11,6 +11,23 @@ const SCALE = [0, 2, 4, 7, 9];                 // major pentatonic
 const ROOTS = [57, 60, 62, 64, 65, 67, 69];   // key per stage (MIDI)
 const CHORDS = [0, 9, 5, 7];                  // I vi IV V, as semitone offsets
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+// Short synthesised effects for the meta layer, rendered once with ZzFX
+// (Frank Force, MIT, vendored in src/vendor) and played through our own mixer.
+// Params: volume, randomness, frequency, attack, sustain, release, shape,
+// shapeCurve, slide, deltaSlide, pitchJump, pitchJumpTime, repeatTime, noise,
+// modulation, bitCrush, delay, sustainVolume, decay, tremolo, filter.
+const ZZ = {
+  acorn: [1, 0, 1046, 0, 0.01, 0.08, 0, 1.4, 0, 0, 523, 0.03, 0, 0, 0, 0, 0, 0.6, 0.02],
+  buy: [1, 0, 660, 0.01, 0.05, 0.22, 1, 1.5, 0, 0, 330, 0.06, 0.09, 0, 0, 0, 0, 0.5, 0.05],
+  stamp: [1.4, 0, 120, 0, 0.02, 0.16, 4, 2.5, -6, 0, 0, 0, 0, 1.2, 0, 0, 0, 0.4, 0.04, 0, -1400],
+  page: [0.5, 0, 500, 0.02, 0.02, 0.1, 4, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0.3, 0.05, 0, -2200],
+  sparkle: [0.8, 0, 1568, 0, 0.04, 0.3, 0, 1.8, 0, 0, 392, 0.05, 0.07, 0, 0, 0, 0, 0.5, 0.03],
+  ward: [1, 0, 180, 0, 0.03, 0.2, 1, 2, 0, 0, 90, 0.04, 0, 0.6, 0, 0, 0, 0.5, 0.05],
+  sun: [1, 0, 220, 0.05, 0.25, 0.4, 0, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0.6, 0.1],
+  roots: [1.2, 0, 90, 0.05, 0.2, 0.5, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0.7, 0.1],
+  still: [1, 0, 600, 0.02, 0.3, 0.5, 0, 1, -4, 0, 0, 0, 0, 0, 8, 0, 0, 0.5, 0.1],
+  charged: [0.7, 0, 784, 0, 0.03, 0.18, 0, 1.6, 0, 0, 392, 0.04, 0.06, 0, 0, 0, 0, 0.5, 0.02],
+};
 const SPRITE = {
   fork: [0, 0.51], merge: [0.5127, 0.58], hit: [1.0925, 0.56], revert: [1.6526, 0.39],
   bark: [2.0419, 1.03], click: [3.0709, 0.26], toggle: [3.3325, 0.39], drop: [3.7189, 0.44], soft: [4.1571, 0.43],
@@ -27,6 +44,8 @@ export class Sound {
     this.playing = false;
     this.golden = false;
     this.buf = null;
+    this.zz = {};
+    this.menu = false;
     // fetch the sprite early so it is ready by the first tap (decoded on unlock)
     this._bytes = typeof fetch === 'function' ? fetch('assets/audio/sfx.mp3').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : Promise.resolve(null);
   }
@@ -62,6 +81,13 @@ export class Sound {
       const sb = c.createBufferSource(); sb.buffer = c.createBuffer(1, 1, 22050); sb.connect(c.destination); sb.start(0);
       this._startPad();
       this._startFrost();
+      // ZzFX renders the meta sounds once, after the first tap (never on page load)
+      import('./vendor/zzfx.js').then(({ ZZFX }) => {
+        ZZFX.sampleRate = c.sampleRate;
+        for (const [k, p] of Object.entries(ZZ)) {
+          try { const data = ZZFX.buildSamples(...p); const b = c.createBuffer(1, data.length, c.sampleRate); b.getChannelData(0).set(data); this.zz[k] = b; } catch { /* synth fallback */ }
+        }
+      }).catch(() => {});
       this._bytes.then((ab) => {
         if (!ab) return;
         const done = (b) => { this.buf = b; };
@@ -152,6 +178,17 @@ export class Sound {
     return true;
   }
 
+  /** Play a pre-rendered ZzFX effect. Returns false if it is not ready. */
+  zzfx(name, { t = 0, vol = 0.35, rate = 1, verb = 0.15 } = {}) {
+    const b = this.zz[name];
+    if (!this.ctx || !b) return false;
+    const c = this.ctx, s = c.createBufferSource(); s.buffer = b; s.playbackRate.value = rate;
+    const g = c.createGain(); g.gain.value = vol;
+    s.connect(g); this._out(g, this.sfx, verb);
+    s.start(c.currentTime + t);
+    return true;
+  }
+
   _key() { return ROOTS[this.stage % ROOTS.length]; }
   _note(deg, oct = 0) {
     const o = Math.floor(deg / 5);
@@ -205,8 +242,17 @@ export class Sound {
 
   setGolden(on) { this.golden = !!on; }
 
+  /** Quiet music-box loop for the title and menus (after the first tap). */
+  startMenu() {
+    if (!this.ctx || (this.playing && this.menu)) return;
+    this.start();
+    this.menu = true;
+    this.padGain.gain.setTargetAtTime(0.06, this.ctx.currentTime, 1.2);
+  }
+
   start() {
     if (!this.ctx) return;
+    this.menu = false;
     this.playing = true;
     this.beat = 0;
     this.nextBeat = this.ctx.currentTime + 0.12;
@@ -216,6 +262,7 @@ export class Sound {
 
   stop() {
     this.playing = false;
+    this.menu = false;
     this.golden = false;
     if (this.padGain) this.padGain.gain.setTargetAtTime(0.04, this.ctx.currentTime, 0.6);
   }
@@ -230,7 +277,8 @@ export class Sound {
   update(intensity, mult) {
     if (!this.ctx || !this.playing || this.ctx.state !== 'running') return;
     this.intensity = intensity;
-    const bpm = 92 + intensity * 34 + (this.golden ? 8 : 0);
+    if (this.menu) intensity = 0;
+    const bpm = this.menu ? 70 : 92 + intensity * 34 + (this.golden ? 8 : 0);
     const spb = 60 / bpm / 2; // eighth notes
     const c = this.ctx;
     if (this.nextBeat < c.currentTime - 0.25) this.nextBeat = c.currentTime + 0.02; // after a stall, never burst-play
@@ -244,14 +292,14 @@ export class Sound {
       const tones = [0, minor ? 3 : 4, 7, 12, minor ? 15 : 14, 19];
       // kalimba arpeggio: sparse at the bottom, fuller as you climb
       const pat = [0, 2, 1, 3, 2, 4, 1, 5];
-      const play = b % 2 === 0 || intensity > 0.3 || this.golden;
+      const play = this.menu ? (b % 4 === 0 || (b % 8 === 3 && bar % 2 === 1)) : b % 2 === 0 || intensity > 0.3 || this.golden;
       if (play && !(b % 8 === 7 && intensity < 0.5)) {
         const st = tones[pat[(b + bar) % 8]];
         this.kalimba(mtof(root + 12 + st), { t, vol: 0.045 + 0.025 * intensity, dec: 0.7, dest: this.music, verb: 0.45, bright: 0.7 });
       }
       if (this.golden && b % 2 === 1) this.kalimba(mtof(root + 24 + tones[(b * 3) % 6]), { t, vol: 0.03, dec: 0.5, dest: this.music, verb: 0.6, bright: 1.2 });
       // bass on beats 1 and 3
-      if (b % 4 === 0) this.tone(mtof(root - 12), { t, dec: 0.32, a: 0.01, vol: 0.12 + 0.06 * intensity, type: 'triangle', dest: this.music });
+      if (b % 4 === 0 && !(this.menu && b % 8)) this.tone(mtof(root - 12), { t, dec: 0.32, a: 0.01, vol: (this.menu ? 0.06 : 0.12) + 0.06 * intensity, type: 'triangle', dest: this.music });
       // soft kick, then shaker as the tree climbs
       if (intensity > 0.12 && b % 4 === 0) this.tone(95, { t, dec: 0.16, vol: 0.2 * Math.min(1, intensity * 2), type: 'sine', slide: 0.45, dest: this.music });
       if (intensity > 0.4 && b % 2 === 1) this.noise({ t, dec: 0.035, vol: 0.035, f0: 9000, f1: 6500, type: 'highpass', dest: this.music });
@@ -314,6 +362,15 @@ export class Sound {
     this.tone(this._note(0, -1), { dec: 0.8, vol: 0.14, type: 'sine', verb: 0.4 });
   }
   death() { [4, 2, 0, -3].forEach((d, i) => this.kalimba(this._note(d, 0), { t: i * 0.15, vol: 0.12, dec: 1.1, verb: 0.6 })); }
+  acorn(n) { if (!this.zzfx('acorn', { vol: 0.3, rate: 1 + Math.min(0.5, (n % 6) * 0.06) })) this.tone(this._note(7 + (n % 5), 1), { dec: 0.08, vol: 0.07, type: 'sine' }); }
+  buy() { this.zzfx('buy', { vol: 0.32 }); this.sample('merge', { vol: 0.35, rate: 1.3 }); [0, 2, 4].forEach((d, i) => this.kalimba(this._note(d, 1), { t: 0.05 + i * 0.07, vol: 0.07, dec: 0.6, verb: 0.4 })); }
+  equip() { this.sample('fork', { vol: 0.4, rate: 1.2 }); this.kalimba(this._note(4, 1), { vol: 0.06, dec: 0.4, verb: 0.3 }); }
+  stamp() { if (!this.zzfx('stamp', { vol: 0.45 })) this.noise({ dec: 0.12, vol: 0.2, f0: 900, f1: 120 }); this.sample('bark', { vol: 0.35, rate: 1.5 }); }
+  page() { if (!this.zzfx('page', { vol: 0.25 })) this.noise({ dec: 0.08, vol: 0.06, f0: 3000, f1: 800 }); }
+  sparkle() { this.zzfx('sparkle', { vol: 0.28, verb: 0.4 }); [4, 7, 9, 12].forEach((d, i) => this.kalimba(this._note(d, 1), { t: i * 0.07, vol: 0.06, dec: 0.7, verb: 0.5, bright: 1.3 })); }
+  levelUp() { this.sparkle(); [0, 2, 4, 5, 7].forEach((d, i) => this.kalimba(this._note(d, 0), { t: 0.1 + i * 0.09, vol: 0.09, dec: 0.9, verb: 0.5 })); }
+  charm(id) { if (!this.zzfx(id, { vol: 0.42, verb: 0.3 })) this.tone(this._note(0, 1), { dec: 0.3, vol: 0.1, slide: 1.5 }); if (id === 'ward') this.sample('bark', { vol: 0.5 }); }
+  charged() { if (!this.zzfx('charged', { vol: 0.3 })) this.kalimba(this._note(7, 1), { vol: 0.07, dec: 0.4 }); }
   click() { if (!this.sample('click', { vol: 0.5 })) this.tone(this._note(2, 1), { dec: 0.06, vol: 0.08, type: 'sine' }); }
   toggle() { if (!this.sample('toggle', { vol: 0.5 })) this.click(); }
   tick(i) { this.kalimba(this._note(i % 10, 1), { vol: 0.035, dec: 0.12, verb: 0.1 }); }
