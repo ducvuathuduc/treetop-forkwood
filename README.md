@@ -1,20 +1,50 @@
 # Forkwood
 
-**Grow a living branch from twig to treetop. Fork it in two, merge it back for combos, and don't get reverted.**
+**A one-touch tree that grows from your choices. Fork it in two, merge it back for combos, and climb from twig to treetop.**
 
-A one-touch browser game made for **Twigpine Project Treetop, Round 01 (Games)**, theme *"From twig to treetop"*.
+<p>
+<img src="screenshots/00-hook.webp" width="280" height="280" alt="A forked branch climbs through a lightning storm toward the chequered finish ribbon of a quest level">
+<img src="screenshots/14-level-clear.jpg" width="520" alt="Level clear: three stars, the run's postcard and the Next level button">
+</p>
 
-▶ **Play:** https://ducvuathuduc.github.io/treetop-forkwood/ (no install, no account, desktop and phone)
+▶ **Play now in your browser:** https://ducvuathuduc.github.io/treetop-forkwood/
+No install, no account, no ads. Desktop and phone. Made for **Twigpine Project Treetop, Round 01 (Games)**, theme *"From twig to treetop"*.
 
-| Golden hour at ×8 | Your tree as a postcard | On a phone |
+## Why it is fun
+
+Your branch grows by itself; you steer it into sunlight. **Tap to fork** it into two tips that sweep twice the sky and slip through split gates. **Tap again to merge** and everything both branches caught is banked at once, raising your combo. Get hit while forked and that branch is **reverted**: you watch it un-grow back to the fork. It is version control you can feel, and the tree you end with is the record of how you played.
+
+* **One input, real decisions.** Every fork doubles your reach and your risk; every merge is a bet you cash in.
+* **Short, readable runs.** A weak player lasts about a minute; experts fight for the stars.
+* **Your tree as a postcard.** Every run ends with a printed card of the whole tree, its height, score and commit hash.
+
+## What's new in v0.6: the Quest update
+
+| Quest map | Modes and stakes | A storm level |
 |---|---|---|
-| ![Golden hour: the tree climbs above the Treetop at combo x8, with sunlight drifting to the tip](screenshots/02-golden-hour-desktop.jpg) | ![End-of-run postcard: the whole tree with its blossoms, height and commit hash](screenshots/05-share-card.jpg) | ![Phone play: the first-run coach asks for a tap to fork](screenshots/07-play-phone.jpg) |
+| ![Quest map: five worlds of four levels with stars and locks](screenshots/13-quest-map.jpg) | ![Modes board: Grow with Sapling, Oak and Ancient stakes, Zen, Sprint, Hardcore](screenshots/15-modes.jpg) | ![Storm Crown level: lightning columns and rain on a purple sky](screenshots/16-storm-level.jpg) |
 
-## The idea in one breath
+* **Quest map: 5 worlds, 20 hand-made levels, 60 stars.** Meadow teaches; Frost Bough slows you; Windy Canopy pushes you around thorn columns; Storm Crown throws lightning; Starlight throws everything. Each level is a short, fixed course (the same every try) with a finish ribbon and two goals of its own, such as "no hits", "merge 4 times" or "finish in 29 s". Goal stars stay once earned. The last level of each world is a harder remix.
+* **Stakes: Sapling ×1, Oak ×1.5, Ancient ×2.2.** Each stake keeps the rules below it and adds its own: hazards sooner, thirstier sap, faster beetles, harder hits, fewer rest glades. Reach the Treetop on one stake to open the next.
+* **Six modes**, each a different question:
+  * **Zen**: no sap to lose. Grow to the Cloudline at your own pace.
+  * **Sprint**: sixty seconds on the clock. How high can you get?
+  * **Hardcore**: one hit and the tree is done. Points ×2.
+  * **Looking-glass**: your steering is mirrored. Points ×1.5.
+  * **Storm Rush**: storm after storm from 60 m up, each longer than the last.
+  * **Weekly tree**: one course for everyone all week, on Oak, with a share code like `FW-2026W41`.
+* **Rewards you earn, never buy:** a chest every 6 stars, 8 quest-only skins (Dandelion, Hoarfrost, Red cedar, Storm print, Aurora, Ember cap, Swift maple, Starwood) and 10 titles that print on your postcard.
+* **A harder climb.** After the first minute the endless run tightens: hazards reach full strength by about 475 m instead of 620 m, sap drains faster from 280 m on, and three new late combos mix two biome ideas at once.
+* **Share and challenge.** Every result has a challenge link: the same course (`?seed=…&beat=…`), the same quest level (`?lvl=2-3&beat=…`) or the same weekly tree (`?week=2026-W41&beat=…`). Level shares come with a spoiler-free star grid:
 
-Your branch grows by itself and you steer it into sunlight. **Tap to fork** it into two tips that sweep twice the sky and slip through split gates. **Tap again to merge**: every sunlight both branches caught is cashed in at once and your multiplier climbs. Reach **×8** and **golden hour** begins: sunlight drifts to you and every point counts double. Catch a whole trail of sunlight and that part of the branch bursts into **full bloom**. Get hit while forked and that branch is **reverted**: it visibly rolls back to the fork point and its commits are gone. Climb from **Twig** to the **Treetop** at 400 m, then past the clouds to the stars.
-
-It is version control you can feel: commits are leaves, forks and merges are real branch shapes, a revert un-grows wood, and every finished run gets a commit-style hash (`tree a1f3c9 · 128 commits · 7 merges`).
+```
+Forkwood quest 23/60★
+1 ★★★ ★★★ ★★★ ★★☆
+2 ★★★ ★★☆ ★★☆ ★☆☆
+3 ★☆☆ ☆☆☆ ☆☆☆ ☆☆☆
+4 · locked
+5 · locked
+```
 
 ## How to play
 
@@ -23,110 +53,89 @@ It is version control you can feel: commits are leaves, forks and merges are rea
 | Steer the growing tip | mouse, or ← → / A D | drag anywhere (relative, so your thumb never covers the tip) |
 | **Fork** / **merge** | click, or Space / ↑ | tap |
 | Fire your charm (from level 2) | E or Shift | tap the charm badge, bottom left |
-| Restart instantly | R | Grow again |
+| Restart | R | Grow again / Retry |
 | Pause / mute | P or Esc / M | buttons, top right |
 
-* The first run teaches itself in three steps (steer, fork, merge). Time slows down when it is waiting for your tap, so nobody misses the first fork.
-* Your tip burns **sap**; sunlight refills it. Forking burns sap 1.4× faster, so a fork is a bet you cash in by merging.
-* Beetles and thorn vines hurt. On a single tip a hit costs sap and resets your multiplier; on a fork it reverts that branch.
-* Frost slows you, wind pushes you, dew refills sap, bark gives a one-hit shield.
-* **Every stage brings one new thing.** Bough: frost clouds and zig-zag thorns. Canopy: gusts and **thorn columns** (go round them, or fork so your two tips pass either side). Treetop: **the storm**, a boss stretch where lightning falls (each bolt shows as a dashed column long before it strikes, and the rain slows your sap drain). Cloudline: **sliding thorns** whose gap drifts along a dotted rule. Starlight: all of it, and the storms return.
-* **Power-ups** (paper tokens, never confused with sunlight): **Pollen** pulls sunlight to you for 6 s, **Ink ×2** doubles points for 8 s, **Sap Rush** surges you upward for 3 s and nothing can hurt you. Pick one up again to add time; they stack.
-* **Grafts**: at 120 m, 240 m, after the storm and at 850 m, two graft medallions hang one fork-width apart. Steer into one to take it, or **fork to take both**. Each graft has a boon and a cost (*Thorn Crown*: all points ×1.25, hits cost 50% more sap). Three pairs form named synergies when you hold both (*Orchard*, *Briar*, *Spring*).
-* **Skill bonuses**: close calls in a row build a graze chain (more points, and every third gives sap); a merge made just before a thorn gate is a **just-in-time** merge worth 1.5×; a forked pair straddling a column pays like a split.
-* **Golden hour** (a merge that reaches ×8): 6 seconds of gold, slower sap drain, sunlight comes to you, double points. Afterwards the multiplier settles to ×4, so you can earn it again.
-* **Full bloom**: catch every sunlight in a trail. Blossoms stay on your tree and on your postcard.
-* The ladder on the right shows Twig → Sapling → Bough → Canopy → **Treetop** → Cloudline → Starlight, with your best height marked in gold.
+* The first run teaches itself in three steps (steer, fork, merge), slowing time while it waits for your first tap.
+* Your tip burns **sap**; sunlight refills it. Forking burns sap faster, so merge to bank what you caught.
+* Beetles and thorns hurt. On one tip a hit costs sap and your combo; on a fork it reverts that branch.
+* **Every stage adds one thing:** frost and zig-zags (Bough), gusts and thorn columns you can straddle with a fork (Canopy), the **storm** with telegraphed lightning (Treetop), sliding thorns (Cloudline), and all of it under the stars.
+* **Power-ups** (Pollen, Ink ×2, Sap Rush), **grafts** with a boon and a cost (fork to take both), graze chains, just-in-time merges, **golden hour** at ×8 and **full bloom** when you catch a whole trail.
 
-## Reasons to play again
+## Modes at a glance
 
-* **Challenge a friend:** every run's course comes from a seed. *Challenge* copies a link (`?seed=…&beat=…`) that gives your friend the exact same course with your height as the line to beat.
-* **Daily tree:** everyone gets the same seeded course each UTC day, with its own best.
-* **Postcard of your tree:** game over shows the whole tree you grew, blossoms and all, with height, score and its hash. Share it (Web Share, or copy/download the PNG).
-* Local stats only (best height and score, runs, treetops reached). No accounts, no tracking, no network calls to anyone.
+| Mode | Rule | Unlock |
+|---|---|---|
+| Grow (Endless) | climb as high as you can; pick a stake | from the start |
+| Zen | no sap loss, finish at 600 m, points ×0.5 | clear level 1-2, or play 3 runs |
+| Sprint | 60 s clock, growth ×1.12 | clear World 1, or grow 240 m |
+| Hardcore | any hit ends the run, points ×2 | clear World 2, or reach 400 m |
+| Looking-glass | mirrored steering, points ×1.5 | clear World 3, or grow 600 m |
+| Storm Rush | 8 storms from 60 m, thornier ground, points ×1.6 | clear World 4, or Treetop on Oak |
+| Weekly tree | same course for all week, Oak, no charms | 12 stars, or grow 850 m |
+| Daily tree | same course for all today, no charms | from the start |
 
-## Grow with it: acorns, levels, charms and skins
+## Grow with it
 
-None of this gets in the way of the first run: a new player sees the same one-screen title and plays straight away. From the second run on, the tree starts to grow with you.
+Acorns come only from playing (pick-ups, height, merges, blooms, chests). They buy cosmetic skins in six slots, all drawn in the woodblock style; skins never change the game. There are levels with three goals each, daily and weekly challenges, a daily gift with a streak, 21 badges and four charms (small, measured edges that the daily tree, weekly tree, quest levels and challenge links switch off so they stay fair). Progress is saved only on your device.
 
-* **Acorns** are earned only by playing: pick them up in the sky, and every run pays for its height, merges, blooms and golden hours. Nothing is sold for money, there are no ads and no accounts.
-* **Levels with three goals each**, written by hand for the first twelve levels (one that teaches, one that stretches, one you will do anyway), then generated. Finish all three to level up.
-* **Daily and weekly challenges** (three each, the same for everyone on a given day) and a **daily gift** with a 7-day streak calendar. Every 7th day adds a frost guard that saves one missed day.
-* **21 badges**, stamped like a printer's seal.
-* **Charms**: take one into a run. Scoring merges charge it, and **E / Shift** or a tap on the charm badge fires it: *Bark Ward* (shield), *Sun Call* (sunlight drifts to you), *Deep Roots* (+25 sap, but combo −2) and *Stillness* (hazards slow down). Each is a small, measured edge (the bot measures +1% to +15% median height). **The daily tree and challenge links never use charms**, so those stay the same for everyone.
-* **The shop**: 26 skins in six slots (bark, leaves, blossom, branch tip, sky plate, postcard), all drawn in the same woodblock style: birch bark with ink marks, needle, maple and ginkgo leaves, an acorn-cap or paper-lantern tip, a Prussian-blue or risograph sky, a perforated postage-stamp postcard. Skins never change the game. One item a day is 25% off.
-* **Rings** (your profile): lifetime stats and your five tallest trees, stored only on your device.
+## Difficulty, measured
 
-## What is original here
+The game shares one deterministic simulation with a headless auto-play bot, so balance is measured, not guessed. Median survival over 60 seeded runs per cell (`npm run stakes`):
 
-* A growth game where the **shape of your tree is the record of how you played**: every fork, merge, bloom, hit and revert stays visible in the wood.
-* **Fork/merge as a risk-reward combo system.** Forking doubles your reach and your exposure; merging banks it. Reverts are not just a penalty: you watch the branch un-grow.
-* The whole thing is a **git metaphor that stays out of the way**. Players who have never used git just see a tree; players who have get the joke.
+| Bot | Sapling | Oak | Ancient |
+|---|---|---|---|
+| weak (0.3) | 60 s · 335 m | 51 s · 290 m | 37 s · 211 m |
+| average (0.6) | 75 s · 464 m | 70 s · 422 m | 50 s · 308 m |
+| expert (0.95) | 110 s · 770 m | 98 s · 658 m | 70 s · 466 m |
+
+Every quest level is beaten by the expert bot and all 60 stars are reachable (`npm run quest`); the final level, *Starlight Remix*, is cleared by the expert bot in about 1 run in 6.
 
 ## Look, feel and sound
 
-* **Art direction: a pressed-leaf woodblock print.** Every object you play with shares one warm ink outline; the backgrounds stay flat and soft, so gameplay always reads first. The sky is posterised into stepped colour bands that you climb through, with a paper grain on top. Everything is drawn in code, nothing is an image.
-* **Type:** Fraunces for the big numbers and banners, Bricolage Grotesque for the interface, JetBrains Mono for scores and hashes.
-* **Game feel:** trauma-based screen shake with smooth noise, hit-stop on hits, merges and golden hour, a camera punch that scales with the combo, sunlight that flies into the sap meter, a bud that squashes and stretches, numbers that pop in and shrink away, a seed that bursts out of the soil when you press Grow, and a slow-motion first fork.
-* **Sound:** the music is generated live (an FM kalimba over a four-chord loop in each stage's key, with bass, soft drums and a generated reverb). It speeds up and thickens as you climb, closes in when your sap runs low and shimmers during golden hour. Effects layer synth tones over CC0 wooden foley from Kenney.
-* **Signature moments:** the first frame is "pulled" like a fresh print (an ink roller lifts the paper off the scene), each new stage rolls its colour plate across the screen, and every postcard is printed in and sealed with your grower level and print number.
-* **Calm mode** (title screen, on automatically with the system's reduce-motion setting) turns off shake, flashes, vibration and interface animation.
+* **A pressed-leaf woodblock print.** One warm ink outline on everything you play with, a posterised sky you climb through, paper grain, and every image drawn in code.
+* **Game feel:** smooth-noise screen shake, hit-stop, a camera punch that grows with the combo, squash and stretch, a slow-motion first fork, a print-pull intro, stage colour plates, stamped rewards.
+* **Sound:** music generated live (FM kalimba, bass and soft drums that speed up as you climb), plus CC0 wooden foley.
+* **Calm mode** turns off shake, flashes, vibration and interface motion (on automatically with reduced motion).
 
-## Tech notes
+## Tech
 
-* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, no third-party requests. First load is about 385 KB uncompressed including fonts and sound.
-* One small library: [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT) renders the short menu and charm sounds. It is vendored in `src/vendor/` and only loaded after your first tap. Bigger engines (PixiJS, Phaser, Howler, GSAP, Matter.js, Lottie) were considered and left out: the game already runs at 60 fps in Canvas 2D, and they would have multiplied the load size or broken the deterministic simulation.
-* Progress lives in one `localStorage` save (`src/meta.js`), with an automatic upgrade from the first public build's save (your best, runs and settings carry over, plus acorns for the metres you already grew).
-* Runs at 60 fps in headless Chromium at 1280×800 and on phone viewports, with about 1.5 ms of JavaScript per frame.
-* Deterministic simulation (`src/sim.js`) shared by the game and a **headless auto-playtest bot** (`src/bot.js`), used to tune difficulty: over 120 seeded runs per skill level, a weak bot's median run is about 58 s and an expert's about 132 s, with the best expert runs past three minutes (`npm run balance`; `node tests/survival.mjs` prints survival by height).
-* **The course director.** Courses are built from 20 hand-made chunks at four difficulty tiers plus rest glades, mixed by a director that follows a sawtooth (build, build, spike, rest) over a rising intensity curve; each stage unlocks its own chunk families and favours its signature hazard. It reads only the seed and the height, never what you did, so a seed always grows the same course: the daily tree and challenge links stay fair for everyone.
-* `tests/fairness.mjs` generates 300 seeded courses to 1,200 m and checks that every gap fits, every split gate fits a forked pair, and every gate is reachable from the one before it.
-* `tests/chunks.mjs` scans 200 seeded courses to 1,500 m: every thorn column leaves room on one side and can be straddled by a fork, no thorn row sits beside a column, overlapping columns always leave a way through, sliding gaps are wide and slow, graft gates are clear of hazards, lightning only falls inside storms, a rest beat comes at least every five chunks, hard tiers never appear too low, and the course is identical whatever the player does. It also unit-tests every power-up, grafts and synergies, just-in-time merges, graze chains and the storm.
-* `tests/toasts.mjs` checks that reward toasts never sit on a button on the title or game-over card, on two phone sizes and desktop.
-* `tests/tutorial.mjs` plays the first-run coach through the real game loop on desktop and two phone sizes and checks that the coach card and stage banners never overlap.
-* `tests/smoke.mjs` plays the game in headless Chromium with a real mouse, touch drags and taps, checks challenge links, and fails on any console error.
-* `tests/meta.mjs` checks the progression rules without a browser: save upgrade and repair, gifts and streaks, shop rules, challenges and badges, that charms never touch pure runs or the course, the charm balance band, and economy pacing with the real simulation and bot.
-* `tests/meta-ui.mjs` plays the meta layer in headless Chromium: first visit untouched, rewards after a real run, gift, buying and wearing skins, charms in play (and off on the daily tree), persistence across reloads, the old-save upgrade, a corrupt save, phone layouts, frame time and console errors.
-* `tests/extra.mjs` checks reduced motion (calm mode, no shake), that a tap on a phone unlocks audio and decodes the sound sprite, the payload budget, and that nothing is requested from another origin.
+* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, **no third-party requests**. First load about 436 KB uncompressed (fonts and sound included); the quest map UI loads on first open.
+* 60 fps on desktop and phone viewports in headless Chromium, about 3–5 ms of JavaScript per frame.
+* `src/sim.js` is pure and deterministic: modes, stakes and quest levels are the same simulation with a few rules changed (`src/modes.js`, `src/campaign.js`); quest progress, unlocks, chests and titles are pure functions in `src/quest.js`.
+* One small library: [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT), vendored and loaded after your first tap.
+* Saves live in one `localStorage` key with automatic upgrade and repair; saves from earlier builds keep their progress, and returning growers find modes and stakes already open for the heights they reached.
 
 ## Run locally
 
 ```bash
 python3 -m http.server 8080   # then open http://localhost:8080
-npm run balance               # bot difficulty report (Node 18+)
-npm run fairness              # course fairness check
-npm run tutorial              # first-run coach test (needs Playwright + Chromium)
-npm run smoke                 # browser smoke test (needs Playwright + Chromium)
-npm run extra                 # reduced motion, audio unlock, payload, origins
-npm run meta                  # progression rules + economy pacing (Node 18+)
-npm run meta-ui               # meta layer in the browser (needs Playwright + Chromium)
+npm run quest                 # every level beatable + 3 stars reachable, mode rules, unlocks, saves (Node 18+)
+npm run stakes                # survival per stake and mode with three bots
+npm run fairness              # 300 seeded courses: every gap fits, every gate reachable
+npm run chunks                # course director, power-ups, grafts, storms
+npm run meta                  # progression rules and economy pacing
+npm run quest-ui              # quest map, levels, modes, phone layouts in headless Chromium
+npm test                      # everything (browser tests need Playwright + Chromium)
 ```
-
-## Progress screens
-
-| Shop: skins drawn in the print style | Goals, gift streak and challenges | Rewards after a run |
-|---|---|---|
-| ![Shop with a daily deal and bark skins](screenshots/09-shop-desktop.jpg) | ![Goals page on a phone: level goals and the 7-day gift calendar](screenshots/10-goals-phone.jpg) | ![Game over with acorns earned, level-up and badge stamps](screenshots/04-gameover-desktop.jpg) |
-
-| Skins in play: cherry bark, maple leaves, acorn tip, Prussian-blue sky | Postage-stamp postcard with the grower's seal |
-|---|---|
-| ![Play with skins](screenshots/11-skins-play.jpg) | ![Perforated postcard](screenshots/12-postcard-stamp.jpg) |
 
 ## More screenshots
 
-| Title | Fork through a split gate | Game over |
+| On a phone | Golden hour at ×8 | The postcard |
 |---|---|---|
-| ![Title card](screenshots/01-title-desktop.jpg) | ![Forked tips passing a split gate in the canopy](screenshots/03-fork-desktop.jpg) | ![Game over with the postcard and replay buttons](screenshots/04-gameover-desktop.jpg) |
+| ![Quest level on a phone](screenshots/17-level-phone.jpg) | ![Golden hour above the Treetop](screenshots/02-golden-hour-desktop.jpg) | ![End-of-run postcard](screenshots/05-share-card.jpg) |
+
+| Shop | Goals and gift streak | Title |
+|---|---|---|
+| ![Shop with skins drawn in the print style](screenshots/09-shop-desktop.jpg) | ![Goals page on a phone](screenshots/10-goals-phone.jpg) | ![Title card](screenshots/01-title-desktop.jpg) |
 
 ## Built during the round
 
 Built from scratch during **9–16 October 2026** for the round; the commit history shows the build. Made with AI assistance, as the round rules allow.
 
-## Credits
+## Credits and license
 
 Design, code, procedural art and generative music: Huynh Dieu Thanh ([@thanhdicode](https://github.com/thanhdicode)) with AI assistance.
-Fonts: Fraunces, Bricolage Grotesque and JetBrains Mono (SIL Open Font License 1.1). Sound effects: Kenney's Impact Sounds and Interface Sounds (CC0). Full list with sources and licence files in [CREDITS.md](CREDITS.md). No third-party characters, logos or brands.
+Fonts: Fraunces, Bricolage Grotesque and JetBrains Mono (SIL Open Font License 1.1). Sound effects: Kenney's Impact Sounds and Interface Sounds (CC0). Sources and licence files in [CREDITS.md](CREDITS.md). No third-party characters, logos or brands.
 
-## License
-
-Code: MIT, see [LICENSE](LICENSE). Fonts keep their OFL licence and the Kenney sounds are CC0, as listed in [CREDITS.md](CREDITS.md).
+Code: MIT, see [LICENSE](LICENSE). Fonts keep their OFL licence; the Kenney sounds are CC0.
