@@ -59,7 +59,11 @@
       </ol>
       <p id="challenge" class="challenge" hidden></p>
       <button id="btn-play" class="btn primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg><span id="btn-play-label">Grow</span></button>
-      <button id="btn-daily" class="btn secondary">Daily tree <span id="daily-best"></span></button>
+      <button id="btn-stake" class="stake-chip" hidden aria-label="Change stake"></button>
+      <div class="title-row">
+        <button id="btn-quest" class="btn secondary"><span id="quest-ico" class="bi"></span>Quest map <span id="quest-n" class="qn"></span></button>
+        <button id="btn-daily" class="btn secondary">Daily tree <span id="daily-best"></span></button>
+      </div>
       <p id="title-best" class="best"></p>
       <div class="foot">
         <p class="controls"><kbd>&larr;</kbd><kbd>&rarr;</kbd> steer <kbd>space</kbd> fork / merge <kbd>P</kbd> pause <kbd>M</kbd> mute</p>
@@ -92,6 +96,21 @@
     </div>
   </section>
 
+  <section id="questmap" class="overlay" aria-label="Quest map and modes">
+    <div class="panel paper meta-panel quest-panel">
+      <header class="meta-head">
+        <div class="tabs" role="tablist">
+          <button data-qtab="map" role="tab"><span class="ti"></span><span>Quest map</span></button>
+          <button data-qtab="modes" role="tab"><span class="ti"></span><span>Modes</span></button>
+        </div>
+        <p id="quest-stars" class="qstars"></p>
+        <button id="btn-quest-close" class="icon" aria-label="Close" title="Close (Esc)"></button>
+      </header>
+      <p id="quest-chest" class="qchest"></p>
+      <div id="quest-body" class="meta-body"></div>
+    </div>
+  </section>
+
   <section id="pause" class="overlay">
     <div class="panel paper small-panel">
       <h2>Paused</h2>
@@ -105,6 +124,7 @@
       <div class="over-left"><div class="print"><img id="card-img" alt="Your tree as a postcard" /></div></div>
       <div class="over-right">
         <p id="over-kicker" class="kicker"></p>
+        <div id="over-stars" class="over-stars" hidden></div>
         <h2 id="over-height"></h2>
         <p id="over-score" class="over-score"></p>
         <p id="over-hash" class="hash"></p>
@@ -115,7 +135,8 @@
           <ul id="rw-stamps" class="rw-stamps" hidden></ul>
         </div>
         <div class="row">
-          <button id="btn-again" class="btn primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4.5h-4.5"/></svg>Grow again <kbd>R</kbd></button>
+          <button id="btn-next" class="btn primary" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg><span id="btn-next-label">Next level</span></button>
+          <button id="btn-again" class="btn primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4v4.5h-4.5"/></svg><span id="btn-again-label">Grow again</span> <kbd>R</kbd></button>
         </div>
         <div class="row small">
           <button id="btn-share" class="btn secondary">Share</button>
