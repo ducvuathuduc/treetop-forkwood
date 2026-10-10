@@ -1,6 +1,6 @@
 {
   "name": "forkwood",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Forkwood: fork your branch, merge for glory, grow from twig to treetop.",
@@ -10,7 +10,8 @@
     "serve": "python3 -m http.server 8080",
     "fairness": "node tests/fairness.mjs",
     "stages": "node tests/stages.mjs",
-    "tutorial": "node tests/tutorial.mjs"
+    "tutorial": "node tests/tutorial.mjs",
+    "extra": "node tests/extra.mjs"
   },
   "license": "MIT"
 }
