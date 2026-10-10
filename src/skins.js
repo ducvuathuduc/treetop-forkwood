@@ -47,6 +47,15 @@ export const SKINS = [
   { id: 'card.kraft', slot: 'card', name: 'Kraft', unlock: { cost: 100 }, paper: '#d8b98a', ink: '#2a1e14', seal: '#a8321f', edge: 'plain' },
   { id: 'card.night', slot: 'card', name: 'Night print', unlock: { cost: 440 }, paper: '#1d2342', ink: '#f4ecd8', seal: '#f2b33d', edge: 'plain' },
   { id: 'card.stamp', slot: 'card', name: 'Postage stamp', unlock: { cost: 760 }, paper: '#f6efe0', ink: '#1e1a16', seal: '#2c4a8a', edge: 'perforated' },
+  // quest prizes: earned on the map or in a mode, never sold
+  { id: 'blossom.dandelion', slot: 'blossom', name: 'Dandelion', unlock: { prize: 'w1' }, petal: '#ffe46b', alt: '#fff8d6', center: '#e2903a' },
+  { id: 'leaf.frost', slot: 'leaf', name: 'Hoarfrost', unlock: { prize: 'w2' }, leaves: ['#8fc8e6', '#dff2ff'], shape: 'needle' },
+  { id: 'bark.cedar', slot: 'bark', name: 'Red cedar', unlock: { prize: 'w3' }, wood: '#9a4a2a', light: '#e0915a', fresh: ['#7d8f3a', '#9fb34a', '#c0d26a'] },
+  { id: 'card.storm', slot: 'card', name: 'Storm print', unlock: { prize: 'w4' }, paper: '#2a2e4c', ink: '#f4ecd8', seal: '#8fd0e6', edge: 'perforated' },
+  { id: 'sky.aurora', slot: 'sky', name: 'Aurora', unlock: { prize: 'w5' }, stops: [[0, '#ffd6a8'], [40, '#cdeccf'], [120, '#8fd6c4'], [240, '#5fb8c9'], [400, '#6a7fd0'], [600, '#3b3f8c'], [850, '#1a2a5a'], [1100, '#0a1430']] },
+  { id: 'bud.ember', slot: 'bud', name: 'Ember cap', unlock: { prize: 'hardcore' }, shape: 'acorn', body: '#e2603f', hi: '#ffc27a', cap: '#2f2723' },
+  { id: 'leaf.swift', slot: 'leaf', name: 'Swift maple', unlock: { prize: 'sprint' }, leaves: ['#4fae6a', '#a6dc6a'], shape: 'maple' },
+  { id: 'bark.starwood', slot: 'bark', name: 'Starwood', unlock: { prize: 'allstars' }, wood: '#24366e', light: '#ffe08a', fresh: ['#5b7fc4', '#8fa8e0', '#cfe0ff'], mark: '#ffe08a' },
 ];
 export const SKIN = Object.fromEntries(SKINS.map((s) => [s.id, s]));
 export const DEFAULT_LOADOUT = { bark: 'bark.walnut', leaf: 'leaf.seasons', blossom: 'blossom.plum', bud: 'bud.sprout', sky: 'sky.print', card: 'card.cream' };
