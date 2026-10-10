@@ -60,6 +60,7 @@ async function page(opts) {
   const a = await p.evaluate(() => window.forkwood.audio);
   ok(a.state === 'running', `tap unlocks WebAudio (before: ${before}, after: ${a.state})`);
   ok(a.sprite, 'CC0 sound sprite decoded');
+  ok(a.zzfx >= 10, `ZzFX meta sounds rendered after the first tap (${a.zzfx})`);
   ok(await p.evaluate(() => document.fonts.check('800 20px "Fraunces Display"') && document.fonts.check('600 14px "Bricolage"')), 'custom fonts loaded');
   ok(errs.length === 0, 'no console errors (phone) ' + errs.join(' | '));
   await ctx.close();
