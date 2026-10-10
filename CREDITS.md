@@ -2,7 +2,11 @@
 
 Forkwood was designed, coded and drawn during Twigpine Project Treetop Round 01 (9–16 October 2026) by Huynh Dieu Thanh ([@thanhdicode](https://github.com/thanhdicode)), with AI assistance.
 
-Everything visual in the game is drawn in code at runtime (Canvas 2D). The music is generated live with WebAudio. The only files the game loads are the fonts and one small sound-effect sprite listed below. All of them allow use in a public MIT-licensed project.
+The tree, leaves, blossoms, skins, effects and interface icons are drawn in code at runtime (Canvas 2D / inline SVG). The music is generated live with WebAudio. The files the game loads are the fonts, one small sound-effect sprite and the illustrations listed below. All of them allow use in a public MIT-licensed project.
+
+## Illustrations (v0.7, made for Forkwood)
+
+`assets/art/` holds images generated for Forkwood with an AI image model during the round, from our own prompts (woodblock-print style, palette matched to the game), then cropped, keyed and compressed to WebP by us: five stage backdrops (`bg-*.webp`), the side foliage, the meadow ground strip, the thorn vine, beetle and sun sprites, five story plates (`story*.webp`) and the eight critter portraits (`critters.webp`). They depict no existing characters, logos or brands, and are released with the game under its MIT licence.
 
 ## Fonts (SIL Open Font License 1.1)
 
@@ -41,3 +45,5 @@ Vendored as `src/vendor/zzfx.js` with one change, noted at the top of the file: 
 ## Not shipped
 
 Playwright and Chromium are used only to test the game locally. Apart from ZzFX above, no libraries, trackers or third-party requests are included in the game. All skins, icons and the acorn are drawn in code or as inline SVG made for Forkwood.
+
+* Retention design (v0.7): streaks, up to two streak freezes and milestone celebrations after Duolingo's published experiments (blog.duolingo.com, "The habit-building research behind your Duolingo streak", 2022); weekly leagues with promotion and demotion after Duolingo Leagues; a free tiered season track after Subway Surfers' Season Hunt (sybo.helpshift.com); async challenge links after Wordle-style sharing. Ideas only, no assets. Forkwood's league rivals are simulated ghosts and say so.
