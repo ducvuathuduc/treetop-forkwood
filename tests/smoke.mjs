@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const { chromium, devices } = require(process.env.PW || '/tmp/pw/node_modules/playwright');
 
 const PORT = 8137;
-const OUT = new URL('../screenshots/', import.meta.url).pathname;
+const OUT = new URL('./out/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const server = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: new URL('..', import.meta.url).pathname, stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 800));
