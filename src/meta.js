@@ -43,6 +43,11 @@ const KIND = {
   charm: { v: (s) => s.charmUses, run: (n) => `Use your charm ${n} times in one run`, tot: (n) => n === 1 ? 'Use a charm' : `Use your charm ${n} times` },
   runs: { v: () => 1, run: () => 'Play a run', tot: (n) => `Play ${n} runs` },
   stage: { v: (s) => s.height, run: (n) => `Reach ${STAGE_AT[n] || n + ' m'}`, tot: (n) => `Reach ${STAGE_AT[n] || n + ' m'}` },
+  grafts: { v: (s) => s.grafts || 0, run: (n) => n === 1 ? 'Take a graft' : `Take ${n} grafts in one run`, tot: (n) => `Take ${n} grafts` },
+  pickups: { v: (s) => s.pickups || 0, run: (n) => n === 1 ? 'Grab a power-up' : `Grab ${n} power-ups in one run`, tot: (n) => `Grab ${n} power-ups` },
+  storm: { v: (s) => s.storms || 0, run: (n) => n === 1 ? 'Grow through the storm' : `Grow through ${n} storms in one run`, tot: (n) => `Grow through ${n} storms` },
+  graze: { v: (s) => s.grazeBest || 0, run: (n) => `Chain ${n} close calls`, tot: (n) => `Chain ${n} close calls` },
+  jit: { v: (s) => s.jits || 0, run: (n) => n === 1 ? 'Merge just before a thorn gate' : `Merge just in time ${n} times in one run`, tot: (n) => `Merge just in time ${n} times` },
 };
 const STAGE_AT = { 40: 'Sapling (40 m)', 120: 'Bough (120 m)', 240: 'the Canopy (240 m)', 400: 'the Treetop (400 m)', 600: 'the Cloudline (600 m)', 850: 'Starlight (850 m)' };
 
@@ -64,17 +69,20 @@ const T = (k, n, run = true) => ({ k, n, run });
 export const LEVELS = [
   [T('forks', 1), T('merges', 1), T('height', 80)],
   [T('stage', 120), T('acorns', 10, false), T('mult', 3)],
-  [T('blooms', 1), T('near', 3), T('runs', 5, false)],
+  [T('blooms', 1), T('near', 3), T('grafts', 1)],
   [T('stage', 240), T('splits', 2), T('charm', 1, false)],
-  [T('mult', 5), T('merges', 8), T('daily', 1)],
-  [T('stage', 400), T('blooms', 3, false), T('acorns', 8)],
+  [T('mult', 5), T('merges', 8), T('pickups', 2)],
+  [T('stage', 400), T('blooms', 3, false), T('jit', 1)],
   [T('golden', 1), T('clean', 150), T('height', 3000, false)],
-  [T('splits', 4), T('near', 6), T('merges', 60, false)],
-  [T('blooms', 3), T('charm', 2), T('acorns', 120, false)],
+  [T('storm', 1), T('graze', 3), T('merges', 60, false)],
+  [T('blooms', 3), T('charm', 2), T('pickups', 15, false)],
   [T('stage', 600), T('golden', 3, false), T('clean', 250)],
-  [T('mult', 8), T('blooms', 4), T('daily', 5, false)],
+  [T('mult', 8), T('grafts', 3), T('storm', 3, false)],
   [T('stage', 850), T('golden', 2), T('height', 15000, false)],
 ];
+// Goals that earlier builds used and this one retired, swapped on load so no
+// saved level ever waits on a mode the player may not want to play.
+const RETIRED = { 3: { runs: T('grafts', 1) }, 5: { daily: T('pickups', 2) }, 6: { acorns: T('jit', 1) }, 8: { splits: T('storm', 1), near: T('graze', 3) }, 9: { acorns: T('pickups', 15, false) }, 11: { blooms: T('grafts', 3), daily: T('storm', 3, false) } };
 export function levelGoals(level) {
   if (level <= LEVELS.length) return LEVELS[level - 1].map((t) => ({ ...t, p: 0, done: false }));
   // after the hand-made levels: generated sets that keep stretching
@@ -83,8 +91,8 @@ export function levelGoals(level) {
   const pick = (a) => a[Math.floor(r() * a.length)];
   return [
     pick([T('height', 500 + 50 * Math.min(8, L)), T('clean', 200 + 25 * Math.min(8, L)), T('mult', 8)]),
-    pick([T('merges', 10 + Math.min(10, L)), T('blooms', 3 + Math.min(4, L >> 1)), T('near', 6 + Math.min(6, L)), T('splits', 4 + Math.min(4, L >> 1))]),
-    pick([T('height', 4000 + 1000 * L, false), T('acorns', 80 + 20 * L, false), T('golden', 2 + L, false), T('blooms', 10 + 2 * L, false)]),
+    pick([T('merges', 10 + Math.min(10, L)), T('blooms', 3 + Math.min(4, L >> 1)), T('near', 6 + Math.min(6, L)), T('splits', 4 + Math.min(4, L >> 1)), T('graze', 4 + Math.min(4, L >> 1)), T('grafts', 3 + Math.min(2, L >> 2))]),
+    pick([T('height', 4000 + 1000 * L, false), T('acorns', 80 + 20 * L, false), T('golden', 2 + L, false), T('blooms', 10 + 2 * L, false), T('storm', 2 + L, false), T('pickups', 15 + 5 * L, false)]),
   ].map((t) => ({ ...t, p: 0, done: false }));
 }
 export const levelReward = (level) => 25 + 10 * level; // acorns for finishing `level`
@@ -92,15 +100,15 @@ export const CHARM_LEVEL = { ward: 2, sun: 3, still: 5, roots: 7 }; // charm unl
 
 // Daily (3) and weekly (3) challenges, picked from pools by the date.
 const DAILY_POOL = [
-  [T('height', 150), T('height', 220), T('merges', 4), T('acorns', 6), T('forks', 4), T('stage', 120)],
-  [T('blooms', 2), T('mult', 5), T('near', 4), T('splits', 3), T('merges', 8), T('acorns', 12, false), T('clean', 120)],
-  [T('stage', 400), T('golden', 1), T('clean', 250), T('blooms', 4), T('mult', 7), T('splits', 5)],
+  [T('height', 150), T('height', 220), T('merges', 4), T('acorns', 6), T('forks', 4), T('stage', 120), T('grafts', 1), T('pickups', 1)],
+  [T('blooms', 2), T('mult', 5), T('near', 4), T('splits', 3), T('merges', 8), T('acorns', 12, false), T('clean', 120), T('pickups', 3, false), T('graze', 3), T('jit', 1)],
+  [T('stage', 400), T('golden', 1), T('clean', 250), T('blooms', 4), T('mult', 7), T('splits', 5), T('storm', 1), T('grafts', 3)],
 ];
 const DAILY_REWARD = [15, 25, 40];
 const WEEKLY_POOL = [
   [T('height', 4000, false), T('height', 6000, false), T('runs', 15, false)],
   [T('blooms', 15, false), T('merges', 80, false), T('acorns', 100, false), T('near', 40, false)],
-  [T('golden', 4, false), T('daily', 3, false), T('splits', 25, false), T('stage', 600)],
+  [T('golden', 4, false), T('daily', 3, false), T('splits', 25, false), T('stage', 600), T('storm', 4, false), T('grafts', 15, false)],
 ];
 const WEEKLY_REWARD = [80, 110, 150];
 
@@ -133,6 +141,9 @@ export const ACHIEVEMENTS = [
   { id: 'charmed', name: 'Charmed', text: 'Use charms 20 times', reward: 40, test: (s, S) => S.stats.charmUses >= 20 },
   { id: 'friend', name: 'Rival', text: 'Beat a friend on their challenge link', reward: 40, test: (s, S, c) => !!(c && c.challengeWon) },
   { id: 'regular', name: 'Regular', text: 'Play 50 runs', reward: 60, test: (s, S) => S.stats.runs >= 50 },
+  { id: 'weathered', name: 'Weathered', text: 'Grow through the storm', reward: 50, test: (s, S) => S.stats.storms >= 1 },
+  { id: 'grafter', name: 'Grafter', text: 'Take four grafts in one run', reward: 50, test: (s) => s && s.grafts >= 4 },
+  { id: 'kindred', name: 'Kindred grafts', text: 'Pair two grafts into a synergy', reward: 40, test: (s) => s && s.synergies && s.synergies.length >= 1 },
 ];
 export const ACH = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
 
@@ -151,7 +162,7 @@ export function freshSave(today = dayKey()) {
     streak: { last: '', count: 0, best: 0, freezes: 0 },
     ach: {},
     seen: {},
-    stats: { runs: 0, meters: 0, merges: 0, treetops: 0, bestMult: 1, blooms: 0, goldens: 0, acorns: 0, nearMisses: 0, splits: 0, charmUses: 0, forks: 0, time: 0, dailyRuns: 0 },
+    stats: { runs: 0, meters: 0, merges: 0, treetops: 0, bestMult: 1, blooms: 0, goldens: 0, acorns: 0, nearMisses: 0, splits: 0, charmUses: 0, forks: 0, time: 0, dailyRuns: 0, grafts: 0, storms: 0, pickups: 0 },
     best: { score: 0, height: 0 },
     topRuns: [],
     tutorial: false,
@@ -205,6 +216,7 @@ export function repair(S, today = dayKey()) {
   if (S.charm && (!CHARMS[S.charm] || !charmUnlocked(S, S.charm))) S.charm = null;
   S.level = lvl;
   if (!goalsOk) S.goals = levelGoals(lvl);
+  else if (RETIRED[lvl]) S.goals = S.goals.map((g) => (RETIRED[lvl][g.k] && !LEVELS[lvl - 1].some((t) => t.k === g.k && t.n === g.n && t.run === g.run) ? (g.done ? { ...RETIRED[lvl][g.k], p: RETIRED[lvl][g.k].n, done: true } : { ...RETIRED[lvl][g.k], p: 0, done: false }) : g));
   unlockEarned(S);
   rollover(S, new Date(today + 'T12:00:00Z'));
   return S;
@@ -328,6 +340,7 @@ export function finishRun(S, sum, ctx = {}) {
   st.bestMult = Math.max(st.bestMult, sum.maxMult); st.blooms += sum.blooms; st.goldens += sum.goldens; st.acorns += sum.acorns || 0;
   st.nearMisses += sum.nearMisses; st.splits += sum.splits || 0; st.charmUses += sum.charmUses || 0; st.forks += sum.forks || 0;
   st.time += Math.round(sum.time || 0); if (ctx.daily) st.dailyRuns++;
+  st.grafts += sum.grafts || 0; st.storms += sum.storms || 0; st.pickups += sum.pickups || 0;
   if (sum.score > S.best.score) { S.best.score = sum.score; out.bestScore = true; }
   if (sum.height > S.best.height) { S.best.height = sum.height; out.bestHeight = true; }
   S.topRuns.push({ h: sum.height, s: sum.score, hash: sum.hash, d: dayKey(now), daily: !!ctx.daily });
