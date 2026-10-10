@@ -3,8 +3,8 @@
 **A one-touch tree that grows from your choices. Fork it in two, merge it back for combos, and climb from twig to treetop.**
 
 <p>
-<img src="screenshots/00-hook.webp" width="280" height="280" alt="A forked branch climbs through a lightning storm toward the chequered finish ribbon of a quest level">
-<img src="screenshots/14-level-clear.jpg" width="520" alt="Level clear: three stars, the run's postcard and the Next level button">
+<img src="screenshots/00-hook.webp" width="560" alt="Forkwood title card over a painted dawn meadow at the foot of a giant tree, a young branch already growing">
+<img src="screenshots/21-duel-invite-phone.webp" width="200" alt="Phone: a friend's duel invite on the title card, with their critter portrait">
 </p>
 
 ▶ **Play now in your browser:** https://ducvuathuduc.github.io/treetop-forkwood/
@@ -18,7 +18,27 @@ Your branch grows by itself; you steer it into sunlight. **Tap to fork** it into
 * **Short, readable runs.** A weak player lasts about a minute; experts fight for the stars.
 * **Your tree as a postcard.** Every run ends with a printed card of the whole tree, its height, score and commit hash.
 
-## What's new in v0.6: the Quest update
+## What's new in v0.7: the Grove update
+
+| Story intro | Painted world (dusk, 550 m) | Practice league |
+|---|---|---|
+| ![Storybook plate of the Great Tree with a line of story text](screenshots/18-story-intro.webp) | ![Forked branch over a pink cloud sea with blossom trees at dusk](screenshots/24-dusk-desktop.webp) | ![League table: you and nine labelled ghost growers, promotion and demotion zones](screenshots/19-league-desktop.webp) |
+
+* **A story before your first run.** Five illustrated storybook plates (about 25 s, tap to advance, Skip any time) tell how a storm reverted the Great Tree and a sparrow saved one seed. Then the game drops you straight into your first tree, no menu in between. Replay it any time from the title (Story) or your profile.
+* **A painted world.** Every stage now has its own illustrated backdrop in the woodblock style (dawn meadow, sunlit forest, amber canopy, dusk above the clouds, starlight), drifting with the climb and cross-fading between stages, with painted boughs framing the playfield on wide screens, a painted meadow and soil, and illustrated thorn vines, beetles and sun tokens. Buttons and cards got a finished edition look. Before and after: [desktop play](screenshots/before-after/desktop-play.webp), [title](screenshots/before-after/desktop-title.webp), [late game](screenshots/before-after/desktop-late.webp), [phone play](screenshots/before-after/phone-play.webp), [phone title](screenshots/before-after/phone-title.webp).
+* **The Grove** (tap your portrait, top left):
+  * **Streak** with milestones at 3, 7, 14, 30, 60 and 100 days, up to two frost guards that each save a missed day, and a 28-day calendar. Finishing a run counts; so does the daily gift.
+  * **Grove season**: a free 30-tier track each month, earned only by playing (rings from height, goals, challenges and your first run of the day). New trails, portraits, frames, a Sakura leaf, a Lotus blossom and Mossy oak bark.
+  * **Practice league**: Seedling → Sprout → Sapling → Bough → Canopy → Treetop → Ancient. Each week you race nine **ghost growers** generated from the week's seed (the same for everyone, and labelled as simulated, never as live players). Top 3 move up, bottom 2 move down.
+  * **Duels**: tap **Duel** on any endless or daily result. Your friend opens the link, grows the exact same course and races your **rival tip**, which climbs at your average pace. They send their answer back and both of you collect acorns on your own device. No server, no account.
+  * **Profile**: a critter portrait (sparrow, squirrel, owl, fox, snail, moth, frog, beetle), a frame, a badge and a name for your duels. Plus a new **Trail** slot for your tree (pollen, petals, fireflies, ink, stardust and more).
+  * **Welcome back gifts** after three or more days away.
+
+| Season track | Streak | Profile |
+|---|---|---|
+| ![Season track on a phone, tier list with rewards](screenshots/20-season-phone.webp) | ![Streak page: flame, frost guards, next milestone, 28-day calendar](screenshots/23-streak-phone.webp) | ![Profile: critter portrait, name, portrait and frame pickers](screenshots/22-profile-phone.webp) |
+
+## The Quest update (v0.6)
 
 | Quest map | Modes and stakes | A storm level |
 |---|---|---|
@@ -77,7 +97,7 @@ Forkwood quest 23/60★
 
 ## Grow with it
 
-Acorns come only from playing (pick-ups, height, merges, blooms, chests). They buy cosmetic skins in six slots, all drawn in the woodblock style; skins never change the game. There are levels with three goals each, daily and weekly challenges, a daily gift with a streak, 21 badges and four charms (small, measured edges that the daily tree, weekly tree, quest levels and challenge links switch off so they stay fair). Progress is saved only on your device.
+Acorns come only from playing (pick-ups, height, merges, blooms, chests, the season, the league and duels). They buy cosmetic skins in seven slots, all drawn in the woodblock style; skins never change the game. There are levels with three goals each, daily and weekly challenges, a daily gift with a streak, 21 badges and four charms (small, measured edges that the daily tree, weekly tree, quest levels and challenge links switch off so they stay fair). Progress is saved only on your device.
 
 ## Difficulty, measured
 
@@ -93,15 +113,15 @@ Every quest level is beaten by the expert bot and all 60 stars are reachable (`n
 
 ## Look, feel and sound
 
-* **A pressed-leaf woodblock print.** One warm ink outline on everything you play with, a posterised sky you climb through, paper grain, and every image drawn in code.
+* **A pressed-leaf woodblock print.** Painted backdrops for every stage, one warm ink outline on everything you play with, paper grain. The tree, its leaves, blossoms, skins and effects are drawn in code; the painted plates, story plates, portraits and three sprites are images made for Forkwood (see CREDITS.md).
 * **Game feel:** smooth-noise screen shake, hit-stop, a camera punch that grows with the combo, squash and stretch, a slow-motion first fork, a print-pull intro, stage colour plates, stamped rewards.
 * **Sound:** music generated live (FM kalimba, bass and soft drums that speed up as you climb), plus CC0 wooden foley.
 * **Calm mode** turns off shake, flashes, vibration and interface motion (on automatically with reduced motion).
 
 ## Tech
 
-* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, **no third-party requests**. First load about 436 KB uncompressed (fonts and sound included); the quest map UI loads on first open.
-* 60 fps on desktop and phone viewports in headless Chromium, about 3–5 ms of JavaScript per frame.
+* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, **no third-party requests**. First load about 645 KB uncompressed (fonts, sound and about 170 KB of painted art included); the other stage plates load as you climb toward them, and the story, quest map and Grove load only when opened.
+* 60 fps on desktop and phone viewports in headless Chromium, about 2–5 ms of JavaScript per frame; images are decoded off the main thread before they are first drawn.
 * `src/sim.js` is pure and deterministic: modes, stakes and quest levels are the same simulation with a few rules changed (`src/modes.js`, `src/campaign.js`); quest progress, unlocks, chests and titles are pure functions in `src/quest.js`.
 * One small library: [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT), vendored and loaded after your first tap.
 * Saves live in one `localStorage` key with automatic upgrade and repair; saves from earlier builds keep their progress, and returning growers find modes and stakes already open for the heights they reached.
@@ -115,6 +135,8 @@ npm run stakes                # survival per stake and mode with three bots
 npm run fairness              # 300 seeded courses: every gap fits, every gate reachable
 npm run chunks                # course director, power-ups, grafts, storms
 npm run meta                  # progression rules and economy pacing
+npm run retention             # streak, season, league ghosts, comeback, duel links, save migration
+npm run intro                 # first-launch story, returning players, Grove, a duel between two devices
 npm run quest-ui              # quest map, levels, modes, phone layouts in headless Chromium
 npm test                      # everything (browser tests need Playwright + Chromium)
 ```
