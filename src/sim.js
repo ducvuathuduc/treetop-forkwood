@@ -8,11 +8,13 @@ export const TIP_R = 9;          // collision radius of a growing tip
 export const FORK_SPREAD = 78;   // half-distance between the two tips when forked
 export const SAP_MAX = 100;
 export const MAX_MULT = 8;
+export const GOLDEN_SEC = 6;     // golden hour length (s), triggered by a merge that reaches MAX_MULT
+export const BLOOM_MIN = 4;      // a trail needs at least this many sunlights to bloom
 
 // Balance knobs (tuned with tests/balance.mjs).
 export const TUNE = {
   drain0: 4.6,      // sap drain per second at ground level
-  drainK: 5.0,      // extra drain per second per 600 m climbed
+  drainK: 5.8,      // extra drain per second per 600 m climbed
   forkDrain: 1.4,   // drain multiplier while two tips grow
   moteSap0: 7.0,    // sap from one sunlight mote at ground level
   moteSapMin: 4.0,  // sap from one mote high up
@@ -94,6 +96,11 @@ export function createSim(opts = {}) {
     deathT: 0,
     newBest: false,
     events: [],
+    golden: 0,
+    goldens: 0,
+    blooms: 0,
+    trailSeq: 0,
+    trails: new Map(),
   };
   const main = newPath(s, W / 2, 40, -1);
   main.pts.push({ x: W / 2, y: 0, t: 0 });
@@ -121,9 +128,10 @@ function addTrail(s, y0, opts = {}) {
   const cx = opts.cx ?? clamp(90 + r() * (W - 180), 60 + amp * 0.5, W - 60 - amp * 0.5);
   const ph = r() * Math.PI * 2;
   const k = 0.35 + r() * 0.35;
+  const trail = newTrail(s, n);
   for (let i = 0; i < n; i++) {
     const x = clamp(cx + Math.sin(ph + i * k) * amp * 0.5, 40, W - 40);
-    s.motes.push({ x, y: y0 - i * 44, kind: 'sun', r: 11, ph: r() * 6.28, taken: false });
+    s.motes.push({ x, y: y0 - i * 44, kind: 'sun', r: 11, ph: r() * 6.28, taken: false, trail });
   }
 }
 
@@ -132,11 +140,20 @@ function addTwinTrail(s, y0, cx) {
   const r = s.rng;
   cx = clamp(cx, FORK_SPREAD + 40, W - FORK_SPREAD - 40);
   const n = 4 + Math.floor(r() * 3);
+  const trail = newTrail(s, n * 2);
   for (let i = 0; i < n; i++) {
     for (const side of [-1, 1]) {
-      s.motes.push({ x: cx + side * FORK_SPREAD, y: y0 - i * 46, kind: 'sun', r: 11, ph: r() * 6.28, taken: false });
+      s.motes.push({ x: cx + side * FORK_SPREAD, y: y0 - i * 46, kind: 'sun', r: 11, ph: r() * 6.28, taken: false, trail });
     }
   }
+}
+
+function newTrail(s, n) {
+  // a trail of sunlight: catch all of it for a full bloom
+  const id = ++s.trailSeq;
+  s.trails.set(id, { n, got: 0 });
+  if (s.trails.size > 40) s.trails.delete(s.trails.keys().next().value);
+  return id;
 }
 
 function addGate(s, y, gapCx, gapW) {
@@ -292,7 +309,19 @@ export function step(s, dt, input = {}) {
   // energy
   const climb = Math.min(2.2, m / 600);
   const drain = (TUNE.drain0 + TUNE.drainK * climb) * (s.tips.length === 2 ? TUNE.forkDrain : 1) + (s.inFrost ? 20 : 0);
-  if (!s.demo) s.sap -= drain * dt;
+  if (!s.demo) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : 1);
+
+  // golden hour: sunlight drifts to your tips, slower drain, double points
+  if (s.golden > 0) {
+    s.golden -= dt;
+    for (const o of s.motes) {
+      if (o.kind !== 'sun' || o.taken || o.y < s.cy - 220 || o.y > s.cy + 30) continue;
+      let bt = null, bd = 150 * 150;
+      for (const tip of s.tips) { const dx = tip.x - o.x, dy = s.cy - o.y, d = dx * dx + dy * dy; if (d < bd) { bd = d; bt = tip; } }
+      if (bt) { const d = Math.sqrt(bd) || 1, v = Math.min(d, 380 * dt); o.x += ((bt.x - o.x) / d) * v; o.y += ((s.cy - o.y) / d) * v; }
+    }
+    if (s.golden <= 0) { s.golden = 0; s.mult = Math.min(s.mult, 4); emit(s, 'goldenend'); }
+  }
 
   // height score
   const mi = Math.floor(m);
@@ -365,11 +394,13 @@ function merge(s) {
     s.score += bonus;
     s.mult = Math.min(MAX_MULT, s.mult + 1);
     s.maxMult = Math.max(s.maxMult, s.mult);
+    const goldenNow = s.mult === MAX_MULT && s.golden <= 0;
     s.sap = Math.min(SAP_MAX, s.sap + 3 * staged);
     s.merges++;
     s.commits++;
     mc.commits.push({ i: 0, kind: 'merge', born: s.t });
     emit(s, 'merge', { x: s.cx, y: s.cy, staged, bonus, mult: s.mult });
+    if (goldenNow) { s.golden = GOLDEN_SEC; s.goldens++; emit(s, 'golden', { x: s.cx, y: s.cy }); }
   } else {
     emit(s, 'emptymerge', { x: s.cx, y: s.cy });
   }
@@ -483,13 +514,25 @@ function collect(s, o, tip) {
     s.chain++;
     s.chainTimer = 1.3;
     s.commits++;
-    const pts = 10 * s.mult;
+    const pts = 10 * s.mult * (s.golden > 0 ? 2 : 1);
     s.score += pts;
     s.sap = Math.min(SAP_MAX, s.sap + Math.max(TUNE.moteSapMin, TUNE.moteSap0 - heightM(s) / 150));
     if (s.tips.length === 2) tip.staged++;
     const p = s.paths[tip.path];
     p.commits.push({ i: p.pts.length - 1, kind: 'commit', born: s.t });
     emit(s, 'collect', { x: o.x, y: o.y, chain: s.chain, pts, forked: s.tips.length === 2 });
+    const tr = o.trail && s.trails.get(o.trail);
+    if (tr && ++tr.got >= tr.n) {
+      s.trails.delete(o.trail);
+      if (tr.n >= BLOOM_MIN) {
+        const bonus = 15 * tr.n * s.mult;
+        s.score += bonus;
+        s.sap = Math.min(SAP_MAX, s.sap + 4);
+        s.blooms++;
+        p.commits.push({ i: p.pts.length - 1, kind: 'bloom', born: s.t });
+        emit(s, 'bloom', { x: tip.x, y: s.cy, n: tr.n, bonus });
+      }
+    }
   } else if (o.kind === 'dew') {
     s.sap = Math.min(SAP_MAX, s.sap + 30);
     s.score += 25 * s.mult;
@@ -527,6 +570,8 @@ export function summary(s) {
     reverts: s.reverts,
     maxMult: s.maxMult,
     nearMisses: s.nearMisses,
+    blooms: s.blooms,
+    goldens: s.goldens,
     stage: STAGES[s.stageIdx].name,
     time: s.t,
     hash: treeHash([s.seed, Math.floor(s.score), ...pts]),
