@@ -2,7 +2,7 @@
 // Background layers are flat and soft (no outlines); everything you play with
 // carries the same warm ink outline, so the gameplay layer always reads first.
 // The sky is posterised into stepped bands, and a paper grain sits on top.
-import { W, PX_PER_M, STAGES, SAP_MAX, CHARMS, heightM, stageIndexFor } from './sim.js';
+import { W, PX_PER_M, STAGES, SAP_MAX, CHARMS, PICKUPS, GRAFTS, heightM, stageIndexFor } from './sim.js';
 import { THEME, leafColor } from './skins.js';
 
 const TAU = Math.PI * 2;
@@ -361,6 +361,8 @@ export class Renderer {
     if (ui.bestM > 3) this.drawBestLine(ctx, -ui.bestM * PX_PER_M, topY, botY, s.newBest, now, ui.bestLabel);
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
+    for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
+    if (!ui.reveal) for (const g of s.tokens) if (!g.taken && g.y > topY - 60 && g.y < botY + 60) this.drawToken(ctx, g, now, s);
     drawTree(ctx, s, now, topY, botY, px);
     if (!ui.reveal) {
       for (const o of s.motes) if (o.y > topY - 30 && o.y < botY + 30) this.drawMote(ctx, o, now, gold);
@@ -378,6 +380,9 @@ export class Renderer {
 
     // ---- screen space overlays
     this._screen(ctx);
+    const storm = this.stormAmount(s, topY, botY);
+    if (storm > 0) this.drawStorm(ctx, cw, ch, now, storm, ui.calm);
+    if (s.pu && s.pu.rush > 0 && !ui.reveal) this.drawRush(ctx, cw, ch, now, Math.min(1, s.pu.rush / 0.4), ui.calm);
     if (gold > 0) this.drawGolden(ctx, cw, ch, now, gold, s.golden);
     if (s.inFrost && !ui.reveal) {
       for (let i = 0; i < 3; i++) { ctx.strokeStyle = 'rgba(214,238,255,0.35)'; ctx.lineWidth = 26 + i * 26; ctx.strokeRect(0, 0, cw, ch); }
@@ -711,6 +716,19 @@ export class Renderer {
   }
 
   drawBramble(ctx, b) {
+    if (b.kind === 'slide') {
+      // the gap's path, printed as a dotted rule with arrow heads: you can read it from afar
+      const lo = b.base - b.amp, hi = b.base + b.amp, y = b.y + 20;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(30,26,22,0.55)'; ctx.lineWidth = 3; ctx.setLineDash([2, 9]);
+      ctx.beginPath(); ctx.moveTo(lo, y); ctx.lineTo(hi, y); ctx.stroke(); ctx.setLineDash([]);
+      for (const [x, d] of [[lo, -1], [hi, 1]]) {
+        ctx.beginPath(); ctx.moveTo(x - d * 2, y - 7); ctx.lineTo(x + d * 6, y); ctx.lineTo(x - d * 2, y + 7);
+        ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = PAPER; ctx.lineWidth = 2.5; ctx.stroke();
+      }
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(b.cx, y, 5, 0, TAU); ctx.fill();
+      ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(b.cx, y, 3, 0, TAU); ctx.fill();
+    }
     for (const [a, c] of b.solids) {
       if (c - a < 2) continue;
       const wy = (x) => b.y + Math.sin(x * 0.09 + b.seed) * 3;
@@ -767,6 +785,8 @@ export class Renderer {
       ctx.save(); ctx.translate(o.x, o.y + bob); ctx.rotate(Math.sin(now * 2 + o.ph) * 0.18);
       drawAcorn(ctx, 1);
       ctx.restore();
+    } else if (PICKUPS[o.kind]) {
+      this.drawPickup(ctx, o.kind, o.x, o.y + Math.sin(now * 3 + o.ph) * 3, r, now);
     } else {
       // bark chip: one-hit shield
       ctx.beginPath();
@@ -779,6 +799,169 @@ export class Renderer {
     }
   }
 
+  drawColumn(ctx, c, now, calm) {
+    const x = c.x, top = c.y1, bot = c.y0;
+    if (c.kind === 'bolt') {
+      if (!c.live) {
+        // warning: a dashed ochre rule and a stamped bolt glyph, long before it strikes
+        const a = 0.55 + 0.35 * Math.sin(now * 8 + c.seed);
+        ctx.lineCap = 'butt';
+        ctx.strokeStyle = `rgba(30,26,22,${(0.45 * a).toFixed(3)})`; ctx.lineWidth = c.hw * 2 + 6; ctx.setLineDash([14, 12]);
+        ctx.beginPath(); ctx.moveTo(x, bot); ctx.lineTo(x, top); ctx.stroke();
+        ctx.strokeStyle = `rgba(242,179,61,${(0.5 * a).toFixed(3)})`; ctx.lineWidth = c.hw * 2 - 4;
+        ctx.beginPath(); ctx.moveTo(x, bot); ctx.lineTo(x, top); ctx.stroke(); ctx.setLineDash([]);
+        this.boltGlyph(ctx, x, bot + 26, 13);
+        return;
+      }
+      // the bolt: a jagged ink-and-gold stroke that flickers
+      const seg = 9, h = bot - top, k = calm ? 0 : Math.floor(now * 14);
+      ctx.fillStyle = 'rgba(255,246,200,0.18)'; ctx.fillRect(x - c.hw - 10, top, c.hw * 2 + 20, h);
+      ctx.beginPath(); ctx.moveTo(x, top);
+      for (let i = 1; i <= seg; i++) ctx.lineTo(x + (i === seg ? 0 : (hash(i * 3.1 + c.seed + k) - 0.5) * c.hw * 1.6), top + h * i / seg);
+      ctx.lineJoin = 'miter'; ctx.lineCap = 'round';
+      ctx.strokeStyle = INK; ctx.lineWidth = 14; ctx.stroke();
+      ctx.strokeStyle = OCHRE; ctx.lineWidth = 8; ctx.stroke();
+      ctx.strokeStyle = '#fff6d0'; ctx.lineWidth = 3; ctx.stroke();
+      return;
+    }
+    // thorn column: an upright vine with thorns both sides
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(244,236,216,0.3)'; ctx.lineWidth = c.hw * 2 + 10;
+    ctx.beginPath(); ctx.moveTo(x, bot); ctx.lineTo(x, top); ctx.stroke();
+    const wx = (y) => x + Math.sin(y * 0.05 + c.seed) * 4;
+    ctx.lineJoin = 'round';
+    for (let y = top + 10; y < bot - 6; y += 16) {
+      const side = (Math.floor(y / 16) % 2) ? -1 : 1, xx = wx(y);
+      ctx.beginPath(); ctx.moveTo(xx + side * 6, y - 5); ctx.lineTo(xx + side * (c.hw + 3), y + 1); ctx.lineTo(xx + side * 6, y + 5); ctx.closePath();
+      ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = '#e8dcc0'; ctx.fill();
+    }
+    ctx.beginPath(); ctx.moveTo(wx(top), top);
+    for (let y = top; y <= bot; y += 10) ctx.lineTo(wx(y), y);
+    ctx.lineTo(wx(bot), bot);
+    ctx.strokeStyle = INK; ctx.lineWidth = 15; ctx.stroke();
+    ctx.strokeStyle = '#5b4030'; ctx.lineWidth = 9.5; ctx.stroke();
+    ctx.strokeStyle = '#8a6448'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(wx(top) - 2, top); for (let y = top; y <= bot; y += 10) ctx.lineTo(wx(y) - 2, y); ctx.stroke();
+    for (let y = top + 30; y < bot - 10; y += 61) {
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(wx(y) + 8, y, 4.6, 0, TAU); ctx.fill();
+      ctx.fillStyle = CORAL; ctx.beginPath(); ctx.arc(wx(y) + 8, y, 3, 0, TAU); ctx.fill();
+    }
+  }
+  boltGlyph(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r * 0.2, y - r); ctx.lineTo(x - r * 0.55, y + r * 0.12); ctx.lineTo(x, y + r * 0.12); ctx.lineTo(x - r * 0.25, y + r); ctx.lineTo(x + r * 0.6, y - r * 0.2); ctx.lineTo(x + r * 0.05, y - r * 0.2); ctx.closePath();
+    ctx.lineJoin = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke(); ctx.fillStyle = OCHRE; ctx.fill();
+  }
+  drawPickup(ctx, kind, x, y, r, now) {
+    ctx.save(); ctx.translate(x, y);
+    // a paper token with an inked edge, so power-ups never read as sunlight
+    ctx.fillStyle = 'rgba(244,236,216,0.35)'; ctx.beginPath(); ctx.arc(0, 0, r * 1.8, 0, TAU); ctx.fill();
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(2, 2.5, r + 2, 0, TAU); ctx.fill();
+    ctx.fillStyle = kind === 'rush' ? '#bfe08a' : kind === 'ink' ? PAPER : '#ffe7a0';
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke();
+    drawPickupIcon(ctx, kind, r, now);
+    ctx.restore();
+  }
+  drawToken(ctx, g, now, s) {
+    // a graft medallion: paper disc, ink ring, glyph, and its name on a tag
+    const bob = Math.sin(now * 2.4 + g.x) * 3, r = g.r;
+    ctx.save(); ctx.translate(g.x, g.y + bob);
+    const owned = s.grafts.includes(g.id);
+    ctx.fillStyle = 'rgba(255,236,170,0.28)'; ctx.beginPath(); ctx.arc(0, 0, r * 2.1, 0, TAU); ctx.fill();
+    ctx.rotate(Math.sin(now * 1.3 + g.x) * 0.08);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(3, 3, r + 3, 0, TAU); ctx.fill();
+    ctx.fillStyle = owned ? '#e8dcc0' : OCHRE; ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, TAU); ctx.fill();
+    ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(0, 0, r - 2, 0, TAU); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke();
+    drawGraftIcon(ctx, g.id, r * 1.25);
+    ctx.restore();
+    const name = GRAFTS[g.id].name + (owned ? ' +' : '');
+    ctx.font = f(800, 13); ctx.textAlign = 'center';
+    const tw = ctx.measureText(name).width + 14, ty = g.y + bob + r + 18;
+    this.card(ctx, g.x - tw / 2, ty - 13, tw, 19, 9, PAPER, 2);
+    ctx.fillStyle = INK; ctx.fillText(name, g.x, ty + 1);
+    ctx.textAlign = 'left';
+    if (g.x < W / 2) {
+      // one caption for the pair, above them
+      ctx.font = f(800, 12); ctx.textAlign = 'center';
+      const cap = 'GRAFT · steer into one · fork for both';
+      ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.strokeText(cap, W / 2, g.y - r - 22);
+      ctx.fillStyle = PAPER; ctx.fillText(cap, W / 2, g.y - r - 22);
+      ctx.textAlign = 'left';
+    }
+  }
+  stormAmount(s, topY, botY) {
+    // fade the storm in as its zone scrolls into view, out after it passes
+    let a = 0;
+    for (const z of s.stormZones || []) {
+      const inside = Math.min(botY, z.y0) - Math.max(topY, z.y1);
+      if (inside > 0) a = Math.max(a, Math.min(1, inside / 500));
+    }
+    return a;
+  }
+  drawStorm(ctx, cw, ch, now, a, calm) {
+    ctx.fillStyle = `rgba(28,30,58,${(0.32 * a).toFixed(3)})`; ctx.fillRect(0, 0, cw, ch);
+    // rain: slanted pale strokes in screen space
+    ctx.strokeStyle = `rgba(214,226,255,${(0.38 * a).toFixed(3)})`; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    ctx.beginPath();
+    const n = Math.round((calm ? 0.35 : 1) * Math.min(110, cw / 9)), sp = calm ? 0.25 : 1;
+    for (let i = 0; i < n; i++) {
+      const x = (hash(i) * (cw + 200) - now * 120 * sp) % (cw + 200), xx = (x + cw + 200) % (cw + 200) - 100;
+      const y = (hash(i + 50) * ch + now * 900 * sp * (0.7 + hash(i + 9) * 0.6)) % (ch + 60) - 30;
+      ctx.moveTo(xx, y); ctx.lineTo(xx - 7, y + 22);
+    }
+    ctx.stroke();
+  }
+  drawRush(ctx, cw, ch, now, a, calm) {
+    // speed lines and a green rim while the sap surges
+    ctx.strokeStyle = `rgba(214,240,170,${(0.5 * a).toFixed(3)})`; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < (calm ? 8 : 26); i++) {
+      const x = hash(i * 1.7) * cw, y = (hash(i + 3) * ch + now * 1400) % (ch + 120) - 60, l = 40 + hash(i) * 70;
+      ctx.moveTo(x, y); ctx.lineTo(x, y + l);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = `rgba(169,207,90,${(0.55 * a).toFixed(3)})`; ctx.lineWidth = 10; ctx.strokeRect(5, 5, cw - 10, ch - 10);
+  }
+  drawPowerHud(ctx, s, cx, y, now) {
+    // active power-ups as stamped tokens with a draining ring
+    const act = Object.keys(PICKUPS).filter((k) => s.pu[k] > 0);
+    if (!act.length) return;
+    const r = 13, gap = 46, x0 = cx - (act.length - 1) * gap / 2;
+    act.forEach((k, i) => {
+      const x = x0 + i * gap, left = s.pu[k], full = PICKUPS[k].dur * (s.grafts.includes('pollen') ? 1.5 : 1);
+      const blink = left < 1.2 && Math.sin(now * 18) < 0;
+      ctx.save(); ctx.translate(x, y + r);
+      ctx.globalAlpha = blink ? 0.45 : 1;
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(2, 2, r + 1, 0, TAU); ctx.fill();
+      ctx.fillStyle = k === 'rush' ? '#bfe08a' : k === 'ink' ? PAPER : '#ffe7a0'; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+      ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
+      drawPickupIcon(ctx, k, r * 0.9, now);
+      ctx.lineCap = 'butt';
+      const end = -Math.PI / 2 + TAU * Math.min(1, left / full);
+      ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, r + 6, -Math.PI / 2, end); ctx.stroke();
+      ctx.strokeStyle = OCHRE; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, r + 6, -Math.PI / 2, end); ctx.stroke();
+      ctx.restore();
+    });
+    if (act.length >= 2) {
+      ctx.font = f(800, 10.5); ctx.textAlign = 'center';
+      const t = act.length === 3 ? 'TRIPLE STACK' : 'STACKED';
+      ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(t, cx, y + 2 * r + 22);
+      ctx.fillStyle = '#ffe08a'; ctx.fillText(t, cx, y + 2 * r + 22);
+      ctx.textAlign = 'left';
+    }
+  }
+  drawGraftHud(ctx, s, x, y) {
+    // grafts taken this run, as a row of small medallions
+    s.grafts.forEach((id, i) => {
+      const gx = x + i * 26;
+      ctx.save(); ctx.translate(gx, y);
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(1.5, 1.5, 11, 0, TAU); ctx.fill();
+      ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(0, 0, 10, 0, TAU); ctx.fill(); ctx.strokeStyle = OCHRE; ctx.lineWidth = 2; ctx.stroke();
+      drawGraftIcon(ctx, id, 13);
+      ctx.restore();
+    });
+  }
   drawBeetle(ctx, b, now) {
     const dir = b.vx >= 0 ? 1 : -1;
     ctx.save();
@@ -976,13 +1159,15 @@ export class Renderer {
       ctx.restore(); ctx.textAlign = 'left';
     }
     // sap meter: inked pill with ticks; sunlight sparks fly into it
-    const bw = Math.min(230, cw * 0.44), bh = 14, bx = (cw - bw) / 2, by = small ? 88 : 22;
+    // phones: the meter sits right-aligned under the buttons, clear of the score + combo badge
+    const bw = Math.min(small ? 170 : 230, cw * 0.44), bh = 14, bx = small ? cw - bw - 18 : (cw - bw) / 2, by = small ? 88 : 22;
+    const bcx = bx + bw / 2;
     const fr = s.sap / SAP_MAX;
     const low = fr < 0.28;
     const pulse = fx.sapPulse || 0;
     this.sapTarget.x = bx + Math.max(10, bw * fx.shownSap / SAP_MAX); this.sapTarget.y = by + bh / 2;
     ctx.save();
-    ctx.translate(cw / 2, by + bh / 2); ctx.scale(1 + pulse * 0.06, 1 + pulse * 0.18); ctx.translate(-cw / 2, -(by + bh / 2));
+    ctx.translate(bcx, by + bh / 2); ctx.scale(1 + pulse * 0.06, 1 + pulse * 0.18); ctx.translate(-bcx, -(by + bh / 2));
     this.card(ctx, bx - 3, by - 3, bw + 6, bh + 6, 10, PAPER, 3);
     const wob = low ? (Math.sin(now * 16) > 0 ? 1 : 0.7) : 1;
     ctx.globalAlpha = wob;
@@ -997,9 +1182,9 @@ export class Renderer {
     ctx.beginPath(); leafPath(ctx, bx - 22, by + bh / 2 + 6, 17, -1.0, 0.45);
     ctx.lineWidth = 2.2; ctx.strokeStyle = INK; ctx.stroke(); ctx.fillStyle = low ? CORAL : MOSS; ctx.fill();
     ctx.font = f(800, 10.5); ctx.textAlign = 'center';
-    const st = s.golden > 0 ? `GOLDEN HOUR · ${Math.ceil(s.golden)}` : low ? 'SAP LOW · GRAB SUNLIGHT' : 'SAP';
-    ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(st, cw / 2, by + bh + 17);
-    ctx.fillStyle = s.golden > 0 ? '#ffe08a' : low ? '#ffc2b0' : PAPER; ctx.fillText(st, cw / 2, by + bh + 17);
+    const st = s.golden > 0 ? `GOLDEN HOUR · ${Math.ceil(s.golden)}` : (s.pu && s.pu.rush > 0) ? 'SAP RUSH' : low ? 'SAP LOW · GRAB SUNLIGHT' : s.storm ? 'RAIN · SAP DRAINS SLOWER' : 'SAP';
+    ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(st, bcx, by + bh + 17);
+    ctx.fillStyle = s.golden > 0 ? '#ffe08a' : low ? '#ffc2b0' : PAPER; ctx.fillText(st, bcx, by + bh + 17);
     ctx.textAlign = 'left';
     // acorns picked up this run
     if (s.acorns > 0 || ui.acornPulse > 0) {
@@ -1009,6 +1194,10 @@ export class Renderer {
       ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.strokeText(`${s.acorns}`, 46, ay);
       ctx.fillStyle = '#f3cf8e'; ctx.fillText(`${s.acorns}`, 46, ay);
     }
+    // on phones the first-run coach card owns the band under the HUD
+    const band = !(small && ui.coach);
+    if (band && s.grafts && s.grafts.length) this.drawGraftHud(ctx, s, 30, sy + (small ? 26 : 30) + (s.acorns > 0 || ui.acornPulse > 0 ? 26 : 0));
+    if (band && s.pu) this.drawPowerHud(ctx, s, bcx, by + bh + 28, now);
     this.layout.charm = null;
     if (s.charm) this.drawCharm(ctx, s, ui, now);
     this.drawLadder(ctx, s, ui, now);
@@ -1026,7 +1215,7 @@ export class Renderer {
       const y = baseY - (1 - easeOut(Math.min(1, k / 0.12))) * 24;
       const pop = k < 0.12 ? easeBack(k / 0.12) : 1 - easeIn(outK);
       const size = Math.round(Math.min(big, (cw - 24) / Math.max(4, b.text.length) * 1.75));
-      this.layout.banner = { y0: baseY - size * 0.85, y1: baseY + 38 };
+      this.layout.banner = { y0: baseY - size * 0.85, y1: baseY + (b.sub2 ? 64 : 38) };
       ctx.save();
       ctx.translate(cw / 2, y - outK * 30); ctx.scale(Math.max(0.01, pop), Math.max(0.01, pop)); ctx.rotate(b.gold ? -0.03 : 0);
       ctx.textAlign = 'center';
@@ -1040,6 +1229,11 @@ export class Renderer {
         const sw = ctx.measureText(b.sub).width + 24;
         this.card(ctx, -sw / 2, 14, sw, 26, 13, b.gold ? OCHRE : PAPER, 3);
         ctx.fillStyle = INK; ctx.fillText(b.sub, 0, 32);
+      }
+      if (b.sub2) {
+        ctx.font = f(800, 12.5);
+        ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(b.sub2, 0, 58);
+        ctx.fillStyle = '#ffc2b0'; ctx.fillText(b.sub2, 0, 58);
       }
       ctx.restore();
       ctx.textAlign = 'left';
@@ -1119,5 +1313,40 @@ export function drawCharmIcon(ctx, id, size = 40) {
     ctx.fillStyle = '#e8b32a'; ctx.beginPath(); ctx.moveTo(-6, 12.5); ctx.lineTo(6, 12.5); ctx.lineTo(0, 5); ctx.closePath(); ctx.fill();
     ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-13, -15); ctx.lineTo(13, -15); ctx.moveTo(-13, 15); ctx.lineTo(13, 15); ctx.stroke();
   }
+  ctx.restore();
+}
+
+/** Glyphs for the three power-ups, drawn centred at 0,0 inside a disc of radius r. */
+export function drawPickupIcon(ctx, kind, r, now = 0) {
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (kind === 'pollen') {
+    ctx.fillStyle = '#f2b33d'; ctx.strokeStyle = INK; ctx.lineWidth = 1.8;
+    for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + now * 0.8; ctx.beginPath(); ctx.arc(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, r * 0.18, 0, TAU); ctx.fill(); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.22, 0, TAU); ctx.fillStyle = INK; ctx.fill();
+  } else if (kind === 'ink') {
+    ctx.beginPath(); ctx.moveTo(-r * 0.3, -r * 0.62); ctx.quadraticCurveTo(-r * 0.8, r * 0.05, -r * 0.3, r * 0.38); ctx.quadraticCurveTo(r * 0.15, r * 0.05, -r * 0.3, -r * 0.62);
+    ctx.fillStyle = INK; ctx.fill();
+    ctx.font = f(900, r * 0.78, 'display'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('×2', r * 0.32, r * 0.08); ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  } else if (kind === 'rush') {
+    ctx.beginPath(); ctx.moveTo(0, -r * 0.7); ctx.lineTo(r * 0.55, -r * 0.05); ctx.lineTo(r * 0.2, -r * 0.05); ctx.lineTo(r * 0.2, r * 0.65); ctx.lineTo(-r * 0.2, r * 0.65); ctx.lineTo(-r * 0.2, -r * 0.05); ctx.lineTo(-r * 0.55, -r * 0.05); ctx.closePath();
+    ctx.fillStyle = MOSS; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+/** Glyphs for the six grafts (ink strokes), centred, about `size` across. */
+export function drawGraftIcon(ctx, id, size) {
+  const k = size / 24;
+  ctx.save(); ctx.scale(k, k);
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.fillStyle = INK;
+  ctx.beginPath();
+  if (id === 'taproot') { ctx.moveTo(0, -9); ctx.lineTo(0, 9); ctx.moveTo(0, 0); ctx.lineTo(-6, 7); ctx.moveTo(0, 3); ctx.lineTo(6, 9); ctx.moveTo(-8, -9); ctx.lineTo(8, -9); }
+  else if (id === 'wild') { ctx.moveTo(0, 9); ctx.lineTo(0, 1); ctx.lineTo(-7, -8); ctx.moveTo(0, 1); ctx.lineTo(7, -8); ctx.moveTo(0, 1); ctx.lineTo(0, -9); }
+  else if (id === 'crown') { ctx.moveTo(-9, 6); ctx.lineTo(-9, -5); ctx.lineTo(-4, 1); ctx.lineTo(0, -8); ctx.lineTo(4, 1); ctx.lineTo(9, -5); ctx.lineTo(9, 6); ctx.closePath(); }
+  else if (id === 'shave') { ctx.moveTo(-8, 7); ctx.quadraticCurveTo(-2, -8, 9, -8); ctx.moveTo(-8, 7); ctx.quadraticCurveTo(4, 2, 9, -8); }
+  else if (id === 'bloom') { for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * TAU / 5, cx = Math.cos(a) * 5.5, cy = Math.sin(a) * 5.5; ctx.moveTo(cx + 3.2, cy); ctx.arc(cx, cy, 3.2, 0, TAU); } }
+  else if (id === 'pollen') { for (let i = 0; i < 6; i++) { const a = i * TAU / 6, cx = Math.cos(a) * 7, cy = Math.sin(a) * 7; ctx.moveTo(cx + 2, cy); ctx.arc(cx, cy, 2, 0, TAU); } ctx.moveTo(3, 0); ctx.arc(0, 0, 3, 0, TAU); }
+  ctx.stroke();
+  if (id === 'crown') { ctx.fillStyle = OCHRE; ctx.fill(); ctx.stroke(); }
   ctx.restore();
 }
