@@ -60,7 +60,7 @@ const getter = (obj) => (k) => (k in obj ? JSON.parse(JSON.stringify(obj[k])) : 
   ok(M.equip(S, target.id) && S.loadout[target.slot] === target.id, 'equip a bought skin');
   ok(!M.equip(S, 'bark.gilded'), 'cannot equip an earned-only skin before earning it');
   ok(!M.buy(S, 'bark.gilded', '2026-10-10'), 'earned-only skins are not for sale');
-  ok(SKINS.every((s) => s.unlock.free || s.unlock.cost || s.unlock.level || s.unlock.ach || s.unlock.prize), 'every skin has a way to unlock it');
+  ok(SKINS.every((s) => s.unlock.free || s.unlock.cost || s.unlock.level || s.unlock.ach || s.unlock.prize || s.unlock.season || s.unlock.streak || s.unlock.league), 'every skin has a way to unlock it');
 }
 
 // ---------------------------------------------------------------- tasks and achievements
