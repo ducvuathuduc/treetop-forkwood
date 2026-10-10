@@ -11,6 +11,17 @@ export const MAX_MULT = 8;
 export const GOLDEN_SEC = 6;     // golden hour length (s), triggered by a merge that reaches MAX_MULT
 export const BLOOM_MIN = 4;      // a trail needs at least this many sunlights to bloom
 
+// Charms: one optional ability per run, charged by scoring merges and fired with
+// a second button (E / Shift / the charm badge). Never active on the daily tree
+// or on challenge links ("pure" runs), so those stay identical for everyone.
+// Each one has a price: it needs merges to charge, and Deep Roots costs combo.
+export const CHARMS = {
+  ward:  { name: 'Bark Ward',  charge: 4, dur: 0,   blurb: 'Grow a bark shield that blocks the next hit.' },
+  sun:   { name: 'Sun Call',   charge: 4, dur: 4,   blurb: 'For 4 s nearby sunlight drifts to your tips.' },
+  roots: { name: 'Deep Roots', charge: 4, dur: 0,   blurb: '+25 sap at once, but your combo drops by 2.' },
+  still: { name: 'Stillness',  charge: 3, dur: 4,   blurb: 'For 4 s beetles, frost and wind slow to a crawl and sap drains slower.' },
+};
+
 // Balance knobs (tuned with tests/balance.mjs).
 export const TUNE = {
   drain0: 4.6,      // sap drain per second at ground level
@@ -52,6 +63,17 @@ export function createSim(opts = {}) {
     rng: mulberry32(seed),
     tutorial: !!opts.tutorial,
     demo: !!opts.demo,
+    pure: !!opts.pure,
+    rng2: mulberry32((seed ^ 0x5bd1e995) >>> 0), // acorns only: never shifts the course itself
+    charm: !opts.pure && opts.charm && CHARMS[opts.charm] ? opts.charm : null,
+    charge: 0,
+    lure: 0,
+    still: 0,
+    forks: 0,
+    splits: 0,
+    acorns: 0,
+    charmUses: 0,
+    blocks: 0,
     bestM: opts.bestM || 0,
     t: 0,
     cx: W / 2,
@@ -242,6 +264,12 @@ function spawnBeat(s, y) {
   }
   if (r() < 0.09) s.motes.push({ x: 60 + r() * (W - 120), y: y - len * 0.5, kind: 'dew', r: 13, ph: 0, taken: false });
   if (m > 70 && r() < 0.045) s.motes.push({ x: 60 + r() * (W - 120), y: y - len * 0.75, kind: 'bark', r: 13, ph: 0, taken: false });
+  // acorns (the meta currency) come from their own random stream
+  const r2 = s.rng2;
+  if (m > 6 && r2() < 0.42) {
+    const n = 1 + Math.floor(r2() * 3), ax = 70 + r2() * (W - 140), ay = y - len * (0.2 + r2() * 0.5), dx = (r2() - 0.5) * 60;
+    for (let i = 0; i < n; i++) s.motes.push({ x: clamp(ax + dx * i, 40, W - 40), y: ay - i * 38, kind: 'acorn', r: 10, ph: r2() * 6.28, taken: false });
+  }
   return len;
 }
 
@@ -277,6 +305,7 @@ export function step(s, dt, input = {}) {
       wind += w.force * k;
     }
   }
+  if (s.still > 0) wind *= 0.35;
   s.wind = wind;
 
   s.prevCy = s.cy;
@@ -288,6 +317,9 @@ export function step(s, dt, input = {}) {
     if (!s.forked && s.tips.length === 1 && s.forkCooldown <= 0) fork(s);
     else if (s.forked) { s.forked = false; emit(s, 'merging'); }
   }
+  if (input.charm) useCharm(s);
+  if (s.lure > 0) s.lure = Math.max(0, s.lure - dt);
+  if (s.still > 0) s.still = Math.max(0, s.still - dt);
   if (s.forked) s.forkTime += dt;
   const spreadTarget = s.forked ? FORK_SPREAD : 0;
   const k = s.forked ? 5.5 : 7;
@@ -308,18 +340,13 @@ export function step(s, dt, input = {}) {
 
   // energy
   const climb = Math.min(2.2, m / 600);
-  const drain = (TUNE.drain0 + TUNE.drainK * climb) * (s.tips.length === 2 ? TUNE.forkDrain : 1) + (s.inFrost ? 20 : 0);
-  if (!s.demo) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : 1);
+  const drain = (TUNE.drain0 + TUNE.drainK * climb) * (s.tips.length === 2 ? TUNE.forkDrain : 1) + (s.inFrost ? (s.still > 0 ? 6 : 20) : 0);
+  if (!s.demo) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : s.still > 0 ? 0.6 : 1);
 
   // golden hour: sunlight drifts to your tips, slower drain, double points
+  if (s.golden > 0 || s.lure > 0) attract(s, dt);
   if (s.golden > 0) {
     s.golden -= dt;
-    for (const o of s.motes) {
-      if (o.kind !== 'sun' || o.taken || o.y < s.cy - 220 || o.y > s.cy + 30) continue;
-      let bt = null, bd = 150 * 150;
-      for (const tip of s.tips) { const dx = tip.x - o.x, dy = s.cy - o.y, d = dx * dx + dy * dy; if (d < bd) { bd = d; bt = tip; } }
-      if (bt) { const d = Math.sqrt(bd) || 1, v = Math.min(d, 380 * dt); o.x += ((bt.x - o.x) / d) * v; o.y += ((s.cy - o.y) / d) * v; }
-    }
     if (s.golden <= 0) { s.golden = 0; s.mult = Math.min(s.mult, 4); emit(s, 'goldenend'); }
   }
 
@@ -332,12 +359,13 @@ export function step(s, dt, input = {}) {
 
   // world update + spawning
   while (s.nextBeatY > s.cy - 1500) s.nextBeatY -= spawnBeat(s, s.nextBeatY);
+  const slow = s.still > 0 ? 0.25 : 1;
   for (const b of s.beetles) {
-    b.x += b.vx * dt; b.ph += dt * 10;
+    b.x += b.vx * dt * slow; b.ph += dt * 10 * slow;
     if (b.x < 18) { b.x = 18; b.vx = Math.abs(b.vx); }
     if (b.x > W - 18) { b.x = W - 18; b.vx = -Math.abs(b.vx); }
   }
-  for (const f of s.frosts) { f.x += f.vx * dt; f.ph += dt; if (f.x < f.r * 0.5 || f.x > W - f.r * 0.5) f.vx *= -1; }
+  for (const f of s.frosts) { f.x += f.vx * dt * slow; f.ph += dt; if (f.x < f.r * 0.5 || f.x > W - f.r * 0.5) f.vx *= -1; }
 
   collide(s);
   retract(s, dt);
@@ -371,6 +399,7 @@ function fork(s) {
   s.tips = [{ x: main.x, side: -1, path: a.id, staged: 0 }, { x: main.x, side: 1, path: b.id, staged: 0 }];
   s.forked = true;
   s.forkTime = 0;
+  s.forks++;
   // a commit dot marks the fork point
   mp.commits.push({ i: mp.pts.length - 1, kind: 'fork', born: s.t });
   emit(s, 'fork', { x: s.cx, y: s.cy });
@@ -398,6 +427,7 @@ function merge(s) {
     s.sap = Math.min(SAP_MAX, s.sap + 3 * staged);
     s.merges++;
     s.commits++;
+    if (s.charm && s.charge < CHARMS[s.charm].charge) { s.charge++; if (s.charge === CHARMS[s.charm].charge) emit(s, 'charged', { charm: s.charm }); }
     mc.commits.push({ i: 0, kind: 'merge', born: s.t });
     emit(s, 'merge', { x: s.cx, y: s.cy, staged, bonus, mult: s.mult });
     if (goldenNow) { s.golden = GOLDEN_SEC; s.goldens++; emit(s, 'golden', { x: s.cx, y: s.cy }); }
@@ -430,7 +460,7 @@ function hit(s, tipIdx, dmg) {
   if (s.invuln > 0) return;
   const tip = s.tips[tipIdx];
   if (s.shield) {
-    s.shield = false; s.invuln = 1;
+    s.shield = false; s.invuln = 1; s.blocks++;
     emit(s, 'shieldbreak', { x: tip.x, y: s.cy });
     return;
   }
@@ -496,6 +526,7 @@ function collide(s) {
     if (br.kind === 'split' && s.tips.length === 2) {
       const bonus = 40 * s.mult;
       s.score += bonus;
+      s.splits++;
       emit(s, 'splitpass', { x: s.cx, y: br.y, bonus });
     } else if (close) nearMiss(s, s.cx, br.y);
   }
@@ -537,10 +568,40 @@ function collect(s, o, tip) {
     s.sap = Math.min(SAP_MAX, s.sap + 30);
     s.score += 25 * s.mult;
     emit(s, 'dew', { x: o.x, y: o.y });
+  } else if (o.kind === 'acorn') {
+    s.acorns++;
+    s.score += 5 * s.mult;
+    emit(s, 'acorn', { x: o.x, y: o.y, n: s.acorns });
   } else if (o.kind === 'bark') {
     s.shield = true;
     emit(s, 'shield', { x: o.x, y: o.y });
   }
+}
+
+function attract(s, dt) {
+  // golden hour and Sun Call: sunlight (and acorns) drift to the nearest tip
+  for (const o of s.motes) {
+    if ((o.kind !== 'sun' && o.kind !== 'acorn') || o.taken || o.y < s.cy - 220 || o.y > s.cy + 30) continue;
+    let bt = null, bd = 150 * 150;
+    for (const tip of s.tips) { const dx = tip.x - o.x, dy = s.cy - o.y, d = dx * dx + dy * dy; if (d < bd) { bd = d; bt = tip; } }
+    if (bt) { const d = Math.sqrt(bd) || 1, v = Math.min(d, 380 * dt); o.x += ((bt.x - o.x) / d) * v; o.y += ((s.cy - o.y) / d) * v; }
+  }
+}
+
+export function charmReady(s) {
+  return !!s.charm && !s.dead && s.charge >= CHARMS[s.charm].charge;
+}
+
+function useCharm(s) {
+  if (!charmReady(s)) return;
+  const c = s.charm;
+  s.charge = 0;
+  s.charmUses++;
+  if (c === 'ward') s.shield = true;
+  else if (c === 'sun') s.lure = CHARMS.sun.dur;
+  else if (c === 'roots') { s.sap = Math.min(SAP_MAX, s.sap + 25); s.mult = Math.max(1, s.mult - 2); }
+  else if (c === 'still') s.still = CHARMS.still.dur;
+  emit(s, 'charm', { charm: c, x: s.cx, y: s.cy });
 }
 
 function retract(s, dt) {
@@ -572,6 +633,14 @@ export function summary(s) {
     nearMisses: s.nearMisses,
     blooms: s.blooms,
     goldens: s.goldens,
+    forks: s.forks,
+    splits: s.splits,
+    acorns: s.acorns,
+    charmUses: s.charmUses,
+    blocks: s.blocks,
+    hits: s.hits,
+    charm: s.charm,
+    pure: s.pure,
     stage: STAGES[s.stageIdx].name,
     time: s.t,
     hash: treeHash([s.seed, Math.floor(s.score), ...pts]),
