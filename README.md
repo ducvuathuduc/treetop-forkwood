@@ -22,6 +22,7 @@ It is version control you can feel: commits are leaves, forks and merges are rea
 |---|---|---|
 | Steer the growing tip | mouse, or ← → / A D | drag anywhere (relative, so your thumb never covers the tip) |
 | **Fork** / **merge** | click, or Space / ↑ | tap |
+| Fire your charm (from level 2) | E or Shift | tap the charm badge, bottom left |
 | Restart instantly | R | Grow again |
 | Pause / mute | P or Esc / M | buttons, top right |
 
@@ -40,6 +41,18 @@ It is version control you can feel: commits are leaves, forks and merges are rea
 * **Postcard of your tree:** game over shows the whole tree you grew, blossoms and all, with height, score and its hash. Share it (Web Share, or copy/download the PNG).
 * Local stats only (best height and score, runs, treetops reached). No accounts, no tracking, no network calls to anyone.
 
+## Grow with it: acorns, levels, charms and skins
+
+None of this gets in the way of the first run: a new player sees the same one-screen title and plays straight away. From the second run on, the tree starts to grow with you.
+
+* **Acorns** are earned only by playing: pick them up in the sky, and every run pays for its height, merges, blooms and golden hours. Nothing is sold for money, there are no ads and no accounts.
+* **Levels with three goals each**, written by hand for the first twelve levels (one that teaches, one that stretches, one you will do anyway), then generated. Finish all three to level up.
+* **Daily and weekly challenges** (three each, the same for everyone on a given day) and a **daily gift** with a 7-day streak calendar. Every 7th day adds a frost guard that saves one missed day.
+* **18 badges**, stamped like a printer's seal.
+* **Charms**: take one into a run. Scoring merges charge it, and **E / Shift** or a tap on the charm badge fires it: *Bark Ward* (shield), *Sun Call* (sunlight drifts to you), *Deep Roots* (+25 sap, but combo −2) and *Stillness* (hazards slow down). Each is a small, measured edge (the bot measures +1% to +11% median height). **The daily tree and challenge links never use charms**, so those stay the same for everyone.
+* **The shop**: 26 skins in six slots (bark, leaves, blossom, branch tip, sky plate, postcard), all drawn in the same woodblock style: birch bark with ink marks, needle, maple and ginkgo leaves, an acorn-cap or paper-lantern tip, a Prussian-blue or risograph sky, a perforated postage-stamp postcard. Skins never change the game. One item a day is 25% off.
+* **Rings** (your profile): lifetime stats and your five tallest trees, stored only on your device.
+
 ## What is original here
 
 * A growth game where the **shape of your tree is the record of how you played**: every fork, merge, bloom, hit and revert stays visible in the wood.
@@ -52,16 +65,21 @@ It is version control you can feel: commits are leaves, forks and merges are rea
 * **Type:** Fraunces for the big numbers and banners, Bricolage Grotesque for the interface, JetBrains Mono for scores and hashes.
 * **Game feel:** trauma-based screen shake with smooth noise, hit-stop on hits, merges and golden hour, a camera punch that scales with the combo, sunlight that flies into the sap meter, a bud that squashes and stretches, numbers that pop in and shrink away, a seed that bursts out of the soil when you press Grow, and a slow-motion first fork.
 * **Sound:** the music is generated live (an FM kalimba over a four-chord loop in each stage's key, with bass, soft drums and a generated reverb). It speeds up and thickens as you climb, closes in when your sap runs low and shimmers during golden hour. Effects layer synth tones over CC0 wooden foley from Kenney.
+* **Signature moments:** the first frame is "pulled" like a fresh print (an ink roller lifts the paper off the scene), each new stage rolls its colour plate across the screen, and every postcard is printed in and sealed with your grower level and print number.
 * **Calm mode** (title screen, on automatically with the system's reduce-motion setting) turns off shake, flashes, vibration and interface animation.
 
 ## Tech notes
 
-* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, no third-party requests. First load is about 250 KB including fonts and sound.
+* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, no third-party requests. First load is about 340 KB uncompressed including fonts and sound.
+* One small library: [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT) renders the short menu and charm sounds. It is vendored in `src/vendor/` and only loaded after your first tap. Bigger engines (PixiJS, Phaser, Howler, GSAP, Matter.js, Lottie) were considered and left out: the game already runs at 60 fps in Canvas 2D, and they would have multiplied the load size or broken the deterministic simulation.
+* Progress lives in one `localStorage` save (`src/meta.js`), with an automatic upgrade from the first public build's save (your best, runs and settings carry over, plus acorns for the metres you already grew).
 * Runs at 60 fps in headless Chromium at 1280×800 and on phone viewports, with about 1.5 ms of JavaScript per frame.
 * Deterministic simulation (`src/sim.js`) shared by the game and a **headless auto-playtest bot** (`src/bot.js`), used to tune difficulty: over 120 seeded runs per skill level, a weak bot's median run is about 54 s and an expert's about 106 s (`npm run balance`).
 * `tests/fairness.mjs` generates 300 seeded courses to 1,200 m and checks that every gap fits, every split gate fits a forked pair, and every gate is reachable from the one before it.
 * `tests/tutorial.mjs` plays the first-run coach through the real game loop on desktop and two phone sizes and checks that the coach card and stage banners never overlap.
 * `tests/smoke.mjs` plays the game in headless Chromium with a real mouse, touch drags and taps, checks challenge links, and fails on any console error.
+* `tests/meta.mjs` checks the progression rules without a browser: save upgrade and repair, gifts and streaks, shop rules, challenges and badges, that charms never touch pure runs or the course, the charm balance band, and economy pacing with the real simulation and bot.
+* `tests/meta-ui.mjs` plays the meta layer in headless Chromium: first visit untouched, rewards after a real run, gift, buying and wearing skins, charms in play (and off on the daily tree), persistence across reloads, the old-save upgrade, a corrupt save, phone layouts, frame time and console errors.
 * `tests/extra.mjs` checks reduced motion (calm mode, no shake), that a tap on a phone unlocks audio and decodes the sound sprite, the payload budget, and that nothing is requested from another origin.
 
 ## Run locally
@@ -73,7 +91,19 @@ npm run fairness              # course fairness check
 npm run tutorial              # first-run coach test (needs Playwright + Chromium)
 npm run smoke                 # browser smoke test (needs Playwright + Chromium)
 npm run extra                 # reduced motion, audio unlock, payload, origins
+npm run meta                  # progression rules + economy pacing (Node 18+)
+npm run meta-ui               # meta layer in the browser (needs Playwright + Chromium)
 ```
+
+## Progress screens
+
+| Shop: skins drawn in the print style | Goals, gift streak and challenges | Rewards after a run |
+|---|---|---|
+| ![Shop with a daily deal and bark skins](screenshots/09-shop-desktop.jpg) | ![Goals page on a phone: level goals and the 7-day gift calendar](screenshots/10-goals-phone.jpg) | ![Game over with acorns earned, level-up and badge stamps](screenshots/04-gameover-desktop.jpg) |
+
+| Skins in play: cherry bark, maple leaves, acorn tip, Prussian-blue sky | Postage-stamp postcard with the grower's seal |
+|---|---|
+| ![Play with skins](screenshots/11-skins-play.jpg) | ![Perforated postcard](screenshots/12-postcard-stamp.jpg) |
 
 ## More screenshots
 
