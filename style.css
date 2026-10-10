@@ -277,10 +277,12 @@ body.book #topbar, body.book .metabar, body.book .dock { display: none; }
 #over.show .stamp { animation: stamp .42s var(--spring) var(--d) both; }
 
 /* toasts and flying acorns */
-.toasts { position: fixed; z-index: 30; left: 50%; bottom: max(96px, calc(env(safe-area-inset-bottom) + 90px)); transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; width: min(92vw, 440px); }
+/* toasts drop from the top edge, under the wallet bar, so they never sit on a button */
+.toasts { position: fixed; z-index: 30; left: 50%; top: calc(max(12px, env(safe-area-inset-top)) + 50px); transform: translateX(-50%); display: flex; flex-direction: column; gap: 5px; align-items: center; pointer-events: none; width: min(92vw, 440px); }
 .toast { margin: 0; display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--ink); font-size: 14px; font-weight: 700; animation: rise .45s var(--spring) both; transition: opacity .35s, transform .35s; }
 .toast .ico { width: 26px; height: 26px; flex: none; }
-.toast.out { opacity: 0; transform: translateY(8px); }
+.toast.out { opacity: 0; transform: translateY(-8px); }
+@media (max-width: 520px) { .toast { font-size: 13px; padding: 5px 10px 5px 6px; } .toast .ico { width: 22px; height: 22px; } }
 .fly { position: fixed; left: 0; top: 0; width: 24px; height: 24px; z-index: 40; pointer-events: none; }
 
 /* the print pull: a sheet of paper lifts off the freshly printed scene */
