@@ -151,5 +151,24 @@ function play(seed, skill, charm) {
   ok(runsToAll >= 45 && runsToAll <= 200, `buying the whole shop takes a mid player ~${runsToAll} runs (shop total ${total} acorns): long tail, not a grind wall`);
 }
 
+
+// ---------------------------------------------------------------- pass 3: new content in goals, retired gates
+{
+  const T = (k, n, run = true) => ({ k, n, run, p: 0, done: false });
+  // a save from the previous build parked at level 5 waiting on "Play the daily tree"
+  const S = M.freshSave('2026-10-10'); S.level = 5; S.goals = [T('mult', 5), { ...T('merges', 8), p: 8, done: true }, T('daily', 1)];
+  const R = M.repair(JSON.parse(JSON.stringify(S)), '2026-10-10');
+  ok(!R.goals.some((g) => g.k === 'daily') && R.goals.some((g) => g.k === 'pickups') && R.goals[1].done, 'level 5 no longer waits on the daily tree; finished goals stay finished');
+  const S11 = M.freshSave('2026-10-10'); S11.level = 11; S11.goals = [T('mult', 8), T('blooms', 4), T('daily', 5, false)];
+  const R11 = M.repair(JSON.parse(JSON.stringify(S11)), '2026-10-10');
+  ok(!R11.goals.some((g) => g.k === 'daily') && R11.goals.some((g) => g.k === 'storm'), 'level 11 trades its daily-tree goal for the storm');
+  ok(M.LEVELS.every((L) => L.every((t) => t.k !== 'daily')), 'no hand-made level requires the daily tree');
+  const kinds = new Set(M.LEVELS.flat().map((t) => t.k));
+  ok(['grafts', 'pickups', 'storm', 'graze', 'jit'].every((k) => kinds.has(k)), 'levels use the new content: grafts, power-ups, storm, graze chains, just-in-time merges');
+  const g = T('grafts', 2), sum = { grafts: 2, pickups: 3, storms: 1, grazeBest: 4, jits: 1, height: 500 };
+  ok(M.advance(g, sum) && M.describe(g) === 'Take 2 grafts in one run', 'graft goals progress from a run summary');
+  const Sx = M.freshSave('2026-10-10'); const out = M.finishRun(Sx, { ...sum, score: 1000, merges: 3, maxMult: 3, nearMisses: 2, blooms: 1, goldens: 0, acorns: 2, forks: 4, splits: 1, charmUses: 0, reverts: 0, hits: 1, synergies: ['orchard'], time: 80 }, { now: new Date('2026-10-10T10:00:00Z') });
+  ok(Sx.stats.grafts === 2 && Sx.stats.storms === 1 && Sx.ach.weathered && Sx.ach.kindred && out.achs.includes('weathered'), 'run stats track grafts and storms; Weathered and Kindred grafts badges unlock');
+}
 if (fails.length) { console.log(`\n${fails.length} FAILED`); process.exit(1); }
 console.log('\nmeta checks OK');
