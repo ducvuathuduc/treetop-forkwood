@@ -2,7 +2,8 @@
 // Background layers are flat and soft (no outlines); everything you play with
 // carries the same warm ink outline, so the gameplay layer always reads first.
 // The sky is posterised into stepped bands, and a paper grain sits on top.
-import { W, PX_PER_M, STAGES, SKY_STOPS, SAP_MAX, heightM, stageIndexFor } from './sim.js';
+import { W, PX_PER_M, STAGES, SAP_MAX, CHARMS, heightM, stageIndexFor } from './sim.js';
+import { THEME, leafColor } from './skins.js';
 
 const TAU = Math.PI * 2;
 export const INK = '#1e1a16';
@@ -34,6 +35,7 @@ export function stageBlend(m) {
   return { a, b, t, i };
 }
 export function skyAt(m) {
+  const SKY_STOPS = THEME.sky.stops;
   if (m <= SKY_STOPS[0][0]) return rgb(SKY_STOPS[0][1]);
   for (let i = 0; i < SKY_STOPS.length - 1; i++) {
     const [m0, c0] = SKY_STOPS[i], [m1, c1] = SKY_STOPS[i + 1];
@@ -58,7 +60,7 @@ function leafPath(ctx, x, y, len, ang, wide = 0.42) {
   ctx.quadraticCurveTo(cx, cy, x, y);
 }
 
-function blossom(ctx, x, y, r, rot, petal, px) {
+export function blossom(ctx, x, y, r, rot, petal, px) {
   // five-petal flower with an ink outline (full-bloom marker)
   ctx.fillStyle = INK;
   ctx.beginPath();
@@ -69,7 +71,62 @@ function blossom(ctx, x, y, r, rot, petal, px) {
   for (let k = 0; k < 5; k++) { const a = rot + k * TAU / 5; ctx.moveTo(x + Math.cos(a) * r * 0.9 + r * 0.62, y + Math.sin(a) * r * 0.9); ctx.arc(x + Math.cos(a) * r * 0.9, y + Math.sin(a) * r * 0.9, r * 0.62, 0, TAU); }
   ctx.fill();
   ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, y, r * 0.42 + 1.4 * px, 0, TAU); ctx.fill();
-  ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(x, y, r * 0.42, 0, TAU); ctx.fill();
+  ctx.fillStyle = THEME.blossom.center; ctx.beginPath(); ctx.arc(x, y, r * 0.42, 0, TAU); ctx.fill();
+}
+
+/** The growing tip, in the equipped style. Drawn around (0,0), pointing up. */
+export function drawBud(ctx, gold, scale = 1) {
+  const B = THEME.bud;
+  const body = gold ? '#f2c14a' : B.body, hi = gold ? '#fff0b8' : B.hi;
+  ctx.save(); ctx.scale(scale, scale);
+  ctx.lineJoin = 'round';
+  if (B.shape === 'acorn') {
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, 0, 9.5, 12, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, 0.5, 7, 9.5, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = hi; ctx.beginPath(); ctx.ellipse(-2.4, 2, 2.2, 4, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, -7, 11, 6.5, 0, Math.PI, TAU); ctx.lineTo(11, -5); ctx.lineTo(-11, -5); ctx.fill();
+    ctx.fillStyle = gold ? '#b5791f' : B.cap; ctx.beginPath(); ctx.ellipse(0, -7, 9, 4.6, 0, Math.PI, TAU); ctx.lineTo(9, -6.2); ctx.lineTo(-9, -6.2); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-5, -9); ctx.lineTo(-3, -6.5); ctx.moveTo(0, -10.5); ctx.lineTo(0, -7); ctx.moveTo(5, -9); ctx.lineTo(3, -6.5); ctx.stroke();
+    ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(1.5, -15); ctx.stroke();
+  } else if (B.shape === 'cone') {
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, -2, 9.5, 14, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, -2, 7, 11.5, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.6;
+    for (let r = 0; r < 4; r++) { const y = -10 + r * 5; ctx.beginPath(); ctx.moveTo(-6, y); ctx.quadraticCurveTo(-3, y + 3, 0, y); ctx.quadraticCurveTo(3, y + 3, 6, y); ctx.stroke(); }
+    ctx.fillStyle = hi; ctx.beginPath(); ctx.ellipse(-2.5, -6, 1.6, 3, 0, 0, TAU); ctx.fill();
+  } else if (B.shape === 'lantern') {
+    ctx.fillStyle = gold ? 'rgba(255,214,110,0.35)' : 'rgba(255,190,90,0.3)'; ctx.beginPath(); ctx.arc(0, -2, 17, 0, TAU); ctx.fill();
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, -2, 10.5, 12.5, 0, 0, TAU); ctx.fill(); ctx.fillRect(-6, -17, 12, 5); ctx.fillRect(-5, 9, 10, 4);
+    ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, -2, 8, 10.2, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = hi; ctx.beginPath(); ctx.ellipse(0, -2, 3.2, 7, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.3;
+    for (const yy of [-8, -2, 4]) { ctx.beginPath(); ctx.moveTo(-7.4, yy); ctx.quadraticCurveTo(0, yy + 2, 7.4, yy); ctx.stroke(); }
+  } else {
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, -2, 9.5, 13.5, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, -2, 7, 11, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = hi; ctx.beginPath(); ctx.ellipse(-2, -5, 3, 5.5, 0, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** One leaf of the equipped leaf skin (outline + fill), drawn as a path set. */
+export function skinLeaf(ctx, x, y, len, ang, fill, lw) {
+  const shape = THEME.leaf.shape;
+  ctx.beginPath();
+  if (shape === 'needle') {
+    for (const da of [-0.32, 0, 0.32]) leafPath(ctx, x, y, len * (da ? 0.85 : 1.05), ang + da, 0.13);
+  } else if (shape === 'maple') {
+    leafPath(ctx, x, y, len * 1.05, ang, 0.36); leafPath(ctx, x, y, len * 0.72, ang - 0.75, 0.38); leafPath(ctx, x, y, len * 0.72, ang + 0.75, 0.38);
+  } else if (shape === 'ginkgo') {
+    const c = Math.cos(ang), sn = Math.sin(ang);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + c * len * 0.45, y + sn * len * 0.45);
+    ctx.arc(x + c * len * 0.45, y + sn * len * 0.45, len * 0.55, ang - 0.95, ang + 0.95);
+    ctx.lineTo(x + c * len * 0.45, y + sn * len * 0.45);
+    ctx.closePath();
+  } else leafPath(ctx, x, y, len, ang);
+  ctx.lineWidth = lw; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.fillStyle = fill; ctx.fill();
 }
 
 export function flagPath(ctx, x, y, s) {
@@ -119,13 +176,30 @@ export function drawTree(ctx, s, now, topY, botY, px) {
           bucket = bk;
           ctx.beginPath();
           ctx.lineWidth = Math.max(px * 1.1, w);
-          ctx.strokeStyle = pass === 0 ? (rev ? '#5a1820' : INK) : pass === 1 ? (rev ? CORAL : '#6b4429') : (rev ? 'rgba(255,214,200,0.5)' : '#a8744a');
+          ctx.strokeStyle = pass === 0 ? (rev ? '#5a1820' : INK) : pass === 1 ? (rev ? CORAL : THEME.bark.wood) : (rev ? 'rgba(255,214,200,0.5)' : THEME.bark.light);
           ctx.moveTo(a.x - (pass === 2 ? widthAt(p, a, now) * 0.2 : 0), a.y);
         }
         ctx.lineTo(b.x - (pass === 2 ? widthAt(p, b, now) * 0.2 : 0), b.y);
       }
       if (bucket >= 0) ctx.stroke();
     }
+  }
+  // birch-style ink marks across the bark
+  if (THEME.bark.mark && px < 2.5) {
+    ctx.strokeStyle = THEME.bark.mark; ctx.lineCap = 'butt';
+    for (const p of s.paths) {
+      if (p.state === 'gone' || p.state === 'reverting' || p.pts.length < 8) continue;
+      const pts = p.pts;
+      const i0 = Math.max(0, findIndexBelow(pts, botY + 40) - 1), i1 = Math.min(pts.length - 1, findIndexBelow(pts, topY - 40) + 1);
+      for (let i = i0 - (i0 % 5); i < i1 - 3; i += 5) {
+        if (i < 2 || hash(i * 1.7 + p.id) < 0.45) continue;
+        const a = pts[i], w = widthAt(p, a, now);
+        if (w < 7) continue;
+        ctx.lineWidth = 2 + hash(i) * 2;
+        ctx.beginPath(); ctx.moveTo(a.x - w * 0.42, a.y); ctx.lineTo(a.x - w * 0.42 + w * (0.3 + hash(i + 3) * 0.4), a.y + 1); ctx.stroke();
+      }
+    }
+    ctx.lineCap = 'round';
   }
   // fresh green growth near each live tip
   for (const p of s.paths) {
@@ -134,7 +208,8 @@ export function drawTree(ctx, s, now, topY, botY, px) {
     for (let i = k0; i < n - 1; i++) {
       const a = pts[i], b = pts[i + 1];
       const t = (i - k0) / (n - k0);
-      ctx.strokeStyle = t < 0.33 ? '#7d8f3a' : t < 0.66 ? '#8fb14a' : '#a9cf5a';
+      const fr = THEME.bark.fresh;
+      ctx.strokeStyle = t < 0.33 ? fr[0] : t < 0.66 ? fr[1] : fr[2];
       ctx.lineWidth = widthAt(p, a, now) * 0.86;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
@@ -156,7 +231,7 @@ export function drawTree(ctx, s, now, topY, botY, px) {
           const pb = g2 < 1 ? easeBack(g2) : 1;
           for (let k = 0; k < 3; k++) {
             const h = hash(c.i * 3 + k);
-            blossom(ctx, pt.x + (k - 1) * 15 * pb, pt.y - 6 - (k % 2) * 12 * pb, (7 + h * 3) * pb * Math.max(1, px * 0.7), now * 0.3 + h * 6, k === 1 ? '#fff4ec' : '#f7b6c8', px);
+            blossom(ctx, pt.x + (k - 1) * 15 * pb, pt.y - 6 - (k % 2) * 12 * pb, (7 + h * 3) * pb * Math.max(1, px * 0.7), now * 0.3 + h * 6, k === 1 ? THEME.blossom.alt : THEME.blossom.petal, px);
           }
         }
         continue;
@@ -180,16 +255,16 @@ export function drawTree(ctx, s, now, topY, botY, px) {
 
 function drawLeaves(ctx, x, y, seed, now, pop, color, kind, px) {
   const n = kind === 'merge' ? 4 : 2;
-  const dark = mix(color, '#1e1a16', 0.28);
+  const skinned = !!THEME.leaf.leaves;
+  if (skinned) color = leafColor(null, 0);
+  const dark = skinned ? leafColor(null, 1) : mix(color, '#1e1a16', 0.28);
   for (let j = 0; j < n; j++) {
     const side = j % 2 === 0 ? 1 : -1;
     const h = hash(seed * 13 + j);
     const ang = side * (0.7 + h * 0.6) - Math.PI / 2 + Math.sin(now * 1.6 + seed * 0.3 + j) * 0.08;
     const len = (14 + h * 9) * pop * (kind === 'merge' ? 1.2 : 1);
-    ctx.beginPath(); leafPath(ctx, x, y, len, ang);
-    ctx.lineWidth = 2.6 * Math.max(1, px * 0.8); ctx.strokeStyle = INK; ctx.stroke();
-    ctx.fillStyle = j >= 2 ? '#f7d9a8' : j % 2 ? dark : color; ctx.fill();
-    if (px < 1.6) {
+    skinLeaf(ctx, x, y, len, ang, j >= 2 ? (skinned ? mix(color, '#f4ecd8', 0.45) : '#f7d9a8') : j % 2 ? dark : color, 2.6 * Math.max(1, px * 0.8));
+    if (px < 1.6 && THEME.leaf.shape === 'leaf') {
       ctx.strokeStyle = 'rgba(30,26,22,0.45)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x + Math.cos(ang) * 2, y + Math.sin(ang) * 2); ctx.lineTo(x + Math.cos(ang) * len * 0.8, y + Math.sin(ang) * len * 0.8); ctx.stroke();
     }
@@ -264,7 +339,7 @@ export class Renderer {
     // ---- screen-space atmosphere: the top leans toward the next stage, in steps
     this._screen(ctx);
     const nxt = STAGES[Math.min(STAGES.length - 1, sb.i + 1)];
-    const nc = rgb(nxt.sky === sb.a.sky ? '#0a0c28' : nxt.sky);
+    const nc = THEME.sky.id === 'sky.print' ? rgb(nxt.sky === sb.a.sky ? '#0a0c28' : nxt.sky) : skyAt(nxt.m === sb.a.m ? 1200 : nxt.m + 60);
     for (let i = 0; i < 4; i++) { ctx.fillStyle = css(nc, 0.13); ctx.fillRect(0, 0, cw, ch * (0.42 - i * 0.1)); }
     if (night > 0) {
       for (let i = 0; i < 80; i++) {
@@ -313,6 +388,19 @@ export class Renderer {
       for (let i = 0; i < 3; i++) { ctx.strokeStyle = `rgba(122,26,20,${(a * (1 - i * 0.28)).toFixed(3)})`; ctx.lineWidth = 18 + i * 22; ctx.strokeRect(0, 0, cw, ch); }
     }
     if (fx.flash > 0) { ctx.fillStyle = `rgba(${fx.flashColor},${(fx.flash * 0.3).toFixed(3)})`; ctx.fillRect(0, 0, cw, ch); }
+    // stage change: the next colour plate is rolled across the print
+    if (fx.plate && !ui.calm) {
+      const k = Math.min(1, fx.plate.t / 0.7), x = cw * (k < 1 ? 1 - Math.pow(1 - k, 2) : 1) * 1.08 - 20;
+      const fade = fx.plate.t < 0.7 ? 1 : Math.max(0, 1 - (fx.plate.t - 0.7) / 0.5);
+      const c = rgb(fx.plate.color);
+      ctx.fillStyle = css(c, 0.22 * fade); ctx.fillRect(0, 0, Math.max(0, x), ch);
+      if (k < 1) {
+        ctx.fillStyle = 'rgba(30,26,22,0.16)'; ctx.fillRect(x + 18, -10, 12, ch + 20);
+        ctx.fillStyle = INK; roundRect(ctx, x, -10, 18, ch + 20, 9); ctx.fill();
+        ctx.fillStyle = 'rgba(244,236,216,0.55)'; ctx.fillRect(x + 4, -10, 3, ch + 20);
+        ctx.fillStyle = css(c, 1); ctx.fillRect(x - 7, -10, 7, ch + 20);
+      }
+    }
     // paper grain over everything but the HUD
     ctx.globalAlpha = 1; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch);
     if (ui.hud) this.drawHud(ctx, s, fx, ui, now);
@@ -674,6 +762,11 @@ export class Renderer {
       ctx.strokeStyle = INK; ctx.lineWidth = 4.5; ctx.lineJoin = 'round'; ctx.stroke();
       ctx.fillStyle = '#78bfe0'; ctx.fill();
       ctx.fillStyle = '#f4fbff'; ctx.beginPath(); ctx.ellipse(o.x - r * 0.25, o.y, r * 0.15, r * 0.3, 0, 0, TAU); ctx.fill();
+    } else if (o.kind === 'acorn') {
+      const bob = Math.sin(now * 3 + o.ph) * 2;
+      ctx.save(); ctx.translate(o.x, o.y + bob); ctx.rotate(Math.sin(now * 2 + o.ph) * 0.18);
+      drawAcorn(ctx, 1);
+      ctx.restore();
     } else {
       // bark chip: one-hit shield
       ctx.beginPath();
@@ -742,9 +835,7 @@ export class Renderer {
       const wob = Math.sin(now * 12) * 0.05;
       const sx = 1 + sq * 0.45 - wob, sy = 1 - sq * 0.3 + wob;
       ctx.save(); ctx.translate(x, y); ctx.rotate(s.heading); ctx.scale(sx, sy);
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, -2, 9.5, 13.5, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = gold > 0 ? '#f2c14a' : '#6faa3c'; ctx.beginPath(); ctx.ellipse(0, -2, 7, 11, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = gold > 0 ? '#fff0b8' : '#c4e88a'; ctx.beginPath(); ctx.ellipse(-2, -5, 3, 5.5, 0, 0, TAU); ctx.fill();
+      drawBud(ctx, gold > 0);
       ctx.restore();
       if (s.shield) {
         ctx.setLineDash([6, 5]); ctx.lineDashOffset = -now * 20;
@@ -753,6 +844,40 @@ export class Renderer {
         ctx.setLineDash([]);
       }
     }
+  }
+
+  drawCharm(ctx, s, ui, now) {
+    // charm badge, bottom left: one ink segment per merge of charge
+    const C = CHARMS[s.charm];
+    const small = this.cw < 520;
+    const r = small ? 30 : 32;
+    const x = 18 + r + 10, y = this.ch - (small ? 40 : 44) - r - (ui.safeBottom || 0);
+    this.layout.charm = { x, y, r: r + 14 };
+    const ready = s.charge >= C.charge;
+    const active = s.lure > 0 ? s.lure / CHARMS.sun.dur : s.still > 0 ? s.still / CHARMS.still.dur : 0;
+    const pulse = ready ? 1 + Math.sin(now * 7) * 0.06 : 1;
+    ctx.save(); ctx.translate(x, y); ctx.scale(pulse, pulse);
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(3, 3, r, 0, TAU); ctx.fill();
+    ctx.fillStyle = ready ? OCHRE : PAPER; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke();
+    // charge segments
+    const n = C.charge, gap = 0.22;
+    ctx.lineCap = 'butt';
+    for (let i = 0; i < n; i++) {
+      const a0 = -Math.PI / 2 + i * TAU / n + gap / 2, a1 = a0 + TAU / n - gap;
+      ctx.strokeStyle = INK; ctx.lineWidth = 9; ctx.beginPath(); ctx.arc(0, 0, r + 7, a0 - 0.03, a1 + 0.03); ctx.stroke();
+      ctx.strokeStyle = i < s.charge ? (ready ? '#ffe08a' : MOSS) : PAPER; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(0, 0, r + 7, a0, a1); ctx.stroke();
+    }
+    if (active > 0) { ctx.strokeStyle = CORAL; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, r - 5, -Math.PI / 2, -Math.PI / 2 + TAU * active); ctx.stroke(); }
+    ctx.lineCap = 'round';
+    drawCharmIcon(ctx, s.charm, r * 0.95);
+    ctx.restore();
+    ctx.textAlign = 'center';
+    const lbl = ready ? (ui.touch ? 'TAP!' : 'PRESS E') : `${s.charge}/${n}`;
+    ctx.font = f(800, 11);
+    ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(lbl, x, y + r + 26);
+    ctx.fillStyle = ready ? '#ffe08a' : PAPER; ctx.fillText(lbl, x, y + r + 26);
+    ctx.textAlign = 'left';
   }
 
   drawParticles(ctx, fx, px) {
@@ -876,12 +1001,22 @@ export class Renderer {
     ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(st, cw / 2, by + bh + 17);
     ctx.fillStyle = s.golden > 0 ? '#ffe08a' : low ? '#ffc2b0' : PAPER; ctx.fillText(st, cw / 2, by + bh + 17);
     ctx.textAlign = 'left';
+    // acorns picked up this run
+    if (s.acorns > 0 || ui.acornPulse > 0) {
+      const ay = sy + (small ? 26 : 30), ap = 1 + (ui.acornPulse || 0) * 0.35;
+      ctx.save(); ctx.translate(30, ay - 6); ctx.scale(ap, ap); drawAcorn(ctx, 0.85); ctx.restore();
+      ctx.font = f(700, small ? 15 : 16, 'mono');
+      ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.strokeText(`${s.acorns}`, 46, ay);
+      ctx.fillStyle = '#f3cf8e'; ctx.fillText(`${s.acorns}`, 46, ay);
+    }
+    this.layout.charm = null;
+    if (s.charm) this.drawCharm(ctx, s, ui, now);
     this.drawLadder(ctx, s, ui, now);
     // coach card sits in its own slot under the HUD; the stage banner always
     // goes below it, so the two can never overlap
     const coachY = small ? 128 : Math.max(118, this.ch * 0.15);
     const coachH = small ? 66 : 72;
-    this.layout = { coach: null, banner: null };
+    this.layout.coach = null; this.layout.banner = null;
     if (ui.coach) { this.drawCoach(ctx, ui.coach, cw, coachY, now); this.layout.coach = { y0: coachY, y1: coachY + coachH + 4 }; }
     if (fx.banner) {
       const b = fx.banner, k = b.t / b.max;
@@ -949,4 +1084,40 @@ export function treeBounds(s) {
     for (const q of p.pts) { if (q.x < x0) x0 = q.x; if (q.x > x1) x1 = q.x; if (q.y < y0) y0 = q.y; if (q.y > y1) y1 = q.y; }
   }
   return { x0: x0 - 30, x1: x1 + 30, y0: y0 - 50, y1: Math.max(y1, 0) + 10 };
+}
+
+/** The acorn: meta currency, drawn as an inked woodblock acorn (about 22 px tall at k=1). */
+export function drawAcorn(ctx, k = 1) {
+  ctx.save(); ctx.scale(k, k); ctx.lineJoin = 'round';
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, 2, 8.6, 10, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#d99a52'; ctx.beginPath(); ctx.ellipse(0, 2.5, 6.4, 7.8, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#f3cf8e'; ctx.beginPath(); ctx.ellipse(-2.2, 4, 1.8, 3.4, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, -4, 10, 6, 0, Math.PI, TAU); ctx.lineTo(10, -2.4); ctx.quadraticCurveTo(0, 0.6, -10, -2.4); ctx.fill();
+  ctx.fillStyle = '#7a4a22'; ctx.beginPath(); ctx.ellipse(0, -4, 8, 4.2, 0, Math.PI, TAU); ctx.lineTo(8, -3.4); ctx.quadraticCurveTo(0, -1.4, -8, -3.4); ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, -9); ctx.quadraticCurveTo(1, -12, 3, -13); ctx.stroke();
+  ctx.restore();
+}
+
+/** Charm emblems, inked like everything else; size ~ diameter in px. */
+export function drawCharmIcon(ctx, id, size = 40) {
+  const k = size / 40;
+  ctx.save(); ctx.scale(k, k); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const inked = (fill, lw = 3) => { ctx.lineWidth = lw; ctx.strokeStyle = INK; ctx.stroke(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } };
+  if (id === 'ward') {
+    ctx.beginPath(); for (let i = 0; i <= 6; i++) { const a = i * TAU / 6 + Math.PI / 6; const X = Math.cos(a) * 14, Y = Math.sin(a) * 14; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); } ctx.closePath();
+    inked('#c98a4a');
+    ctx.strokeStyle = '#7a4a22'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(-7, -3); ctx.lineTo(7, -3); ctx.moveTo(-6, 4); ctx.lineTo(4, 4); ctx.stroke();
+  } else if (id === 'sun') {
+    ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i * TAU / 8; ctx.moveTo(Math.cos(a) * 17, Math.sin(a) * 17); ctx.lineTo(Math.cos(a) * 12, Math.sin(a) * 12); } ctx.lineWidth = 5; ctx.strokeStyle = INK; ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = OCHRE; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, 8.5, 0, TAU); inked('#f6c445');
+    ctx.fillStyle = '#fff1c4'; ctx.beginPath(); ctx.arc(-2.5, -2.5, 3, 0, TAU); ctx.fill();
+  } else if (id === 'roots') {
+    ctx.beginPath(); ctx.moveTo(0, -15); ctx.quadraticCurveTo(9, -4, 0, 2); ctx.quadraticCurveTo(-9, -4, 0, -15); inked('#78bfe0', 2.8);
+    ctx.lineWidth = 3.4; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, 9); ctx.quadraticCurveTo(-4, 13, -12, 15); ctx.moveTo(0, 9); ctx.quadraticCurveTo(4, 13, 12, 15); ctx.moveTo(0, 9); ctx.lineTo(0, 17); ctx.stroke();
+  } else if (id === 'still') {
+    ctx.beginPath(); ctx.moveTo(-10, -15); ctx.lineTo(10, -15); ctx.lineTo(1.5, 0); ctx.lineTo(10, 15); ctx.lineTo(-10, 15); ctx.lineTo(-1.5, 0); ctx.closePath(); inked('#cfe6ff');
+    ctx.fillStyle = '#e8b32a'; ctx.beginPath(); ctx.moveTo(-6, 12.5); ctx.lineTo(6, 12.5); ctx.lineTo(0, 5); ctx.closePath(); ctx.fill();
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-13, -15); ctx.lineTo(13, -15); ctx.moveTo(-13, 15); ctx.lineTo(13, 15); ctx.stroke();
+  }
+  ctx.restore();
 }
