@@ -16,7 +16,11 @@ const base = process.env.URL || `http://localhost:${PORT}/`;
 const origin = new URL(base).origin;
 const fails = [];
 const ok = (cond, msg) => { console.log((cond ? 'ok   ' : 'FAIL ') + msg); if (!cond) fails.push(msg); };
-const browser = await chromium.launch();
+// honour an outbound proxy when testing a deployed URL from a sandbox
+const px = process.env.URL && (process.env.HTTPS_PROXY || process.env.https_proxy);
+let proxy;
+if (px) { const u = new URL(px); proxy = { server: `${u.protocol}//${u.host}`, username: decodeURIComponent(u.username) || undefined, password: decodeURIComponent(u.password) || undefined }; }
+const browser = await chromium.launch(proxy ? { proxy } : {});
 
 async function page(opts) {
   const ctx = await browser.newContext(opts);
