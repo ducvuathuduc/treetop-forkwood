@@ -3,3 +3,8 @@ node_modules/
 tests/out/
 STRATEGY.md
 QA-REPORT.md
+UPGRADE-PLAN.md
+media/*.webm
+media/*.mp4
+media/*.webm
+TREETOP-CHECKLIST.md
