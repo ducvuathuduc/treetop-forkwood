@@ -19,7 +19,10 @@ const OUT = ROOT + 'tests/out/';
 fs.mkdirSync(OUT, { recursive: true });
 const fails = [];
 const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg); if (!c) fails.push(msg); };
-const browser = await chromium.launch();
+const px = process.env.URL && (process.env.HTTPS_PROXY || process.env.https_proxy);
+let proxy;
+if (px) { const u = new URL(px); proxy = { server: `${u.protocol}//${u.host}`, username: decodeURIComponent(u.username) || undefined, password: decodeURIComponent(u.password) || undefined }; }
+const browser = await chromium.launch(proxy ? { proxy } : {});
 const allErrs = [];
 const DESK = { viewport: { width: 1280, height: 800 } };
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
