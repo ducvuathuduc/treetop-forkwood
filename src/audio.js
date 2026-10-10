@@ -373,6 +373,20 @@ export class Sound {
   charged() { if (!this.zzfx('charged', { vol: 0.3 })) this.kalimba(this._note(7, 1), { vol: 0.07, dec: 0.4 }); }
   click() { if (!this.sample('click', { vol: 0.5 })) this.tone(this._note(2, 1), { dec: 0.06, vol: 0.08, type: 'sine' }); }
   toggle() { if (!this.sample('toggle', { vol: 0.5 })) this.click(); }
+  // pass 3: power-ups, grafts, the storm
+  pickup(kind) {
+    if (kind === 'rush') { this.sample('fork', { vol: 0.5, rate: 0.8 }); this.noise({ dec: 0.5, vol: 0.12, f0: 400, f1: 3000, type: 'bandpass', q: 1.5 }); [0, 4, 7, 12].forEach((d, i) => this.kalimba(this._note(d, 1), { t: i * 0.04, vol: 0.07, dec: 0.5, verb: 0.3 })); }
+    else if (kind === 'ink') { if (!this.zzfx('stamp', { vol: 0.4 })) this.noise({ dec: 0.12, vol: 0.2, f0: 900, f1: 120 }); this.kalimba(this._note(7, 1), { t: 0.05, vol: 0.08, dec: 0.5 }); }
+    else { if (!this.zzfx('sun', { vol: 0.35 })) this.tone(this._note(4, 1), { dec: 0.3, vol: 0.08, slide: 1.5 }); }
+  }
+  puEnd() { this.tone(this._note(2, 1), { dec: 0.18, vol: 0.05, type: 'sine', slide: 0.7 }); }
+  graft() { this.stamp(); [0, 4, 7].forEach((d, i) => this.kalimba(this._note(d, 1), { t: 0.08 + i * 0.08, vol: 0.09, dec: 0.8, verb: 0.5 })); }
+  synergy() { this.sparkle(); [7, 9, 12, 14].forEach((d, i) => this.kalimba(this._note(d, 1), { t: 0.15 + i * 0.07, vol: 0.08, dec: 0.9, verb: 0.6, bright: 1.4 })); }
+  storm() { this.noise({ dec: 2.2, vol: 0.22, f0: 300, f1: 60, verb: 0.4 }); this.tone(55, { type: 'sine', dec: 1.6, vol: 0.12, slide: 0.7 }); }
+  strike() { this.noise({ dec: 0.18, vol: 0.28, f0: 7000, f1: 900, type: 'bandpass', q: 0.8 }); this.noise({ t: 0.05, dec: 1.2, vol: 0.18, f0: 260, f1: 50, verb: 0.3 }); }
+  stormEnd() { [0, 2, 4, 7, 9].forEach((d, i) => this.kalimba(this._note(d, 1), { t: i * 0.07, vol: 0.09, dec: 0.9, verb: 0.6 })); }
+  graze(n) { [0, 2, 4].forEach((d, i) => this.kalimba(this._note(d + Math.min(4, n / 3), 1), { t: i * 0.05, vol: 0.06, dec: 0.4, verb: 0.3, bright: 1.3 })); }
+  jit() { this.sample('merge', { vol: 0.45, rate: 1.25 }); this.kalimba(this._note(9, 1), { t: 0.06, vol: 0.09, dec: 0.6, verb: 0.4, bright: 1.4 }); }
   tick(i) { this.kalimba(this._note(i % 10, 1), { vol: 0.035, dec: 0.12, verb: 0.1 }); }
 }
 
