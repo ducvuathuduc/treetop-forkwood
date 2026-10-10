@@ -11,6 +11,7 @@ export const SLOTS = [
   { id: 'bud', name: 'Branch tip', hint: 'the growing tip you steer' },
   { id: 'sky', name: 'Sky plate', hint: 'the posterised sky you climb' },
   { id: 'card', name: 'Postcard', hint: 'the print you share' },
+  { id: 'trail', name: 'Trail', hint: 'what your growing tip leaves behind' },
 ];
 
 // unlock: { cost } in acorns, or { level } / { ach } for earned-only items
@@ -56,14 +57,26 @@ export const SKINS = [
   { id: 'bud.ember', slot: 'bud', name: 'Ember cap', unlock: { prize: 'hardcore' }, shape: 'acorn', body: '#e2603f', hi: '#ffc27a', cap: '#2f2723' },
   { id: 'leaf.swift', slot: 'leaf', name: 'Swift maple', unlock: { prize: 'sprint' }, leaves: ['#4fae6a', '#a6dc6a'], shape: 'maple' },
   { id: 'bark.starwood', slot: 'bark', name: 'Starwood', unlock: { prize: 'allstars' }, wood: '#24366e', light: '#ffe08a', fresh: ['#5b7fc4', '#8fa8e0', '#cfe0ff'], mark: '#ffe08a' },
+  // pass 5: earned by streaks, the season track and the league (never sold), plus two shop trails
+  { id: 'trail.none', slot: 'trail', name: 'No trail', unlock: { free: true }, kind: 'none' },
+  { id: 'trail.leaves', slot: 'trail', name: 'Leaf litter', unlock: { cost: 280 }, kind: 'leaves', c: ['#6faa3c', '#a9cf5a'] },
+  { id: 'trail.sparks', slot: 'trail', name: 'Ember sparks', unlock: { cost: 450 }, kind: 'sparks', c: ['#f2b33d', '#e2603f'] },
+  { id: 'trail.pollen', slot: 'trail', name: 'Pollen', unlock: { season: 4 }, kind: 'pollen', c: ['#ffe46b', '#fff4b8'] },
+  { id: 'trail.petals', slot: 'trail', name: 'Plum petals', unlock: { season: 10 }, kind: 'petals', c: ['#f7b6c8', '#fff4ec'] },
+  { id: 'trail.fireflies', slot: 'trail', name: 'Fireflies', unlock: { streak: 30 }, kind: 'fireflies', c: ['#d8f27a', '#fffbd0'] },
+  { id: 'trail.ink', slot: 'trail', name: 'Ink drops', unlock: { league: 3 }, kind: 'ink', c: ['#1e1a16', '#3a3a5a'] },
+  { id: 'trail.stardust', slot: 'trail', name: 'Stardust', unlock: { season: 27 }, kind: 'stardust', c: ['#fff6d8', '#ffe08a'] },
+  { id: 'leaf.sakura', slot: 'leaf', name: 'Sakura', unlock: { season: 13 }, leaves: ['#f39ab8', '#ffd0de'], shape: 'leaf' },
+  { id: 'blossom.lotus', slot: 'blossom', name: 'Lotus', unlock: { season: 16 }, petal: '#ffc2d6', alt: '#ffffff', center: '#f2b33d' },
+  { id: 'bark.mossy', slot: 'bark', name: 'Mossy oak', unlock: { season: 21 }, wood: '#5a5434', light: '#9fb34a', fresh: ['#6f9a4a', '#8fb14a', '#b5d26a'] },
 ];
 export const SKIN = Object.fromEntries(SKINS.map((s) => [s.id, s]));
-export const DEFAULT_LOADOUT = { bark: 'bark.walnut', leaf: 'leaf.seasons', blossom: 'blossom.plum', bud: 'bud.sprout', sky: 'sky.print', card: 'card.cream' };
+export const DEFAULT_LOADOUT = { bark: 'bark.walnut', leaf: 'leaf.seasons', blossom: 'blossom.plum', bud: 'bud.sprout', sky: 'sky.print', card: 'card.cream', trail: 'trail.none' };
 
 /** The live theme the renderer and the postcard read. */
 export const THEME = {
   bark: SKIN['bark.walnut'], leaf: SKIN['leaf.seasons'], blossom: SKIN['blossom.plum'],
-  bud: SKIN['bud.sprout'], sky: SKIN['sky.print'], card: SKIN['card.cream'],
+  bud: SKIN['bud.sprout'], sky: SKIN['sky.print'], card: SKIN['card.cream'], trail: SKIN['trail.none'],
 };
 
 export function applyLoadout(loadout = {}) {
