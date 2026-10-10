@@ -134,7 +134,7 @@ export function renderCard(s, sum, meta) {
   const topM = Math.max(60, sum.height * 1.12);
   const bands = 18;
   for (let i = 0; i < bands; i++) {
-    const m = topM * (1 - (i + 0.5) / bands);
+    const m = topM * (1 - (i + 0.5) / bands) + ((s.R && s.R.biome) || 0);
     ctx.fillStyle = css(skyAt(m));
     ctx.fillRect(P.x, P.y + (P.h * i) / bands, P.w, P.h / bands + 1);
   }
@@ -178,6 +178,7 @@ export function renderCard(s, sum, meta) {
   // header on the paper
   ctx.fillStyle = CI; ctx.textAlign = 'left';
   ctx.font = f(800, 26); ctx.fillText('F O R K W O O D', 62, 86);
+  if (meta.title) { const tw0 = ctx.measureText('F O R K W O O D').width; ctx.font = f(700, 22); ctx.fillStyle = inkA(0.75); ctx.fillText(`· ${meta.title}`, 74 + tw0, 86); ctx.fillStyle = CI; }
   ctx.font = f(800, 168, 'display');
   const ht = `${sum.height}`;
   ctx.fillText(ht, 54, 236);
@@ -188,8 +189,21 @@ export function renderCard(s, sum, meta) {
   ctx.font = f(600, 26); ctx.fillStyle = inkA(0.8);
   ctx.fillText(`reached ${sum.stage}`, Wc - 60, 134);
   let ry = 170;
+  if (meta.modeLine) { ctx.fillText(meta.modeLine, Wc - 60, ry, 560); ry += 36; }
+  if (meta.stars) {
+    // quest stars: this run's stars inked, the level's best as outlines
+    for (let i = 0; i < 3; i++) {
+      const cx = Wc - 60 - 26 - (2 - i) * 58, cy = ry + 4;
+      ctx.beginPath();
+      for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 11 : 25; ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
+      ctx.closePath();
+      ctx.fillStyle = i < meta.stars.run ? OCHRE : CARD.paper; ctx.fill();
+      ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeStyle = CI; ctx.stroke();
+    }
+    ry += 48;
+  }
   if (meta.daily) { ctx.fillText(`Daily tree · ${meta.dailyLabel}`, Wc - 60, ry); ry += 36; }
-  if (meta.challenge) { ctx.fillText(meta.challenge.won ? `beat a friend's ${meta.challenge.m} m` : `friend's tree: ${meta.challenge.m} m`, Wc - 60, ry); ry += 36; }
+  if (meta.challenge) { const u = meta.challenge.pts ? ' pts' : ' m'; ctx.fillText(meta.challenge.won ? `beat a friend's ${meta.challenge.m.toLocaleString('en-US')}${u}` : `friend's best: ${meta.challenge.m.toLocaleString('en-US')}${u}`, Wc - 60, ry); ry += 36; }
   if (meta.newBest) {
     ctx.save(); ctx.translate(Wc - 160, Math.max(ry, 200) + 12); ctx.rotate(-0.06);
     ctx.fillStyle = INK; roundRect(ctx, -96, -26, 200, 54, 12); ctx.fill();
