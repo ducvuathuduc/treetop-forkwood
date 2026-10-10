@@ -1,10 +1,13 @@
 // Forkwood: game glue (input, camera, effects, UI, persistence).
-import { createSim, step, summary, heightM, W, PX_PER_M, STAGES, SAP_MAX } from './sim.js';
+import { createSim, step, summary, heightM, W, PX_PER_M, STAGES, SAP_MAX, CHARMS } from './sim.js';
 import { Renderer } from './render.js';
 import { Sound } from './audio.js';
 import { createBot, botInput } from './bot.js';
 import { renderCard, shareCard, downloadCard } from './share.js';
 import { dailySeed, dailyLabel } from './rng.js';
+import * as M from './meta.js';
+import { applyLoadout } from './skins.js';
+import { createMetaUI } from './ui-meta.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -22,12 +25,12 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } },
 };
 
-let best = store.get('forkwood.best', { score: 0, height: 0 });
-let tutorialDone = store.get('forkwood.tutorial', false);
-let stats = store.get('forkwood.stats', { runs: 0, meters: 0, merges: 0, treetops: 0, bestMult: 1 });
+// one save object for everything (meta.js migrates the first build's keys)
+let S = M.loadSave((k) => store.get(k, null));
+const persist = (apply = true) => { if (!BOT_MODE) store.set(M.SAVE_KEY, S); if (apply) applyLoadout(S.loadout); };
+persist();
 const motionQuery = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-let calm = store.get('forkwood.calm', null);
-const isCalm = () => (calm == null ? !!(motionQuery && motionQuery.matches) : calm);
+const isCalm = () => (S.calm == null ? !!(motionQuery && motionQuery.matches) : S.calm);
 
 // ------------------------------------------------------------------ state
 let mode = 'title';         // title | play | over
@@ -39,12 +42,14 @@ let botSkill = 0.8;
 let lastSum = null;
 let cardCanvas = null;
 let deathShown = false;
+let autoplay = false; // trailer capture: the bot plays a normal (saved) run in real time
 
 const cam = { x: W / 2, y: -200, scale: 1, anchor: 0.7, trauma: 0, punch: 0 };
 const fx = { particles: [], floaters: [], sparks: [], flash: 0, flashColor: '255,80,80', banner: null, shownScore: 0, shownSap: SAP_MAX, multPulse: 0, sapPulse: 0, squash: 0, hitStop: 0 };
 const input = { targetX: null, dir: 0, toggle: false, keys: new Set(), pointerId: null, downT: 0, downX: 0, downY: 0, moved: 0, anchor: W / 2, kind: window.matchMedia && matchMedia('(pointer: coarse)').matches ? 'touch' : 'mouse' };
 // first-run coach: steer -> fork -> merge, taught by doing (screen-space, never overlaps the world)
 const coach = { step: null, t: 0, collects: 0, retry: false, slow: false };
+const ui = createMetaUI({ getSave: () => S, persist, sound, isCalm, onOpen: () => { $('title').classList.remove('show'); }, onClose: () => { if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } else ui.refreshBar(mode); } });
 let timeScale = 1;
 const TREETOP_IDX = STAGES.findIndex((st) => st.name === 'Treetop');
 
@@ -55,6 +60,8 @@ function setMode(m) {
   $('over').classList.toggle('show', m === 'over');
   $('pause').classList.remove('show');
   paused = false;
+  if (m !== 'title') ui.hide();
+  ui.refreshBar(m);
 }
 
 function startDemo() {
@@ -66,15 +73,16 @@ function startDemo() {
 
 function resetFx() {
   fx.particles.length = 0; fx.floaters.length = 0; fx.sparks.length = 0; fx.flash = 0; fx.banner = null; fx.multPulse = 0; fx.sapPulse = 0; fx.squash = 0;
-  fx.shownScore = 0; fx.shownSap = SAP_MAX; fx.hitStop = 0; cam.trauma = 0; cam.punch = 0;
+  fx.shownScore = 0; fx.shownSap = SAP_MAX; fx.hitStop = 0; cam.trauma = 0; cam.punch = 0; fx.plate = null;
 }
 
 function startRun(isDaily = daily) {
   sound.unlock();
   daily = isDaily;
   const seed = daily ? dailySeed() : FIXED_SEED ?? ((Math.random() * 1e9) >>> 0);
-  const bestM = daily ? store.get('forkwood.daily.' + dailySeed(), { height: 0 }).height : CHALLENGE ? CHALLENGE.m : best.height;
-  sim = createSim({ seed, tutorial: !tutorialDone, bestM });
+  const bestM = daily ? store.get('forkwood.daily.' + dailySeed(), { height: 0 }).height : CHALLENGE ? CHALLENGE.m : S.best.height;
+  const pure = daily || !!CHALLENGE; // daily tree and challenge links: same rules for everyone, no charms
+  sim = createSim({ seed, tutorial: !S.tutorial, bestM, pure, charm: pure ? null : S.charm });
   coach.step = sim.tutorial ? 'steer' : null; coach.t = 0; coach.collects = 0; coach.retry = false; coach.slow = false;
   timeScale = 1;
   bot = createBot(botSkill, seed & 0xffff);
@@ -93,14 +101,16 @@ function startRun(isDaily = daily) {
   shake(5); fx.squash = 1;
   if (!sim.tutorial) {
     const goal = CHALLENGE && !daily ? { text: `BEAT ${CHALLENGE.m} m`, sub: 'same course as your friend' }
-      : best.height < STAGES[TREETOP_IDX].m ? { text: 'REACH THE TREETOP', sub: `${STAGES[TREETOP_IDX].m} m · fork, merge, climb` }
-      : { text: `BEAT ${daily ? bestM : best.height} m`, sub: daily ? `daily tree · ${dailyLabel()}` : 'your best · gold line' };
+      : daily ? { text: bestM > 0 ? `BEAT ${bestM} m` : 'DAILY TREE', sub: `${dailyLabel()} · same course for all · no charms` }
+      : S.best.height < STAGES[TREETOP_IDX].m ? { text: 'REACH THE TREETOP', sub: `${STAGES[TREETOP_IDX].m} m · fork, merge, climb` }
+      : { text: `BEAT ${S.best.height} m`, sub: sim.charm ? `your best · ${CHARMS[sim.charm].name} charm ready to charge` : 'your best · gold line' };
     fx.banner = { ...goal, t: 0, max: 2.2, small: true };
   }
 }
 
 function toMenu() {
   sound.stop();
+  if (sound.ready) sound.startMenu();
   setMode('title');
   refreshTitle();
   startDemo();
@@ -108,9 +118,10 @@ function toMenu() {
 
 function refreshTitle() {
   const bits = [];
-  if (best.score > 0) bits.push(`best ${best.height} m · ${best.score.toLocaleString('en-US')} pts`);
-  if (stats.runs > 0) bits.push(`${stats.runs} run${stats.runs === 1 ? '' : 's'}`);
-  if (stats.treetops > 0) bits.push(`treetop ×${stats.treetops}`);
+  if (S.best.score > 0) bits.push(`best ${S.best.height} m · ${S.best.score.toLocaleString('en-US')} pts`);
+  if (S.stats.runs > 0) bits.push(`${S.stats.runs} run${S.stats.runs === 1 ? '' : 's'}`);
+  if (S.stats.treetops > 0) bits.push(`treetop ×${S.stats.treetops}`);
+  ui.refreshBar(mode);
   $('title-best').textContent = bits.join(' · ');
   $('btn-calm').querySelector('.lbl').textContent = `Calm mode: ${isCalm() ? 'on' : 'off'}`;
   document.body.classList.toggle('calm', isCalm());
@@ -181,7 +192,7 @@ function updateCoach(s, dt) {
   if (coach.step === 'merge' && s.forked && s.brambles.some((b) => b.kind === 'gate' && b.y < y && b.y > y - 340)) coach.slow = true;
   if (coach.step === 'praise' && coach.t > 3.4) {
     coach.step = null;
-    if (!BOT_MODE) { tutorialDone = true; store.set('forkwood.tutorial', true); }
+    if (!BOT_MODE) { S.tutorial = true; persist(false); }
   }
   return coach.slow ? 0.22 : 1;
 }
@@ -259,6 +270,7 @@ function handleEvents(s, quiet) {
       case 'stage': {
         const st = STAGES[e.idx];
         sound.setStage(e.idx);
+        if (!quiet && !isCalm()) fx.plate = { t: 0, color: STAGES[e.idx].sky };
         if (!quiet && e.idx === TREETOP_IDX) {
           sound.stageUp(); sound.newBest();
           fx.banner = { text: 'Treetop', sub: 'you grew a whole tree · now reach the stars', t: 0, max: 3.4, gold: true };
@@ -266,6 +278,24 @@ function handleEvents(s, quiet) {
           for (let k = 0; k < 5; k++) burst(s.cx + (k - 2) * 70, s.cy - 80 - k * 20, 12, STAGES[e.idx].leaf, 340, 8, 1.8, 'leaf');
           burst(s.cx, s.cy - 60, 26, '#ffe08a', 420, 10, 1.0, 'spark');
         } else if (!quiet) { sound.stageUp(); fx.banner = { text: st.name, sub: `${st.m} m · +15 sap`, t: 0, max: 2.4 }; }
+        break;
+      }
+      case 'acorn':
+        burst(e.x, e.y, 5, '#d99a52', 150, 6, 0.5, 'leaf');
+        if (!quiet) { sound.acorn(e.n); fx.acornPulse = 1; floater(e.x, e.y - 16, '+1 acorn', '#f3cf8e', 15, 0.7); }
+        break;
+      case 'charged':
+        if (!quiet) { sound.charged(); floater(s.cx, s.cy - 70, `${CHARMS[e.charm].name} ready`, '#ffe08a', 19, 1.1); }
+        break;
+      case 'charm': {
+        const col = { ward: '#c98a4a', sun: '#f2b33d', roots: '#78bfe0', still: '#cfe6ff' }[e.charm];
+        ring(e.x, e.y, col, 140, 0.7); ring(e.x, e.y, '#f4ecd8', 90, 0.5);
+        burst(e.x, e.y, 16, col, 260, 8, 0.8, e.charm === 'sun' ? 'spark' : 'leaf');
+        if (!quiet) {
+          sound.charm(e.charm); shake(4); hitStop(0.05); vibrate(30);
+          flash(e.charm === 'still' ? '200,230,255' : e.charm === 'roots' ? '150,210,240' : '255,215,106', 0.35);
+          floater(e.x, e.y - 60, { ward: 'bark ward', sun: 'sun call', roots: '+25 sap · combo −2', still: 'stillness' }[e.charm], col, 24, 1.1);
+        }
         break;
       }
       case 'newbest':
@@ -293,8 +323,10 @@ function updateFx(dt) {
   if (fx.sparks.length && fx.sparks[0].t >= fx.sparks[0].max) { fx.sparks = fx.sparks.filter((sp) => sp.t < sp.max); fx.sapPulse = 1; }
   fx.sapPulse = Math.max(0, fx.sapPulse - dt * 4);
   fx.squash = Math.max(0, fx.squash - dt * 5);
+  fx.acornPulse = Math.max(0, (fx.acornPulse || 0) - dt * 4);
   cam.punch = Math.max(0, (cam.punch || 0) - dt * 0.25);
   if (fx.banner) { fx.banner.t += dt; if (fx.banner.t > fx.banner.max) fx.banner = null; }
+  if (fx.plate) { fx.plate.t += dt; if (fx.plate.t > 1.3) fx.plate = null; }
   if (sim) {
     fx.shownScore += (sim.score - fx.shownScore) * Math.min(1, dt * 10);
     if (Math.abs(sim.score - fx.shownScore) < 1) fx.shownScore = sim.score;
@@ -308,16 +340,14 @@ function showGameOver() {
   const sum = summary(sim);
   lastSum = sum;
   let newBest = false;
-  const prevBest = best.height;
+  const prevBest = S.best.height;
+  let rewards = null;
+  const before = S.acorns;
   if (!BOT_MODE) {
-    stats = { ...stats, runs: stats.runs + 1, meters: stats.meters + sum.height, merges: stats.merges + sum.merges,
-      treetops: stats.treetops + (sum.height >= STAGES[TREETOP_IDX].m ? 1 : 0), bestMult: Math.max(stats.bestMult, sum.maxMult) };
-    store.set('forkwood.stats', stats);
-    if (sum.score > best.score || sum.height > best.height) {
-      newBest = sum.score > best.score;
-      best = { score: Math.max(best.score, sum.score), height: Math.max(best.height, sum.height) };
-      store.set('forkwood.best', best);
-    }
+    const challengeWon = !!(CHALLENGE && !daily && sum.height > CHALLENGE.m);
+    rewards = M.finishRun(S, sum, { daily, challengeWon });
+    newBest = rewards.bestScore;
+    persist();
     if (daily) {
       const key = 'forkwood.daily.' + dailySeed();
       const d = store.get(key, { score: 0, height: 0 });
@@ -327,7 +357,7 @@ function showGameOver() {
   const url = location.host ? (location.host + location.pathname).replace(/index\.html$/, '').replace(/\/$/, '') : 'Forkwood';
   const challenge = CHALLENGE && !daily ? { m: CHALLENGE.m, won: sum.height > CHALLENGE.m } : null;
   try {
-    cardCanvas = renderCard(sim, sum, { daily, dailyLabel: dailyLabel(), newBest, url, seed: sim.seed, challenge });
+    cardCanvas = renderCard(sim, sum, { daily, dailyLabel: dailyLabel(), newBest, url, seed: sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs) });
     $('card-img').src = cardCanvas.toDataURL('image/png');
   } catch (e) {
     console.warn('card render failed', e && e.stack || e);
@@ -339,10 +369,11 @@ function showGameOver() {
     : (sum.height > prevBest && prevBest >= STAGES[TREETOP_IDX].m) ? 'Above the treetop and climbing. Stars next.' : runTip(sum);
   countUp(sum.height);
   $('over-kicker').classList.toggle('gold', !!(newBest || (challenge && challenge.won)));
-  $('over-score').textContent = `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(best.score, sum.score).toLocaleString('en-US')}`;
+  $('over-score').textContent = `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(S.best.score, sum.score).toLocaleString('en-US')}`;
   $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}`;
   $('share-msg').textContent = '';
   setMode('over');
+  ui.showRewards(rewards, { before });
   if (input.kind !== 'touch') $('btn-again').focus({ preventScroll: true });
 }
 
@@ -401,6 +432,8 @@ canvas.addEventListener('pointerdown', (e) => {
   input.kind = e.pointerType === 'mouse' ? 'mouse' : 'touch';
   if (mode === 'title') { startRun(false); return; }
   else if (mode === 'play' && paused) { resume(); return; }
+  const cz = renderer.layout.charm;
+  if (mode === 'play' && cz && Math.hypot(e.clientX - cz.x, e.clientY - cz.y) < cz.r) { input.charm = true; return; }
   input.pointerId = e.pointerId; input.downT = performance.now(); input.downX = e.clientX; input.downY = e.clientY; input.moved = 0;
   if (e.pointerType === 'mouse') input.targetX = worldX(e.clientX);
   else input.anchor = input.targetX ?? (sim ? sim.cx : W / 2);
@@ -431,6 +464,7 @@ window.addEventListener('keydown', (e) => {
   if (e.repeat && (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W')) return;
   sound.unlock();
   if (['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D', ' ', 'ArrowUp', 'w', 'W'].includes(k)) input.kind = 'key';
+  if (ui.isOpen) { if (k === 'Escape') ui.hide(); return; }
   if (k === 'm' || k === 'M') { toggleMute(); return; }
   if (k === 'r' || k === 'R') { startRun(daily && mode !== 'title'); return; }
   if (mode === 'title') { if (k === 'Enter' || k === ' ') startRun(false); else if (k === 'd' || k === 'D') startRun(true); return; }
@@ -440,6 +474,7 @@ window.addEventListener('keydown', (e) => {
   if (k === 'ArrowLeft' || k === 'a' || k === 'A') { input.keys.add('L'); input.targetX = null; }
   if (k === 'ArrowRight' || k === 'd' || k === 'D') { input.keys.add('R'); input.targetX = null; }
   if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') toggleFork();
+  if (k === 'e' || k === 'E' || k === 'Shift' || k === 'q' || k === 'Q') input.charm = true;
   input.dir = (input.keys.has('R') ? 1 : 0) - (input.keys.has('L') ? 1 : 0);
 });
 window.addEventListener('keyup', (e) => {
@@ -474,7 +509,7 @@ $('btn-daily').addEventListener('click', (e) => { e.stopPropagation(); startRun(
 $('btn-again').addEventListener('click', () => startRun(daily));
 $('btn-menu').addEventListener('click', toMenu);
 $('btn-menu-p').addEventListener('click', toMenu);
-$('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); calm = !isCalm(); store.set('forkwood.calm', calm); sound.unlock(); sound.toggle(); refreshTitle(); });
+$('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); S.calm = !isCalm(); persist(false); sound.unlock(); sound.toggle(); refreshTitle(); });
 $('btn-challenge').addEventListener('click', async () => {
   if (!lastSum) return;
   const url = challengeUrl();
@@ -518,7 +553,7 @@ function playTick(dt, inp) {
   timeScale += (want - timeScale) * Math.min(1, dt * (want < timeScale ? 10 : 4));
   let sdt = dt * timeScale;
   if (fx.hitStop > 0) { fx.hitStop -= dt; sdt = 0; }
-  if (inp.toggle) sdt = Math.max(sdt, 1 / 240); // never swallow a tap during a freeze
+  if (inp.toggle || inp.charm) sdt = Math.max(sdt, 1 / 240); // never swallow a tap during a freeze
   step(sim, sdt, inp);
   handleEvents(sim, false);
 }
@@ -541,14 +576,15 @@ function frame(nowMs) {
     step(sim, dt, inp);
     handleEvents(sim, true);
     if (sim.dead || sim.t > 70) startDemo();
+    if (sound.menu) sound.update(0, 1);
     cam.scale += (base * 0.92 - cam.scale) * Math.min(1, dt * 3);
     cam.anchor = 0.72;
     cam.y += (sim.cy - cam.y) * Math.min(1, dt * 4);
   } else if (mode === 'play' && !paused) {
     let inp;
-    if (BOT_MODE) inp = botInput(bot, sim);
-    else inp = { targetX: input.dir !== 0 ? null : input.targetX, dir: input.dir, toggle: input.toggle };
-    input.toggle = false;
+    if (BOT_MODE || autoplay) inp = botInput(bot, sim);
+    else inp = { targetX: input.dir !== 0 ? null : input.targetX, dir: input.dir, toggle: input.toggle, charm: input.charm };
+    input.toggle = false; input.charm = false;
     playTick(dt, inp);
     sound.setFrost(sim.inFrost && !sim.dead);
     sound.setLowSap(sim.dead ? 1 : sim.sap / SAP_MAX);
@@ -579,6 +615,8 @@ function frame(nowMs) {
     daily,
     reveal: false,
     calm: isCalm(),
+    acornPulse: fx.acornPulse || 0,
+    touch: input.kind === 'touch',
   });
   frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
   requestAnimationFrame(frame);
@@ -595,10 +633,18 @@ window.forkwood = {
   get timeScale() { return timeScale; },
   get banner() { return fx.banner; },
   get fx() { return fx; },
-  get audio() { return { state: sound.ctx ? sound.ctx.state : 'none', sprite: !!sound.buf, muted: sound.muted }; },
+  get audio() { return { state: sound.ctx ? sound.ctx.state : 'none', sprite: !!sound.buf, muted: sound.muted, zzfx: Object.keys(sound.zz).length }; },
   get calm() { return isCalm(); },
   get cam() { return cam; },
   get layout() { return renderer.layout; },
+  get save() { return S; },
+  get meta() { return M; },
+  get ui() { return ui; },
+  reloadSave: () => { S = M.loadSave((k) => store.get(k, null)); persist(); refreshTitle(); return S; },
+  charmNow: () => { input.charm = true; },
+  setAutoplay: (v) => { autoplay = !!v; },
+  // trailer capture only: start a golden hour as if a merge had reached ×8
+  forceGolden: () => { if (!sim || sim.dead) return; sim.mult = 8; sim.maxMult = 8; sim.golden = 6; sim.goldens++; sim.events = [{ type: 'golden', x: sim.cx, y: sim.cy }]; handleEvents(sim, false); sim.events = []; },
   summary: () => sim && summary(sim),
   start: (d = false) => startRun(d),
   setBotSkill: (k) => { botSkill = k; },
@@ -626,4 +672,7 @@ window.forkwood = {
 startDemo();
 setMode('title');
 refreshTitle();
+// the print pull: the paper sheet lifts off the first frame (skipped in calm mode)
+setTimeout(() => $('press').classList.add('done'), BOT_MODE || isCalm() ? 0 : 1400);
+if (S.migrationBonus) { const n = S.migrationBonus; delete S.migrationBonus; persist(false); setTimeout(() => ui.toast(`Welcome back: +${n} acorns for the ${S.stats.meters.toLocaleString('en-US')} m you already grew`, 'gift'), 1600); }
 requestAnimationFrame((t) => { last = t; frame(t); });
