@@ -360,7 +360,7 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
     t.className = 'toast ' + kind;
     t.innerHTML = `${kind === 'gift' ? ICON.gift : kind === 'badge' ? ICON.badges : kind === 'buy' ? ICON.shop : ICON.acorn}<span>${esc(text)}</span>`;
     box.appendChild(t);
-    while (box.children.length > 3) box.firstChild.remove();
+    while (box.children.length > (innerWidth < 520 ? 2 : 3)) box.firstChild.remove();
     setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 400); }, 3200);
   }
 
