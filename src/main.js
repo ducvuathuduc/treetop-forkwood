@@ -1,5 +1,5 @@
 // Forkwood: game glue (input, camera, effects, UI, persistence).
-import { createSim, step, summary, heightM, W, PX_PER_M, STAGES, SAP_MAX, CHARMS } from './sim.js';
+import { createSim, step, summary, heightM, W, PX_PER_M, STAGES, SAP_MAX, CHARMS, PICKUPS, GRAFTS, SYNERGIES } from './sim.js';
 import { Renderer } from './render.js';
 import { Sound } from './audio.js';
 import { createBot, botInput } from './bot.js';
@@ -219,6 +219,7 @@ function handleEvents(s, quiet) {
           sound.merge(e.mult); shake(5 + e.mult); flash('255,215,106', 0.4); fx.multPulse = 1; fx.squash = 1; vibrate(25);
           hitStop(0.04 + 0.006 * e.mult); cam.punch = 0.05 + 0.01 * e.mult;
           floater(e.x, e.y - 50, `merge ×${e.mult}`, '#f2b33d', 28 + e.mult * 2, 1.2);
+          if (e.jit) { floater(e.x, e.y - 92, 'just in time ×1.5', '#c4e88a', 20, 1.1); sound.jit(); }
           floater(e.x, e.y - 18, `+${e.bonus}`, '#f4ecd8', 20, 1.0);
         }
         break;
@@ -235,7 +236,55 @@ function handleEvents(s, quiet) {
         if (!quiet) { hitStop(0.09); sound.hit(); shake(12); flash('255,60,60', 0.8); vibrate(70); floater(e.x, e.y - 30, `−${e.dmg} sap`, '#ff9a86', 22, 0.9); }
         break;
       case 'near':
-        if (!quiet) { sound.near(); floater(e.x, e.y - 20, `close +${e.bonus}`, '#c4e88a', 17, 0.8); }
+        if (!quiet) { sound.near(); floater(e.x, e.y - 20, e.n > 1 ? `close ×${Math.min(5, e.n)} +${e.bonus}` : `close +${e.bonus}`, '#c4e88a', 17 + Math.min(4, e.n), 0.8); }
+        break;
+      case 'graze':
+        ring(e.x, e.y, '#c4e88a', 70, 0.5);
+        if (!quiet) { sound.graze(e.n); floater(e.x, e.y - 52, `graze chain ${e.n} · +sap`, '#c4e88a', 22, 1.0); shake(2); }
+        break;
+      case 'straddle':
+        ring(e.x, e.y, '#a9cf5a', 90, 0.6);
+        if (!quiet) { sound.collect(8, true); floater(e.x, e.y - 40, `straddled +${e.bonus}`, '#c4e88a', 20, 1.0); }
+        break;
+      case 'pickup': {
+        const col = { pollen: '#ffe08a', ink: '#f4ecd8', rush: '#a9cf5a' }[e.kind];
+        ring(e.x, e.y, col, 90, 0.6); ring(e.x, e.y, '#1e1a16', 46, 0.35);
+        burst(e.x, e.y, 14, col, 260, 8, 0.8, e.kind === 'rush' ? 'leaf' : 'spark');
+        if (!quiet) {
+          sound.pickup(e.kind); hitStop(0.04); vibrate(25);
+          if (e.kind === 'rush') { shake(6); flash('190,230,140', 0.4); cam.punch = 0.06; }
+          floater(e.x, e.y - 40, e.spring ? 'spring pollen' : e.extended ? `${PICKUPS[e.kind].name} +time` : PICKUPS[e.kind].name, col, 24, 1.1);
+          if (!e.spring && e.stacked < 2) floater(e.x, e.y - 12, PICKUPS[e.kind].blurb, '#f4ecd8', 14, 1.0);
+        }
+        break;
+      }
+      case 'puend':
+        if (!quiet) { sound.puEnd(); floater(s.cx, s.cy - 46, `${PICKUPS[e.kind].name} ends`, '#e8dcc0', 14, 0.7); }
+        break;
+      case 'graft': {
+        ring(e.x, e.y, '#f2b33d', 110, 0.7); burst(e.x, e.y, 16, '#f2b33d', 280, 8, 0.9, 'leaf');
+        if (!quiet) {
+          sound.graft(); hitStop(0.06); shake(4); vibrate(30);
+          const G = GRAFTS[e.id];
+          if (e.again) floater(e.x, e.y - 40, `graft deepened +${e.bonus}`, '#f2b33d', 22, 1.1);
+          else fx.banner = { text: G.name, sub: G.boon, sub2: `cost: ${G.cost}`, t: 0, max: 2.6, small: true };
+        }
+        break;
+      }
+      case 'synergy': {
+        ring(e.x, e.y, '#ffe08a', 200, 0.9); burst(e.x, e.y, 26, '#ffe08a', 420, 9, 1.0, 'spark');
+        if (!quiet) { sound.synergy(); flash('255,215,106', 0.45); shake(6); fx.banner = { text: SYNERGIES[e.id].name.toUpperCase(), sub: SYNERGIES[e.id].text, t: 0, max: 3, gold: true }; }
+        break;
+      }
+      case 'storm':
+        if (!quiet) { sound.storm(); shake(5); fx.banner = { text: e.i === 0 ? 'THE STORM' : 'STORM', sub: 'lightning shows before it strikes · rain feeds sap', t: 0, max: 2.8 }; }
+        break;
+      case 'strike':
+        if (!quiet) { sound.strike(); flash('255,246,200', 0.5); shake(4); }
+        break;
+      case 'stormend':
+        burst(e.x, e.y - 40, 20, '#cfe6ff', 300, 8, 1.2, 'leaf');
+        if (!quiet) { sound.stormEnd(); floater(e.x, e.y - 60, `storm weathered +${e.bonus}`, '#cfe6ff', 24, 1.4); flash('207,230,255', 0.35); }
         break;
       case 'splitpass':
         ring(e.x, e.y, '#a9cf5a', 90, 0.6);
@@ -277,7 +326,7 @@ function handleEvents(s, quiet) {
           flash('255,215,106', 0.6); shake(8); vibrate(80);
           for (let k = 0; k < 5; k++) burst(s.cx + (k - 2) * 70, s.cy - 80 - k * 20, 12, STAGES[e.idx].leaf, 340, 8, 1.8, 'leaf');
           burst(s.cx, s.cy - 60, 26, '#ffe08a', 420, 10, 1.0, 'spark');
-        } else if (!quiet) { sound.stageUp(); fx.banner = { text: st.name, sub: `${st.m} m · +15 sap`, t: 0, max: 2.4 }; }
+        } else if (!quiet) { sound.stageUp(); fx.banner = { text: st.name, sub: `+15 sap · ${st.news}`, t: 0, max: 2.6 }; }
         break;
       }
       case 'acorn':
@@ -370,7 +419,7 @@ function showGameOver() {
   countUp(sum.height);
   $('over-kicker').classList.toggle('gold', !!(newBest || (challenge && challenge.won)));
   $('over-score').textContent = `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(S.best.score, sum.score).toLocaleString('en-US')}`;
-  $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}`;
+  $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}${sum.grafts ? ` · grafts: ${sum.graftIds.map((g) => GRAFTS[g].name).join(', ')}` : ''}`;
   $('share-msg').textContent = '';
   setMode('over');
   ui.showRewards(rewards, { before });
@@ -399,6 +448,9 @@ function countUp(target) {
 
 function runTip(sum) {
   if (sum.merges === 0) return 'Tip: fork, grab sunlight on both branches, then merge for a combo.';
+  if (sum.height >= 100 && sum.height < 140 && sum.grafts === 0) return 'Tip: at 120 m two graft medallions appear. Steer into one, or fork to take both.';
+  if (sum.height >= 400 && sum.height < 560 && sum.storms === 0) return 'Tip: in the storm, dashed columns show where lightning will strike. Stay out of them.';
+  if (sum.height >= 240 && sum.splits < 2) return 'Tip: fork so your two tips pass either side of a thorn column.';
   if (sum.reverts >= 2) return 'Tip: merge before thorn gates. A hit on a fork reverts that branch.';
   if (sum.maxMult < 4) return 'Tip: merge often. Every merge raises the multiplier, and ×8 starts golden hour.';
   if (sum.blooms === 0) return 'Tip: catch every sunlight in a trail and that branch bursts into full bloom.';
@@ -664,6 +716,13 @@ window.forkwood = {
     const b = createBot(skill, 99);
     const n = Math.round(sec * 60);
     for (let i = 0; i < n && !sim.dead; i++) { step(sim, 1 / 60, botInput(b, sim)); sim.sap = Math.max(sim.sap, 60); }
+    cam.y = sim.cy; fx.shownScore = sim.score;
+    return heightM(sim);
+  },
+  // screenshots only: fast-forward until the tree reaches `m` metres
+  fastTo: (m, skill = 0.95) => {
+    const b = createBot(skill, 99);
+    for (let i = 0; i < 60 * 600 && !sim.dead && heightM(sim) < m; i++) { step(sim, 1 / 60, botInput(b, sim)); sim.sap = Math.max(sim.sap, 60); }
     cam.y = sim.cy; fx.shownScore = sim.score;
     return heightM(sim);
   },
