@@ -4,6 +4,7 @@
 // The sky is posterised into stepped bands, and a paper grain sits on top.
 import { W, PX_PER_M, STAGES, SAP_MAX, CHARMS, PICKUPS, GRAFTS, heightM, stageIndexFor } from './sim.js';
 import { THEME, leafColor } from './skins.js';
+import { drawPlates, drawFoliageFrame, drawSunSprite, drawBeetleSprite, drawBrambleSprite, drawGroundSprite } from './art.js';
 
 const TAU = Math.PI * 2;
 export const INK = '#1e1a16';
@@ -129,6 +130,33 @@ export function skinLeaf(ctx, x, y, len, ang, fill, lw) {
   ctx.fillStyle = fill; ctx.fill();
 }
 
+/** One trail particle of the equipped trail skin at (x,y); k = 0..1 life left. */
+export function trailBit(ctx, kind, c, x, y, k, rot, sz = 1) {
+  const a = Math.max(0, Math.min(1, k));
+  if (kind === 'fireflies') {
+    ctx.fillStyle = `rgba(216,242,122,${(0.28 * a).toFixed(3)})`; ctx.beginPath(); ctx.arc(x, y, 7 * sz, 0, TAU); ctx.fill();
+    ctx.fillStyle = c[1]; ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(x, y, 2.4 * sz, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+    return;
+  }
+  ctx.globalAlpha = a;
+  if (kind === 'petals' || kind === 'leaves') {
+    ctx.fillStyle = INK; ctx.beginPath(); leafPath(ctx, x, y, 11 * sz, rot, kind === 'petals' ? 0.55 : 0.4); ctx.fill();
+    ctx.fillStyle = c[(rot * 10 | 0) & 1]; ctx.beginPath(); leafPath(ctx, x + 0.6, y, 9 * sz, rot, kind === 'petals' ? 0.5 : 0.36); ctx.fill();
+  } else if (kind === 'stardust' || kind === 'sparks') {
+    const r = (kind === 'sparks' ? 3.2 : 4.4) * sz * (0.5 + a * 0.5);
+    ctx.fillStyle = c[(rot * 10 | 0) & 1]; ctx.beginPath();
+    ctx.moveTo(x, y - r * 1.6); ctx.lineTo(x + r * 0.4, y - r * 0.4); ctx.lineTo(x + r * 1.6, y); ctx.lineTo(x + r * 0.4, y + r * 0.4);
+    ctx.lineTo(x, y + r * 1.6); ctx.lineTo(x - r * 0.4, y + r * 0.4); ctx.lineTo(x - r * 1.6, y); ctx.lineTo(x - r * 0.4, y - r * 0.4); ctx.fill();
+  } else if (kind === 'ink') {
+    ctx.fillStyle = c[0]; ctx.beginPath(); ctx.arc(x, y, 3.4 * sz * (0.6 + a * 0.4), 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 4 * sz, y + 3 * sz, 1.5 * sz, 0, TAU); ctx.fill();
+  } else {
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, y, 3.6 * sz, 0, TAU); ctx.fill();
+    ctx.fillStyle = c[(rot * 10 | 0) & 1]; ctx.beginPath(); ctx.arc(x, y, 2.4 * sz, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 export function flagPath(ctx, x, y, s) {
   ctx.beginPath();
   ctx.moveTo(x, y + s); ctx.lineTo(x, y - s);
@@ -154,8 +182,8 @@ export function drawTree(ctx, s, now, topY, botY, px) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   const order = s.paths.slice().sort((a, b) => (a.id === 0 ? 1 : 0) - (b.id === 0 ? 1 : 0));
-  // passes: ink outline, bark, light edge
-  for (let pass = 0; pass < 3; pass++) {
+  // passes: ink outline, bark, shaded side, light edge
+  for (let pass = 0; pass < 4; pass++) {
     for (const p of order) {
       if (p.state === 'gone' || p.pts.length < 2) continue;
       const pts = p.pts;
@@ -169,17 +197,18 @@ export function drawTree(ctx, s, now, topY, botY, px) {
         const a = pts[i], b = pts[Math.min(i1, i + step)];
         let w = widthAt(p, a, now);
         if (pass === 0) w += 3.4 * Math.max(1, px * 0.8);
-        else if (pass === 2) w *= 0.28;
+        else if (pass === 2) w *= 0.42;
+        else if (pass === 3) w *= 0.24;
         const bk = Math.round(w * 2);
         if (bk !== bucket) {
           if (bucket >= 0) ctx.stroke();
           bucket = bk;
           ctx.beginPath();
           ctx.lineWidth = Math.max(px * 1.1, w);
-          ctx.strokeStyle = pass === 0 ? (rev ? '#5a1820' : INK) : pass === 1 ? (rev ? CORAL : THEME.bark.wood) : (rev ? 'rgba(255,214,200,0.5)' : THEME.bark.light);
-          ctx.moveTo(a.x - (pass === 2 ? widthAt(p, a, now) * 0.2 : 0), a.y);
+          ctx.strokeStyle = pass === 0 ? (rev ? '#5a1820' : INK) : pass === 1 ? (rev ? CORAL : THEME.bark.wood) : pass === 2 ? (rev ? 'rgba(90,24,32,0.35)' : 'rgba(30,20,14,0.28)') : (rev ? 'rgba(255,214,200,0.5)' : THEME.bark.light);
+          ctx.moveTo(a.x + (pass === 2 ? widthAt(p, a, now) * 0.24 : pass === 3 ? -widthAt(p, a, now) * 0.2 : 0), a.y);
         }
-        ctx.lineTo(b.x - (pass === 2 ? widthAt(p, b, now) * 0.2 : 0), b.y);
+        ctx.lineTo(b.x + (pass === 2 ? widthAt(p, b, now) * 0.24 : pass === 3 ? -widthAt(p, b, now) * 0.2 : 0), b.y);
       }
       if (bucket >= 0) ctx.stroke();
     }
@@ -338,8 +367,21 @@ export class Renderer {
       ctx.fillStyle = css(skyAt(m));
       ctx.fillRect(leftX - 20, b * BAND, rightX - leftX + 40, BAND + 1);
     }
-    // ---- screen-space atmosphere: the top leans toward the next stage, in steps
+    // ---- painted backdrop plate for this height (falls back to the print sky until loaded)
     this._screen(ctx);
+    const plated = !ui.noArt && drawPlates(ctx, cw, ch, camM);
+    this.plated = plated;
+    if (plated) {
+      if (THEME.sky.id !== 'sky.print') {
+        // sky plates recolour the painting
+        ctx.globalCompositeOperation = 'color'; ctx.fillStyle = css(skyAt(camM), 0.55); ctx.fillRect(0, 0, cw, ch);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      // a thin paper wash so the inked play layer always reads first
+      ctx.fillStyle = 'rgba(244,236,216,0.08)'; ctx.fillRect(0, 0, cw, ch);
+    }
+    // ---- screen-space atmosphere: the top leans toward the next stage, in steps
+    if (!plated) {
     const nxt = STAGES[Math.min(STAGES.length - 1, sb.i + 1)];
     const nc = THEME.sky.id === 'sky.print' ? rgb(nxt.sky === sb.a.sky ? '#0a0c28' : nxt.sky) : skyAt(nxt.m === sb.a.m ? 1200 : nxt.m + 60);
     for (let i = 0; i < 4; i++) { ctx.fillStyle = css(nc, 0.13); ctx.fillRect(0, 0, cw, ch * (0.42 - i * 0.1)); }
@@ -353,11 +395,21 @@ export class Renderer {
       }
     }
     this.drawSun(ctx, cw, ch, camM, night, now);
+    } else if (night > 0) {
+      // a few twinkling stars over the painted night
+      for (let i = 0; i < 26; i++) {
+        const x = hash(i) * cw, y = ((hash(i + 99) * ch + (cam.y * sc) * 0.05) % ch + ch) % ch;
+        const tw = Math.max(0, Math.sin(now * 2.2 + i * 1.7));
+        ctx.fillStyle = `rgba(255,248,226,${(night * 0.8 * tw * tw).toFixed(3)})`;
+        ctx.fillRect(x, y, 2, 2);
+      }
+    }
 
     // ---- world
     this._world(ctx);
-    this.drawBackdrop(ctx, cam, topY, botY, now, camM, sb);
-    if (leftX < -40) this.drawCanopyFrame(ctx, cam, topY, botY, leftX, rightX, now, sb, night);
+    if (plated) this.drawDrift(ctx, cam, topY, botY, now, camM, leftX, rightX);
+    else this.drawBackdrop(ctx, cam, topY, botY, now, camM, sb);
+    if (leftX < -40 && !(plated && drawFoliageFrame(ctx, cam.y, topY, botY, leftX, rightX, W, camM))) this.drawCanopyFrame(ctx, cam, topY, botY, leftX, rightX, now, sb, night);
     this.drawGround(ctx, leftX, rightX, botY);
     for (const w of s.winds) this.drawWind(ctx, w, now, topY, botY);
     if (ui.bestM > 3) this.drawBestLine(ctx, -ui.bestM * PX_PER_M, topY, botY, s.newBest, now, ui.bestLabel);
@@ -370,15 +422,17 @@ export class Renderer {
     if (!ui.reveal) {
       for (const o of s.motes) if (o.y > topY - 30 && o.y < botY + 30) this.drawMote(ctx, o, now, gold);
       for (const b of s.beetles) if (b.y > topY - 30 && b.y < botY + 30) this.drawBeetle(ctx, b, now);
+      if (ui.hud || ui.trail) this.drawTrail(ctx, s, now);
+      if (ui.ghostM != null) this.drawGhost(ctx, s, ui.ghostM, now);
       this.drawTips(ctx, s, now, fx, gold);
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
     }
     this.drawParticles(ctx, fx, px);
     // playfield edges: a hairline ink rule either side
     if (leftX < -2 - pad) {
-      ctx.fillStyle = 'rgba(30,26,22,0.35)';
-      ctx.fillRect(-2 * px, topY, 2 * px, botY - topY);
-      ctx.fillRect(W, topY, 2 * px, botY - topY);
+      ctx.fillStyle = this.plated ? 'rgba(30,26,22,0.16)' : 'rgba(30,26,22,0.35)';
+      const ry1 = this.plated ? Math.min(botY, -90) : botY;
+      if (ry1 > topY) { ctx.fillRect(-2 * px, topY, 2 * px, ry1 - topY); ctx.fillRect(W, topY, 2 * px, ry1 - topY); }
     }
 
     // ---- screen space overlays
@@ -492,8 +546,27 @@ export class Renderer {
     }
   }
 
+  drawDrift(ctx, cam, topY, botY, now, camM, leftX, rightX) {
+    // drifting leaves and petals (parallax 0.6) give the painted plate depth and motion
+    const p = 0.6, tile = 420, shift = cam.y * (1 - p);
+    const t0 = Math.floor((topY - shift) / tile) - 1, t1 = Math.floor((botY - shift) / tile) + 1;
+    const st = stageBlend(camM), col = rgb(st.a.leaf);
+    const span = rightX - leftX + 200;
+    for (let t = t0; t <= t1; t++) {
+      for (let k = 0; k < 3; k++) {
+        const h = hash(t * 11.3 + k * 7.7);
+        const x = leftX - 100 + ((h * span + now * (14 + h * 22)) % span);
+        const y = t * tile + shift + k * (tile / 3) + Math.sin(now * 0.9 + h * 9) * 18;
+        const ang = now * (0.6 + h) + h * 9, len = 9 + h * 7;
+        ctx.fillStyle = css(lerp3(col, [255, 250, 236], 0.25), 0.75);
+        ctx.beginPath(); leafPath(ctx, x, y, len, ang, 0.4); ctx.fill();
+      }
+    }
+  }
+
   drawGround(ctx, leftX, rightX, botY) {
     if (botY < -300) return;
+    if (this.plated && drawGroundSprite(ctx, leftX, rightX, botY)) return;
     const hill = (x) => -60 - 40 * Math.sin(x * 0.006) - 22 * Math.sin(x * 0.017 + 1);
     const near = (x) => -18 - 16 * Math.sin(x * 0.011 + 2);
     ctx.fillStyle = '#a7bf7a';
@@ -586,6 +659,19 @@ export class Renderer {
         }
       }
     }
+  }
+
+  drawGhost(ctx, s, m, now) {
+    // a duel rival's tip, rising at their average pace: a pale bud in a ring with a RIVAL tag
+    const y = -m * PX_PER_M, x = W / 2 + Math.sin(now * 0.8) * 60;
+    ctx.fillStyle = 'rgba(244,236,216,0.35)'; ctx.beginPath(); ctx.arc(x, y - 2, 20, 0, TAU); ctx.fill();
+    ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(30,26,22,0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y - 2, 20, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.save(); ctx.globalAlpha = 0.6; ctx.translate(x, y); drawBud(ctx, false, 1.1); ctx.restore();
+    ctx.font = f(800, 11); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText('RIVAL').width + 12;
+    this.card(ctx, x - tw / 2, y - 44, tw, 17, 8, '#ffe7a8', 2);
+    ctx.fillStyle = INK; ctx.fillText('RIVAL', x, y - 35);
+    ctx.textBaseline = 'alphabetic';
   }
 
   drawTapCue(ctx, s, now) {
@@ -787,6 +873,15 @@ export class Renderer {
       ctx.lineCap = 'round';
       ctx.strokeStyle = 'rgba(244,236,216,0.32)'; ctx.lineWidth = 22;
       ctx.beginPath(); ctx.moveTo(a, b.y); ctx.lineTo(c, b.y); ctx.stroke();
+      if (drawBrambleSprite(ctx, a, c, b.y, b.seed || 0)) {
+        // inked knots where a cut vine ends inside the playfield
+        for (const x of [a, c]) if (x > 1 && x < W - 1) {
+          ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, b.y, 8, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#6b4a34'; ctx.beginPath(); ctx.arc(x, b.y, 5, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#a07650'; ctx.beginPath(); ctx.arc(x - 1.2, b.y - 1.2, 2, 0, TAU); ctx.fill();
+        }
+        continue;
+      }
       // thorns first (so the vine overlaps their base), inked
       ctx.lineJoin = 'round';
       for (let x = a + 8; x < c - 4; x += 15) {
@@ -817,6 +912,7 @@ export class Renderer {
       // a flat sun stamp: halo disc, inked rays, inked disc
       ctx.fillStyle = gold > 0 ? 'rgba(255,214,110,0.45)' : 'rgba(255,236,170,0.32)';
       ctx.beginPath(); ctx.arc(o.x, o.y, r * 2.1, 0, TAU); ctx.fill();
+      if (drawSunSprite(ctx, o.x, o.y, r, now * 0.9 + o.ph)) return;
       ctx.lineCap = 'round';
       ctx.beginPath();
       for (let i = 0; i < 8; i++) { const a = now * 0.9 + o.ph + i * TAU / 8; ctx.moveTo(o.x + Math.cos(a) * r * 1.2, o.y + Math.sin(a) * r * 1.2); ctx.lineTo(o.x + Math.cos(a) * r * 1.6, o.y + Math.sin(a) * r * 1.6); }
@@ -1014,6 +1110,7 @@ export class Renderer {
     });
   }
   drawBeetle(ctx, b, now) {
+    if (drawBeetleSprite(ctx, b, now)) return;
     const dir = b.vx >= 0 ? 1 : -1;
     ctx.save();
     ctx.translate(b.x, b.y);
@@ -1041,6 +1138,32 @@ export class Renderer {
     ctx.strokeStyle = INK; ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.moveTo(16, -2); ctx.quadraticCurveTo(22, -6, 23, -10 + Math.sin(now * 8) * 1.5); ctx.moveTo(16, 2); ctx.quadraticCurveTo(22, 6, 23, 10 - Math.sin(now * 8) * 1.5); ctx.stroke();
     ctx.restore();
+  }
+
+  drawTrail(ctx, s, now) {
+    // the equipped trail: bits shed behind each live tip, in sim time (frame-rate independent)
+    const T = THEME.trail;
+    if (!T || T.kind === 'none') { this.trail = null; return; }
+    if (!this.trail || this.trailSim !== s) { this.trail = []; this.trailSim = s; this.trailT = now; }
+    const tr = this.trail;
+    if (!s.dead) {
+      while (this.trailT < now) {
+        this.trailT += 0.06;
+        for (const tip of s.tips) {
+          const h = hash(this.trailT * 13.1 + tip.x);
+          tr.push({ x: tip.x + (h - 0.5) * 14, y: s.cy + 10 + h * 6, t: this.trailT, rot: h * 6.28, vx: (h - 0.5) * 30 });
+        }
+      }
+      if (tr.length > 90) tr.splice(0, tr.length - 90);
+    }
+    const life = T.kind === 'fireflies' ? 1.6 : 1.1;
+    for (const b of tr) {
+      const age = now - b.t;
+      if (age > life || age < 0) continue;
+      const k = 1 - age / life;
+      const wob = T.kind === 'fireflies' ? Math.sin(now * 5 + b.rot * 3) * 8 : 0;
+      trailBit(ctx, T.kind, T.c, b.x + b.vx * age + wob, b.y + age * (T.kind === 'ink' ? 30 : 14), k, b.rot + age * 2);
+    }
   }
 
   drawTips(ctx, s, now, fx, gold) {
