@@ -1,6 +1,6 @@
 {
   "name": "forkwood",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "Forkwood: fork your branch, merge for glory, grow from twig to treetop.",
@@ -14,7 +14,9 @@
     "extra": "node tests/extra.mjs",
     "meta": "node tests/meta.mjs",
     "meta-ui": "node tests/meta-ui.mjs",
-    "test": "node tests/fairness.mjs && node tests/meta.mjs && node tests/stages.mjs && node tests/tutorial.mjs && node tests/smoke.mjs && node tests/extra.mjs && node tests/meta-ui.mjs"
+    "test": "node tests/fairness.mjs && node tests/chunks.mjs && node tests/meta.mjs && node tests/stages.mjs && node tests/tutorial.mjs && node tests/smoke.mjs && node tests/extra.mjs && node tests/meta-ui.mjs && node tests/toasts.mjs",
+    "chunks": "node tests/chunks.mjs",
+    "toasts": "node tests/toasts.mjs"
   },
   "license": "MIT"
 }
