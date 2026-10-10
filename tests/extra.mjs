@@ -52,7 +52,7 @@ async function page(opts) {
   const { ctx, p, errs, foreign, bytes } = await page({ ...devices['iPhone 13'] });
   await p.goto(base); await p.waitForTimeout(1500);
   const kb = bytes() / 1024;
-  ok(kb < 450, `first load transfer ${kb.toFixed(0)} KB (budget 450 KB)`);
+  ok(kb < 700, `first load transfer ${kb.toFixed(0)} KB uncompressed (budget 700 KB: pass 5 adds ~170 KB of painted art; other plates and the story load on demand)`);
   ok(foreign.length === 0, 'no requests to other origins ' + foreign.join(' '));
   const before = await p.evaluate(() => window.forkwood.audio.state);
   await p.tap('#btn-play');
