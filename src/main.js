@@ -8,13 +8,25 @@ import { dailySeed, dailyLabel } from './rng.js';
 import * as M from './meta.js';
 import { applyLoadout } from './skins.js';
 import { createMetaUI } from './ui-meta.js';
+import { MODE, STAKE, STAKES, rulesFor, stakeOf, weekKey, weekSeed, weekCode, parseWeek } from './modes.js';
+import { LEVEL, LEVELS, levelRules, goalText, goalMet, nextLevel, worldOf } from './campaign.js';
+import * as Q from './quest.js';
+import { ICON } from './icons.js';
+const ICON_STAR = ICON.star, ICON_STAR_OFF = ICON.starOff;
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const BOT_MODE = params.has('bot');           // let the bot play the real game (testing)
 const FIXED_SEED = params.has('seed') ? (Number(params.get('seed')) >>> 0) : null;
 // challenge links: ?seed=<course>&beat=<metres> ("beat my tree")
-const CHALLENGE = FIXED_SEED != null && params.has('beat') ? { seed: FIXED_SEED, m: Math.max(1, Math.min(99999, Math.floor(Number(params.get('beat')) || 0))) } : null;
+const BEAT = Math.max(1, Math.min(9999999, Math.floor(Number(params.get('beat')) || 0)));
+const LINK_STAKE = STAKE[params.get('stake')] ? params.get('stake') : 'sapling';
+const LINK_LVL = LEVEL[params.get('lvl')] ? params.get('lvl') : null;
+const LINK_WEEK = parseWeek(params.get('week'));
+const LINK_MODE = MODE[params.get('mode')] && params.get('mode') !== 'weekly' ? params.get('mode') : null;
+// challenge links: ?seed=&beat=[&mode=&stake=] (a course), ?lvl=&beat= (a quest level's score), ?week=&beat= (this week's tree)
+const CHALLENGE = params.has('beat') && (FIXED_SEED != null || LINK_LVL || LINK_WEEK)
+  ? { seed: FIXED_SEED, m: BEAT, lvl: LINK_LVL, week: LINK_WEEK, mode: LINK_MODE || 'classic', stake: LINK_STAKE } : null;
 
 const canvas = $('game');
 const renderer = new Renderer(canvas);
@@ -43,6 +55,9 @@ let lastSum = null;
 let cardCanvas = null;
 let deathShown = false;
 let autoplay = false; // trailer capture: the bot plays a normal (saved) run in real time
+// what is being played: endless (with a stake), a mode, a quest level or the weekly tree
+let run = { mode: 'classic', stake: 'sapling', level: null, week: null };
+let lastQuest = null;
 
 const cam = { x: W / 2, y: -200, scale: 1, anchor: 0.7, trauma: 0, punch: 0 };
 const fx = { particles: [], floaters: [], sparks: [], flash: 0, flashColor: '255,80,80', banner: null, shownScore: 0, shownSap: SAP_MAX, multPulse: 0, sapPulse: 0, squash: 0, hitStop: 0 };
@@ -50,6 +65,28 @@ const input = { targetX: null, dir: 0, toggle: false, keys: new Set(), pointerId
 // first-run coach: steer -> fork -> merge, taught by doing (screen-space, never overlaps the world)
 const coach = { step: null, t: 0, collects: 0, retry: false, slow: false };
 const ui = createMetaUI({ getSave: () => S, persist, sound, isCalm, onOpen: () => { $('title').classList.remove('show'); }, onClose: () => { if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } else ui.refreshBar(mode); } });
+// the quest map UI loads on first open (keeps the first load small)
+let questUI = null, questLoading = null;
+function loadQuestUI() {
+  if (questUI) return Promise.resolve(questUI);
+  questLoading = questLoading || import('./ui-quest.js').then(({ createQuestUI }) => (questUI = createQuestUI({ getSave: () => S, persist, sound,
+    onPlayLevel: (id) => startLevel(id), onPlayMode: (id) => startMode(id),
+    onOpen: () => { $('title').classList.remove('show'); $('over').classList.remove('show'); ui.refreshBar('quest'); },
+    onClose: () => { if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } else if (mode === 'over') { $('over').classList.add('show'); ui.refreshBar(mode); } } })));
+  return questLoading;
+}
+const qui = {
+  get isOpen() { return !!(questUI && questUI.isOpen); },
+  hide() { if (questUI) questUI.hide(); },
+  show(...a) { return loadQuestUI().then((q) => q.show(...a)); },
+};
+if (CHALLENGE) run = CHALLENGE.lvl ? { mode: 'classic', stake: 'sapling', level: CHALLENGE.lvl, week: null }
+  : CHALLENGE.week ? { mode: 'weekly', stake: 'oak', level: null, week: CHALLENGE.week }
+  : { mode: CHALLENGE.mode, stake: CHALLENGE.stake, level: null, week: null };
+else if (LINK_LVL) run.level = LINK_LVL;
+else if (LINK_WEEK) run = { mode: 'weekly', stake: 'oak', level: null, week: LINK_WEEK };
+else if (LINK_MODE) run.mode = LINK_MODE;
+run.stake = CHALLENGE ? run.stake : S.quest.stake;
 let timeScale = 1;
 const TREETOP_IDX = STAGES.findIndex((st) => st.name === 'Treetop');
 
@@ -76,13 +113,49 @@ function resetFx() {
   fx.shownScore = 0; fx.shownSap = SAP_MAX; fx.hitStop = 0; cam.trauma = 0; cam.punch = 0; fx.plate = null;
 }
 
+/** What the HUD calls this run, e.g. "OAK", "SPRINT", "2-3 ZIG-ZAG". */
+function runLabel() {
+  if (daily) return 'DAILY';
+  if (run.level) return `${run.level} ${LEVEL[run.level].name.toUpperCase()}`;
+  if (run.mode === 'weekly') return `WEEKLY ${weekCode(run.week || weekKey()).slice(3)}`;
+  if (run.mode !== 'classic') return MODE[run.mode].name.toUpperCase();
+  return run.stake !== 'sapling' ? STAKE[run.stake].name.toUpperCase() : '';
+}
+function isChallengeRun() {
+  if (!CHALLENGE || daily) return false;
+  if (CHALLENGE.lvl) return run.level === CHALLENGE.lvl;
+  if (CHALLENGE.week) return run.mode === 'weekly' && run.week === CHALLENGE.week;
+  return !run.level && run.mode === CHALLENGE.mode && (run.mode !== 'classic' || run.stake === CHALLENGE.stake);
+}
+function bestFor() {
+  if (daily) return store.get('forkwood.daily.' + dailySeed(), { height: 0 }).height;
+  if (isChallengeRun() && !CHALLENGE.lvl) return CHALLENGE.m;
+  if (run.level) return 0;
+  if (run.mode === 'weekly') return (S.quest.weekly[run.week] || {}).h || 0;
+  if (run.mode !== 'classic') return (S.quest.modeBest[run.mode] || {}).h || 0;
+  return run.stake === 'sapling' ? S.best.height : (S.quest.stakeBest[run.stake] || 0);
+}
+
+function startLevel(id) { if (!LEVEL[id]) return; run = { ...run, level: id, mode: 'classic', week: null }; startRun(false); }
+function startMode(id) {
+  if (!MODE[id]) return;
+  run = { ...run, level: null, mode: id, week: id === 'weekly' ? weekKey() : null, stake: id === 'classic' ? S.quest.stake : run.stake };
+  startRun(false);
+}
+
 function startRun(isDaily = daily) {
   sound.unlock();
   daily = isDaily;
-  const seed = daily ? dailySeed() : FIXED_SEED ?? ((Math.random() * 1e9) >>> 0);
-  const bestM = daily ? store.get('forkwood.daily.' + dailySeed(), { height: 0 }).height : CHALLENGE ? CHALLENGE.m : S.best.height;
-  const pure = daily || !!CHALLENGE; // daily tree and challenge links: same rules for everyone, no charms
-  sim = createSim({ seed, tutorial: !S.tutorial, bestM, pure, charm: pure ? null : S.charm });
+  if (qui.isOpen) qui.hide();
+  const lv = run.level && !daily ? LEVEL[run.level] : null;
+  const challenge = isChallengeRun();
+  const seed = daily ? dailySeed() : lv ? lv.seed : run.mode === 'weekly' ? weekSeed(run.week || weekKey()) : (challenge && CHALLENGE.seed != null) ? CHALLENGE.seed : FIXED_SEED ?? ((Math.random() * 1e9) >>> 0);
+  const bestM = bestFor();
+  // daily, weekly, quest levels and challenge links: same rules for everyone, no charms
+  const pure = daily || challenge || !!lv || run.mode === 'weekly';
+  const rules = daily ? {} : lv ? levelRules(lv) : rulesFor(run);
+  const tutorial = !S.tutorial && !lv && (daily || run.mode === 'classic');
+  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules });
   coach.step = sim.tutorial ? 'steer' : null; coach.t = 0; coach.collects = 0; coach.retry = false; coach.slow = false;
   timeScale = 1;
   bot = createBot(botSkill, seed & 0xffff);
@@ -100,16 +173,27 @@ function startRun(isDaily = daily) {
   burst(W / 2, -10, 10, '#ffe08a', 240, 8, 0.7, 'spark');
   shake(5); fx.squash = 1;
   if (!sim.tutorial) {
-    const goal = CHALLENGE && !daily ? { text: `BEAT ${CHALLENGE.m} m`, sub: 'same course as your friend' }
+    const m = MODE[run.mode], k = STAKE[run.stake];
+    const goal = lv ? { text: `${lv.id} ${lv.name.toUpperCase()}`, sub: `reach the ribbon at ${sim.finishM} m · ${goalText(lv.goals[0])} · ${goalText(lv.goals[1])}`, sub2: challenge ? `friend scored ${CHALLENGE.m.toLocaleString('en-US')}` : '' }
+      : challenge && CHALLENGE.week ? { text: `BEAT ${CHALLENGE.m} m`, sub: `weekly tree ${weekCode(run.week)} · same course as your friend` }
+      : challenge ? { text: `BEAT ${CHALLENGE.m} m`, sub: `same course as your friend${run.mode !== 'classic' ? ' · ' + m.name : run.stake !== 'sapling' ? ' · ' + k.name : ''}` }
       : daily ? { text: bestM > 0 ? `BEAT ${bestM} m` : 'DAILY TREE', sub: `${dailyLabel()} · same course for all · no charms` }
+      : run.mode === 'weekly' ? { text: bestM > 0 ? `BEAT ${bestM} m` : 'WEEKLY TREE', sub: `${weekCode(run.week)} · Oak stake · same for everyone all week` }
+      : run.mode === 'sprint' ? { text: '60 SECONDS', sub: bestM > 0 ? `grow higher than ${bestM} m before the clock runs out` : 'how high can you grow before the clock runs out?' }
+      : run.mode === 'zen' ? { text: 'ZEN', sub: 'no sap to lose · grow to the Cloudline (600 m) at your pace' }
+      : run.mode === 'hardcore' ? { text: 'ONE HIT', sub: bestM > 0 ? `best ${bestM} m · points ×2 · any hit ends it` : 'points ×2 · any hit ends the tree' }
+      : run.mode === 'mirror' ? { text: 'LOOKING-GLASS', sub: 'left is right · points ×1.5' }
+      : run.mode === 'storm' ? { text: 'STORM RUSH', sub: 'storm after storm from 60 m · points ×1.6' }
+      : run.stake !== 'sapling' ? { text: bestM > 0 ? `BEAT ${bestM} m` : `${k.name.toUpperCase()} STAKE`, sub: `points ×${k.mult} · ${k.adds.slice(-2).join(' · ')}` }
       : S.best.height < STAGES[TREETOP_IDX].m ? { text: 'REACH THE TREETOP', sub: `${STAGES[TREETOP_IDX].m} m · fork, merge, climb` }
       : { text: `BEAT ${S.best.height} m`, sub: sim.charm ? `your best · ${CHARMS[sim.charm].name} charm ready to charge` : 'your best · gold line' };
-    fx.banner = { ...goal, t: 0, max: 2.2, small: true };
+    fx.banner = { ...goal, t: 0, max: lv ? 3.2 : 2.2, small: true };
   }
 }
 
 function toMenu() {
   sound.stop();
+  if (!CHALLENGE) run = { mode: 'classic', stake: S.quest.stake, level: null, week: null };
   if (sound.ready) sound.startMenu();
   setMode('title');
   refreshTitle();
@@ -128,9 +212,21 @@ function refreshTitle() {
   $('btn-calm').setAttribute('aria-pressed', String(isCalm()));
   if (CHALLENGE) {
     $('challenge').hidden = false;
-    $('challenge').textContent = `A friend grew ${CHALLENGE.m} m on this course. Can you beat it?`;
+    $('challenge').textContent = CHALLENGE.lvl ? `A friend scored ${CHALLENGE.m.toLocaleString('en-US')} on quest level ${CHALLENGE.lvl} (${LEVEL[CHALLENGE.lvl].name}). Can you beat it?`
+      : CHALLENGE.week ? `A friend grew ${CHALLENGE.m} m on the weekly tree ${weekCode(CHALLENGE.week)}. Can you beat it?`
+      : `A friend grew ${CHALLENGE.m} m on this course${CHALLENGE.mode !== 'classic' ? ` in ${MODE[CHALLENGE.mode].name}` : CHALLENGE.stake !== 'sapling' ? ` on ${STAKE[CHALLENGE.stake].name}` : ''}. Can you beat it?`;
     $('btn-play-label').textContent = 'Take the challenge';
+  } else {
+    const k = STAKE[S.quest.stake];
+    $('btn-play-label').textContent = S.quest.stake === 'sapling' ? 'Grow' : `Grow · ${k.name}`;
   }
+  // stake chip: only once a second stake is open (first visit stays one clean screen)
+  const stakesOpen = STAKES.filter((k) => Q.stakeUnlocked(S, k.id));
+  $('btn-stake').hidden = !!CHALLENGE || stakesOpen.length < 2;
+  $('btn-stake').innerHTML = STAKES.map((k) => `<span class="${k.id === S.quest.stake ? 'on' : ''} ${Q.stakeUnlocked(S, k.id) ? '' : 'off'}">${k.name}<small>×${k.mult}</small></span>`).join('');
+  const st = Q.totalStars(S);
+  $('quest-n').textContent = st > 0 ? `${st}★` : 'new';
+  $('quest-n').classList.toggle('new', st === 0);
   const d = store.get('forkwood.daily.' + dailySeed(), null);
   $('daily-best').textContent = d ? `· today ${d.height} m` : `· ${dailyLabel()}`;
 }
@@ -320,7 +416,8 @@ function handleEvents(s, quiet) {
         const st = STAGES[e.idx];
         sound.setStage(e.idx);
         if (!quiet && !isCalm()) fx.plate = { t: 0, color: STAGES[e.idx].sky };
-        if (!quiet && e.idx === TREETOP_IDX) {
+        if (!quiet && run.level && !daily) { sound.stageUp(); floater(s.cx, s.cy - 50, '+15 sap', '#c4e88a', 18, 0.9); }
+        else if (!quiet && e.idx === TREETOP_IDX) {
           sound.stageUp(); sound.newBest();
           fx.banner = { text: 'Treetop', sub: 'you grew a whole tree · now reach the stars', t: 0, max: 3.4, gold: true };
           flash('255,215,106', 0.6); shake(8); vibrate(80);
@@ -348,12 +445,24 @@ function handleEvents(s, quiet) {
         break;
       }
       case 'newbest':
-        if (!quiet) { sound.newBest(); floater(s.cx, s.cy - 60, CHALLENGE && !daily ? 'friend beaten' : 'new best', '#f2b33d', 28, 1.4); flash('255,215,106', 0.35); }
+        if (!quiet) { sound.newBest(); floater(s.cx, s.cy - 60, isChallengeRun() ? 'friend beaten' : 'new best', '#f2b33d', 28, 1.4); flash('255,215,106', 0.35); }
         break;
       case 'death':
         for (const t of s.tips) burst(t.x, s.cy, 14, STAGES[s.stageIdx].leaf, 140, 7, 1.6, 'leaf');
-        if (!quiet) { sound.death(); sound.stop(); shake(6); vibrate(120); }
+        if (!quiet) { sound.death(); sound.stop(); shake(6); vibrate(120); if (e.why === 'hit') fx.banner = { text: 'ONE HIT', sub: 'hardcore: the tree is done', t: 0, max: 1.6, small: true }; }
         break;
+      case 'finish': {
+        // a finish ribbon or the sprint clock: a win, celebrated like the Treetop
+        const time = e.why === 'time';
+        for (let k = 0; k < 5; k++) burst(s.cx + (k - 2) * 60, s.cy - 60 - k * 16, 12, STAGES[s.stageIdx].leaf, 320, 8, 1.6, 'leaf');
+        burst(s.cx, s.cy - 50, 24, '#ffe08a', 400, 10, 1.0, 'spark');
+        ring(s.cx, s.cy, '#f2b33d', 200, 0.9);
+        if (!quiet) {
+          sound.stageUp(); sound.newBest(); flash('255,215,106', 0.55); shake(7); vibrate(80); sound.stop();
+          fx.banner = time ? { text: "TIME!", sub: `${Math.floor(heightM(s))} m in 60 s`, t: 0, max: 1.6, gold: true } : { text: run.level ? 'CLEAR!' : 'FINISH', sub: `${Math.floor(heightM(s))} m · ${Math.floor(s.score).toLocaleString('en-US')} pts`, t: 0, max: 1.6, gold: true };
+        }
+        break;
+      }
     }
   }
 }
@@ -392,10 +501,20 @@ function showGameOver() {
   const prevBest = S.best.height;
   let rewards = null;
   const before = S.acorns;
+  const lv = run.level && !daily ? LEVEL[run.level] : null;
+  const challengeRun = isChallengeRun();
+  lastQuest = null;
   if (!BOT_MODE) {
-    const challengeWon = !!(CHALLENGE && !daily && sum.height > CHALLENGE.m);
-    rewards = M.finishRun(S, sum, { daily, challengeWon });
+    const challengeWon = !!(challengeRun && (CHALLENGE.lvl ? sum.won && sum.score > CHALLENGE.m : sum.height > CHALLENGE.m));
+    rewards = M.finishRun(S, sum, { daily, challengeWon, noBest: !!lv || (run.mode !== 'classic' && !daily) || (run.stake !== 'sapling' && !daily) });
     newBest = rewards.bestScore;
+    const q = Q.finishQuest(S, sum, { mode: daily ? 'classic' : run.mode, stake: daily ? 'sapling' : stakeOf(run), level: lv ? lv.id : null, week: run.week });
+    lastQuest = q;
+    rewards.quest = q;
+    rewards.unlocked.push(...M.unlockEarned(S));
+    rewards.total = S.acorns;
+    if (lv) newBest = !!q.levelBest && sum.won;
+    else if (run.mode !== 'classic' || run.stake !== 'sapling') newBest = q.modeBest || q.stakeBest;
     persist();
     if (daily) {
       const key = 'forkwood.daily.' + dailySeed();
@@ -404,21 +523,51 @@ function showGameOver() {
     }
   }
   const url = location.host ? (location.host + location.pathname).replace(/index\.html$/, '').replace(/\/$/, '') : 'Forkwood';
-  const challenge = CHALLENGE && !daily ? { m: CHALLENGE.m, won: sum.height > CHALLENGE.m } : null;
+  const challenge = challengeRun ? { m: CHALLENGE.m, won: CHALLENGE.lvl ? sum.won && sum.score > CHALLENGE.m : sum.height > CHALLENGE.m, pts: !!CHALLENGE.lvl } : null;
+  const modeLine = lv ? `Quest ${lv.id} · ${lv.name}${sum.won ? '' : ' · not finished'}` : run.mode === 'weekly' ? `Weekly tree ${weekCode(run.week)} · Oak` : run.mode !== 'classic' && !daily ? MODE[run.mode].name : (!daily && run.stake !== 'sapling' ? `${STAKE[run.stake].name} stake ×${STAKE[run.stake].mult}` : '');
+  const cardStars = lv && lastQuest ? { run: lastQuest.runStars || 0, best: lastQuest.stars || 0 } : null;
   try {
-    cardCanvas = renderCard(sim, sum, { daily, dailyLabel: dailyLabel(), newBest, url, seed: sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs) });
+    cardCanvas = renderCard(sim, sum, { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '' });
     $('card-img').src = cardCanvas.toDataURL('image/png');
   } catch (e) {
     console.warn('card render failed', e && e.stack || e);
   }
   const toGo = STAGES[TREETOP_IDX].m - sum.height;
-  $('over-kicker').textContent = challenge ? (challenge.won ? `★ CHALLENGE BEATEN (${challenge.m} m)` : `CHALLENGE: ${challenge.m - sum.height + 1} m short`)
-    : newBest ? '★ NEW BEST' : daily ? `DAILY TREE · ${dailyLabel()}` : `reached ${sum.stage.toUpperCase()}`;
-  $('over-tip').textContent = toGo > 0 ? `${toGo} m to the Treetop. ${runTip(sum)}`
+  const why = { hit: 'one hit', time: "time's up", sap: 'out of sap', finish: 'finished' }[sum.end] || '';
+  $('over-kicker').textContent = challenge ? (challenge.won ? `★ CHALLENGE BEATEN (${challenge.pts ? challenge.m.toLocaleString('en-US') + ' pts' : challenge.m + ' m'})` : challenge.pts ? `CHALLENGE: friend scored ${challenge.m.toLocaleString('en-US')}` : `CHALLENGE: ${challenge.m - sum.height + 1} m short`)
+    : lv ? (sum.won ? `LEVEL ${lv.id} CLEAR` : `LEVEL ${lv.id} · ${why}`)
+    : run.mode === 'sprint' && !daily ? (newBest ? '★ SPRINT BEST' : `SPRINT · ${why}`)
+    : run.mode === 'zen' && !daily ? (sum.won ? 'ZEN · CLOUDLINE REACHED' : 'ZEN')
+    : run.mode === 'hardcore' && !daily ? (newBest ? '★ HARDCORE BEST' : 'HARDCORE · one hit')
+    : newBest ? `★ NEW BEST${run.stake !== 'sapling' && run.mode === 'classic' && !daily ? ' ON ' + STAKE[run.stake].name.toUpperCase() : ''}` : daily ? `DAILY TREE · ${dailyLabel()}` : run.mode === 'weekly' ? `WEEKLY ${weekCode(run.week)}` : `reached ${sum.stage.toUpperCase()}`;
+  if (lv) {
+    const mk = lastQuest ? lastQuest.mask || 0 : 0;
+    $('over-tip').innerHTML = [`Reach the ribbon (${sum.finishM} m)`, ...lv.goals.map(goalText)].map((t, i) => `<span class="lg ${mk & (1 << i) ? 'on' : ''}">${mk & (1 << i) ? '★' : '☆'} ${t}</span>`).join('');
+  } else $('over-tip').textContent = run.mode === 'sprint' && !daily ? `Sprint: ${sum.height} m in ${Math.min(60, Math.round(sum.time))} s. ${runTip(sum)}`
+    : toGo > 0 ? `${toGo} m to the Treetop. ${runTip(sum)}`
     : (sum.height > prevBest && prevBest >= STAGES[TREETOP_IDX].m) ? 'Above the treetop and climbing. Stars next.' : runTip(sum);
-  countUp(sum.height);
+  $('over-tip').classList.toggle('goals', !!lv);
+  document.querySelector('.over-panel').classList.toggle('lvl', !!lv);
+  // stars for quest levels: this run's stars light up, newly earned ones stamp in
+  const os = $('over-stars');
+  os.hidden = !lv;
+  if (lv && lastQuest) {
+    const mk = lastQuest.mask || 0, prev = (S.quest.marks[lv.id] || 0) & ~mk | 0;
+    os.innerHTML = [0, 1, 2].map((i) => { const on = !!(mk & (1 << i)), had = i < lastQuest.prevStars; return `<i class="${on ? 'on' : had ? 'had' : ''} ${on && i >= lastQuest.prevStars ? 'new' : ''}" style="--d:${0.35 + i * 0.22}s">${on || had ? ICON_STAR : ICON_STAR_OFF}</i>`; }).join('') + `<small>${lastQuest.stars}/3 on this level</small>`;
+    if (!isCalm() && lastQuest.newStars) for (let i = 0; i < lastQuest.newStars; i++) setTimeout(() => sound.stamp(), (0.35 + (lastQuest.prevStars + i) * 0.22) * 1000);
+  }
+  // next / retry buttons
+  const nx = lv && sum.won ? nextLevel(lv) : null;
+  const nxOpen = nx && Q.levelUnlocked(S, nx.id);
+  $('btn-next').hidden = !nxOpen;
+  if (nxOpen) $('btn-next-label').textContent = `Next: ${nx.id} ${nx.name}`;
+  $('btn-again-label').textContent = lv ? (sum.won ? 'Play again' : 'Retry') : 'Grow again';
+  $('btn-again').classList.toggle('primary', !nxOpen); $('btn-again').classList.toggle('secondary', !!nxOpen);
+  $('btn-menu').textContent = lv ? 'Map' : 'Menu';
+  countUp(lv && sum.won ? sum.score : sum.height, lv && sum.won ? 'pts' : 'm');
   $('over-kicker').classList.toggle('gold', !!(newBest || (challenge && challenge.won)));
-  $('over-score').textContent = `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(S.best.score, sum.score).toLocaleString('en-US')}`;
+  $('over-score').textContent = lv ? (sum.won ? `${sum.height} m in ${Math.round(sum.time)} s · best ${(S.quest.best[lv.id] || sum.score).toLocaleString('en-US')} pts` : `${sum.height} of ${sum.finishM} m · ${sum.score.toLocaleString('en-US')} pts`)
+    : `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(run.mode === 'classic' && run.stake === 'sapling' || daily ? S.best.score : ((run.mode === 'classic' ? 0 : (S.quest.modeBest[run.mode] || {}).s) || 0), sum.score).toLocaleString('en-US')}`;
   $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}${sum.grafts ? ` · grafts: ${sum.graftIds.map((g) => GRAFTS[g].name).join(', ')}` : ''}`;
   $('share-msg').textContent = '';
   setMode('over');
@@ -427,11 +576,11 @@ function showGameOver() {
 }
 
 let countRaf = 0;
-function countUp(target) {
+function countUp(target, unit = 'm') {
   // the height counts up with soft ticks, then settles (instant in calm mode)
   const el = $('over-height');
   cancelAnimationFrame(countRaf);
-  const set = (v) => { el.innerHTML = `${v}<small>m</small>`; };
+  const set = (v) => { el.innerHTML = `${unit === 'pts' ? v.toLocaleString('en-US') : v}<small>${unit}</small>`; };
   if (isCalm() || BOT_MODE || target < 2) { set(target); return; }
   const t0 = performance.now(), dur = Math.min(1100, 380 + target * 2);
   let lastTick = -1;
@@ -459,12 +608,21 @@ function runTip(sum) {
 
 function challengeUrl() {
   const base = location.origin && location.origin !== 'null' ? location.origin + location.pathname : 'Forkwood';
-  return `${base}?seed=${sim.seed}&beat=${lastSum.height}`;
+  if (run.level && !daily) return `${base}?lvl=${run.level}&beat=${lastSum.won ? lastSum.score : 1}`;
+  if (run.mode === 'weekly' && !daily) return `${base}?week=${run.week}&beat=${lastSum.height}`;
+  const extra = daily ? '' : `${run.mode !== 'classic' ? `&mode=${run.mode}` : ''}${run.mode === 'classic' && run.stake !== 'sapling' ? `&stake=${run.stake}` : ''}`;
+  return `${base}?seed=${sim.seed}&beat=${lastSum.height}${extra}`;
 }
 
 function shareText() {
   const s = lastSum;
-  return `I grew a ${s.height} m tree in Forkwood (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
+  const lv = run.level && !daily ? LEVEL[run.level] : null;
+  if (lv) {
+    const n = lastQuest ? lastQuest.runStars || 0 : 0;
+    return `Forkwood quest ${lv.id} "${lv.name}" ${'★'.repeat(n)}${'☆'.repeat(3 - n)} · ${s.score.toLocaleString('en-US')} pts\n${Q.mapGrid(S)}\nBeat my score: ${challengeUrl()}`;
+  }
+  const what = run.mode === 'weekly' && !daily ? ` on the weekly tree ${weekCode(run.week)}` : run.mode !== 'classic' && !daily ? ` in ${MODE[run.mode].name}` : run.stake !== 'sapling' && !daily ? ` on ${STAKE[run.stake].name} stake` : '';
+  return `I grew a ${s.height} m tree in Forkwood${what} (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
 }
 
 // ------------------------------------------------------------------ input
@@ -479,15 +637,18 @@ function toggleFork() { if (mode === 'play' && !paused) input.toggle = true; }
 // drag anywhere and the tip moves with your finger, so a tap to fork never yanks
 // the branch toward the tap point and your thumb never has to cover the tip.
 const TOUCH_GAIN = 1.5;
+// Looking-glass mode: steering is mirrored (the course is not)
+const mirrored = () => mode === 'play' && !daily && !run.level && run.mode === 'mirror';
+const mirrorX = (x) => (mirrored() ? W - x : x);
 canvas.addEventListener('pointerdown', (e) => {
   sound.unlock();
   input.kind = e.pointerType === 'mouse' ? 'mouse' : 'touch';
-  if (mode === 'title') { startRun(false); return; }
+  if (mode === 'title') { playMain(); return; }
   else if (mode === 'play' && paused) { resume(); return; }
   const cz = renderer.layout.charm;
   if (mode === 'play' && cz && Math.hypot(e.clientX - cz.x, e.clientY - cz.y) < cz.r) { input.charm = true; return; }
   input.pointerId = e.pointerId; input.downT = performance.now(); input.downX = e.clientX; input.downY = e.clientY; input.moved = 0;
-  if (e.pointerType === 'mouse') input.targetX = worldX(e.clientX);
+  if (e.pointerType === 'mouse') input.targetX = mirrorX(worldX(e.clientX));
   else input.anchor = input.targetX ?? (sim ? sim.cx : W / 2);
   if (e.pointerType === 'mouse' && mode === 'play' && e.button === 0) toggleFork();
 });
@@ -496,9 +657,9 @@ window.addEventListener('pointermove', (e) => {
     if (input.dir !== 0) return;
     if (input.kind === 'key' && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) < 3) return;
     input.kind = 'mouse';
-    input.targetX = worldX(e.clientX);
+    input.targetX = mirrorX(worldX(e.clientX));
   } else if (e.pointerId === input.pointerId) {
-    input.targetX = Math.max(0, Math.min(W, input.anchor + ((e.clientX - input.downX) / cam.scale) * TOUCH_GAIN));
+    input.targetX = Math.max(0, Math.min(W, input.anchor + ((e.clientX - input.downX) / cam.scale) * TOUCH_GAIN * (mirrored() ? -1 : 1)));
     input.moved = Math.max(input.moved, Math.hypot(e.clientX - input.downX, e.clientY - input.downY));
   }
 });
@@ -517,9 +678,10 @@ window.addEventListener('keydown', (e) => {
   sound.unlock();
   if (['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D', ' ', 'ArrowUp', 'w', 'W'].includes(k)) input.kind = 'key';
   if (ui.isOpen) { if (k === 'Escape') ui.hide(); return; }
+  if (qui.isOpen) { if (k === 'Escape') qui.hide(); return; }
   if (k === 'm' || k === 'M') { toggleMute(); return; }
   if (k === 'r' || k === 'R') { startRun(daily && mode !== 'title'); return; }
-  if (mode === 'title') { if (k === 'Enter' || k === ' ') startRun(false); else if (k === 'd' || k === 'D') startRun(true); return; }
+  if (mode === 'title') { if (k === 'Enter' || k === ' ') playMain(); else if (k === 'd' || k === 'D') startRun(true); return; }
   if (mode === 'over') { if (k === 'Enter' || k === ' ') startRun(daily); if (k === 'Escape') toMenu(); return; }
   if (k === 'p' || k === 'P' || k === 'Escape') { paused ? resume() : pause(); return; }
   if (paused) { if (k === ' ' || k === 'Enter') resume(); return; }
@@ -556,10 +718,20 @@ function toggleMute() { sound.setMuted(!sound.muted); $('btn-mute').classList.to
 $('btn-mute').classList.toggle('muted', sound.muted);
 $('btn-mute').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); toggleMute(); });
 $('btn-pause').addEventListener('click', (e) => { e.stopPropagation(); paused ? resume() : pause(); });
-$('btn-play').addEventListener('click', (e) => { e.stopPropagation(); startRun(false); });
+const playMain = () => { if (CHALLENGE) startRun(false); else startMode('classic'); };
+$('btn-play').addEventListener('click', (e) => { e.stopPropagation(); playMain(); });
 $('btn-daily').addEventListener('click', (e) => { e.stopPropagation(); startRun(true); });
 $('btn-again').addEventListener('click', () => startRun(daily));
-$('btn-menu').addEventListener('click', toMenu);
+$('btn-next').addEventListener('click', () => { const nx = run.level && nextLevel(LEVEL[run.level]); if (nx) startLevel(nx.id); });
+$('btn-menu').addEventListener('click', () => { if (run.level && !daily && mode === 'over') { sound.page(); qui.show('map', run.level); } else toMenu(); });
+$('btn-quest').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); sound.startMenu(); sound.page(); qui.show('map'); });
+$('btn-stake').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const open = STAKES.filter((k) => Q.stakeUnlocked(S, k.id));
+  const i = open.findIndex((k) => k.id === S.quest.stake);
+  S.quest.stake = open[(i + 1) % open.length].id; run.stake = S.quest.stake; persist(false); sound.page(); refreshTitle();
+});
+$('quest-ico').innerHTML = ICON.map;
 $('btn-menu-p').addEventListener('click', toMenu);
 $('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); S.calm = !isCalm(); persist(false); sound.unlock(); sound.toggle(); refreshTitle(); });
 $('btn-challenge').addEventListener('click', async () => {
@@ -589,7 +761,7 @@ $('btn-share').addEventListener('click', async () => {
 $('title').addEventListener('pointerdown', (e) => {
   if (e.target.closest('button')) return;
   sound.unlock();
-  startRun(false);
+  playMain();
 });
 
 window.addEventListener('resize', () => { renderer.resize(); });
@@ -635,7 +807,7 @@ function frame(nowMs) {
   } else if (mode === 'play' && !paused) {
     let inp;
     if (BOT_MODE || autoplay) inp = botInput(bot, sim);
-    else inp = { targetX: input.dir !== 0 ? null : input.targetX, dir: input.dir, toggle: input.toggle, charm: input.charm };
+    else inp = { targetX: input.dir !== 0 ? null : input.targetX, dir: mirrored() ? -input.dir : input.dir, toggle: input.toggle, charm: input.charm };
     input.toggle = false; input.charm = false;
     playTick(dt, inp);
     sound.setFrost(sim.inFrost && !sim.dead);
@@ -663,8 +835,12 @@ function frame(nowMs) {
     hints: false,
     coach: coachView(sim),
     bestM: mode === 'title' ? 0 : sim.bestM,
-    bestLabel: CHALLENGE && !daily ? 'FRIEND' : 'BEST',
+    bestLabel: isChallengeRun() ? 'FRIEND' : 'BEST',
     daily,
+    modeLabel: mode === 'play' ? runLabel() : '',
+    finishM: sim.finishM || 0,
+    clock: sim.R && sim.R.timeLimit ? Math.max(0, sim.R.timeLimit - sim.t) : null,
+    mirror: mirrored(),
     reveal: false,
     calm: isCalm(),
     acornPulse: fx.acornPulse || 0,
@@ -698,6 +874,12 @@ window.forkwood = {
   // trailer capture only: start a golden hour as if a merge had reached ×8
   forceGolden: () => { if (!sim || sim.dead) return; sim.mult = 8; sim.maxMult = 8; sim.golden = 6; sim.goldens++; sim.events = [{ type: 'golden', x: sim.cx, y: sim.cy }]; handleEvents(sim, false); sim.events = []; },
   summary: () => sim && summary(sim),
+  get run() { return run; },
+  get quest() { return Q; },
+  get qui() { return qui; },
+  loadQuestUI,
+  startLevel: (id) => startLevel(id),
+  startMode: (id) => startMode(id),
   start: (d = false) => startRun(d),
   setBotSkill: (k) => { botSkill = k; },
   killNow: () => { if (sim) sim.sap = 0.001; },
