@@ -36,6 +36,7 @@ Vendored as `src/vendor/zzfx.js` with one change, noted at the top of the file: 
 * Trauma-based screen shake: Squirrel Eiserloh, "Math for Game Programmers: Juicing Your Cameras With Math", GDC 2016.
 * Game feel: Martin Jonasson & Petri Purho, "Juice it or lose it" (2012); Jan Willem Nijman, "The Art of Screenshake" (2013).
 * Progression design: levels of three goals after Alto's Adventure (Snowman); cosmetic-only unlocks so scores stay comparable after Crossy Road (Hipster Whale, GDC 2015); quests as an "endless tutorial" after David Fox, "Don't Pass on Battle Pass" (GDC 2022); streak freeze after Duolingo. Ideas only, no assets.
+* Course and power-up design (pass 3): chunk tiers with costs and a growing budget after Tommy Thompson's write-up of *Sure Footing*; a sawtooth with designed rest beats after the build/peak/relax pacing of *Left 4 Dead*'s director; vehicles as pace breakers after *Jetpack Joyride* (Luke Muscat, GDC 2012); stackable timed power-ups after *Subway Surfers*; self-chosen risk for reward after *Downwell*'s combo; a guaranteed path first after *Spelunky*'s generator. Ideas only, no assets. The storm, lightning, thorn columns, sliding thorns, power-up tokens and graft medallions are drawn in code for Forkwood; the new sounds are synthesised in code (no new files).
 
 ## Not shipped
 
