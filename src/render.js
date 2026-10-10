@@ -569,7 +569,7 @@ export class Renderer {
       }
       if (wide) {
         const label = STAGES[i].name.toUpperCase();
-        ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(30,26,22,0.55)'; ctx.strokeText(label, x - 13, yy + 4);
+        ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(30,26,22,0.9)'; ctx.strokeText(label, x - 13, yy + 4);
         ctx.fillStyle = goal ? OCHRE : reached ? PAPER : 'rgba(244,236,216,0.7)';
         ctx.fillText(label, x - 13, yy + 4);
       }
