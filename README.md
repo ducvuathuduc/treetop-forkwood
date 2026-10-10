@@ -30,6 +30,10 @@ It is version control you can feel: commits are leaves, forks and merges are rea
 * Your tip burns **sap**; sunlight refills it. Forking burns sap 1.4× faster, so a fork is a bet you cash in by merging.
 * Beetles and thorn vines hurt. On a single tip a hit costs sap and resets your multiplier; on a fork it reverts that branch.
 * Frost slows you, wind pushes you, dew refills sap, bark gives a one-hit shield.
+* **Every stage brings one new thing.** Bough: frost clouds and zig-zag thorns. Canopy: gusts and **thorn columns** (go round them, or fork so your two tips pass either side). Treetop: **the storm**, a boss stretch where lightning falls (each bolt shows as a dashed column long before it strikes, and the rain slows your sap drain). Cloudline: **sliding thorns** whose gap drifts along a dotted rule. Starlight: all of it, and the storms return.
+* **Power-ups** (paper tokens, never confused with sunlight): **Pollen** pulls sunlight to you for 6 s, **Ink ×2** doubles points for 8 s, **Sap Rush** surges you upward for 3 s and nothing can hurt you. Pick one up again to add time; they stack.
+* **Grafts**: at 120 m, 240 m, after the storm and at 850 m, two graft medallions hang one fork-width apart. Steer into one to take it, or **fork to take both**. Each graft has a boon and a cost (*Thorn Crown*: all points ×1.25, hits cost 50% more sap). Three pairs form named synergies when you hold both (*Orchard*, *Briar*, *Spring*).
+* **Skill bonuses**: close calls in a row build a graze chain (more points, and every third gives sap); a merge made just before a thorn gate is a **just-in-time** merge worth 1.5×; a forked pair straddling a column pays like a split.
 * **Golden hour** (a merge that reaches ×8): 6 seconds of gold, slower sap drain, sunlight comes to you, double points. Afterwards the multiplier settles to ×4, so you can earn it again.
 * **Full bloom**: catch every sunlight in a trail. Blossoms stay on your tree and on your postcard.
 * The ladder on the right shows Twig → Sapling → Bough → Canopy → **Treetop** → Cloudline → Starlight, with your best height marked in gold.
@@ -48,8 +52,8 @@ None of this gets in the way of the first run: a new player sees the same one-sc
 * **Acorns** are earned only by playing: pick them up in the sky, and every run pays for its height, merges, blooms and golden hours. Nothing is sold for money, there are no ads and no accounts.
 * **Levels with three goals each**, written by hand for the first twelve levels (one that teaches, one that stretches, one you will do anyway), then generated. Finish all three to level up.
 * **Daily and weekly challenges** (three each, the same for everyone on a given day) and a **daily gift** with a 7-day streak calendar. Every 7th day adds a frost guard that saves one missed day.
-* **18 badges**, stamped like a printer's seal.
-* **Charms**: take one into a run. Scoring merges charge it, and **E / Shift** or a tap on the charm badge fires it: *Bark Ward* (shield), *Sun Call* (sunlight drifts to you), *Deep Roots* (+25 sap, but combo −2) and *Stillness* (hazards slow down). Each is a small, measured edge (the bot measures +1% to +11% median height). **The daily tree and challenge links never use charms**, so those stay the same for everyone.
+* **21 badges**, stamped like a printer's seal.
+* **Charms**: take one into a run. Scoring merges charge it, and **E / Shift** or a tap on the charm badge fires it: *Bark Ward* (shield), *Sun Call* (sunlight drifts to you), *Deep Roots* (+25 sap, but combo −2) and *Stillness* (hazards slow down). Each is a small, measured edge (the bot measures +1% to +15% median height). **The daily tree and challenge links never use charms**, so those stay the same for everyone.
 * **The shop**: 26 skins in six slots (bark, leaves, blossom, branch tip, sky plate, postcard), all drawn in the same woodblock style: birch bark with ink marks, needle, maple and ginkgo leaves, an acorn-cap or paper-lantern tip, a Prussian-blue or risograph sky, a perforated postage-stamp postcard. Skins never change the game. One item a day is 25% off.
 * **Rings** (your profile): lifetime stats and your five tallest trees, stored only on your device.
 
@@ -70,12 +74,15 @@ None of this gets in the way of the first run: a new player sees the same one-sc
 
 ## Tech notes
 
-* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, no third-party requests. First load is about 340 KB uncompressed including fonts and sound.
+* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, no third-party requests. First load is about 385 KB uncompressed including fonts and sound.
 * One small library: [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT) renders the short menu and charm sounds. It is vendored in `src/vendor/` and only loaded after your first tap. Bigger engines (PixiJS, Phaser, Howler, GSAP, Matter.js, Lottie) were considered and left out: the game already runs at 60 fps in Canvas 2D, and they would have multiplied the load size or broken the deterministic simulation.
 * Progress lives in one `localStorage` save (`src/meta.js`), with an automatic upgrade from the first public build's save (your best, runs and settings carry over, plus acorns for the metres you already grew).
 * Runs at 60 fps in headless Chromium at 1280×800 and on phone viewports, with about 1.5 ms of JavaScript per frame.
-* Deterministic simulation (`src/sim.js`) shared by the game and a **headless auto-playtest bot** (`src/bot.js`), used to tune difficulty: over 120 seeded runs per skill level, a weak bot's median run is about 54 s and an expert's about 106 s (`npm run balance`).
+* Deterministic simulation (`src/sim.js`) shared by the game and a **headless auto-playtest bot** (`src/bot.js`), used to tune difficulty: over 120 seeded runs per skill level, a weak bot's median run is about 58 s and an expert's about 132 s, with the best expert runs past three minutes (`npm run balance`; `node tests/survival.mjs` prints survival by height).
+* **The course director.** Courses are built from 20 hand-made chunks at four difficulty tiers plus rest glades, mixed by a director that follows a sawtooth (build, build, spike, rest) over a rising intensity curve; each stage unlocks its own chunk families and favours its signature hazard. It reads only the seed and the height, never what you did, so a seed always grows the same course: the daily tree and challenge links stay fair for everyone.
 * `tests/fairness.mjs` generates 300 seeded courses to 1,200 m and checks that every gap fits, every split gate fits a forked pair, and every gate is reachable from the one before it.
+* `tests/chunks.mjs` scans 200 seeded courses to 1,500 m: every thorn column leaves room on one side and can be straddled by a fork, no thorn row sits beside a column, overlapping columns always leave a way through, sliding gaps are wide and slow, graft gates are clear of hazards, lightning only falls inside storms, a rest beat comes at least every five chunks, hard tiers never appear too low, and the course is identical whatever the player does. It also unit-tests every power-up, grafts and synergies, just-in-time merges, graze chains and the storm.
+* `tests/toasts.mjs` checks that reward toasts never sit on a button on the title or game-over card, on two phone sizes and desktop.
 * `tests/tutorial.mjs` plays the first-run coach through the real game loop on desktop and two phone sizes and checks that the coach card and stage banners never overlap.
 * `tests/smoke.mjs` plays the game in headless Chromium with a real mouse, touch drags and taps, checks challenge links, and fails on any console error.
 * `tests/meta.mjs` checks the progression rules without a browser: save upgrade and repair, gifts and streaks, shop rules, challenges and badges, that charms never touch pure runs or the course, the charm balance band, and economy pacing with the real simulation and bot.
