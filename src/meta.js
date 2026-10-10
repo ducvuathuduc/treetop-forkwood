@@ -6,6 +6,7 @@
 import { SKINS, SKIN, DEFAULT_LOADOUT } from './skins.js';
 import { CHARMS } from './sim.js';
 import { mulberry32 } from './rng.js';
+import { freshQuest, repairQuest, PRIZES } from './quest.js';
 
 export const SAVE_KEY = 'forkwood.save.v2';
 export const SAVE_VERSION = 2;
@@ -167,6 +168,7 @@ export function freshSave(today = dayKey()) {
     topRuns: [],
     tutorial: false,
     calm: null,
+    quest: freshQuest(),
   };
 }
 
@@ -217,6 +219,7 @@ export function repair(S, today = dayKey()) {
   S.level = lvl;
   if (!goalsOk) S.goals = levelGoals(lvl);
   else if (RETIRED[lvl]) S.goals = S.goals.map((g) => (RETIRED[lvl][g.k] && !LEVELS[lvl - 1].some((t) => t.k === g.k && t.n === g.n && t.run === g.run) ? (g.done ? { ...RETIRED[lvl][g.k], p: RETIRED[lvl][g.k].n, done: true } : { ...RETIRED[lvl][g.k], p: 0, done: false }) : g));
+  repairQuest(S);
   unlockEarned(S);
   rollover(S, new Date(today + 'T12:00:00Z'));
   return S;
@@ -286,13 +289,14 @@ export function unlockText(it) {
   if (u.cost) return `${u.cost} acorns`;
   if (u.level) return `Reach level ${u.level}`;
   if (u.ach) return `Badge: ${ACH[u.ach] ? ACH[u.ach].name : u.ach}`;
+  if (u.prize) return `Quest: ${PRIZES[u.prize] ? PRIZES[u.prize].text : u.prize}`;
   return '';
 }
-function unlockEarned(S) {
+export function unlockEarned(S) {
   const got = [];
   for (const it of SKINS) {
     if (S.owned.includes(it.id)) continue;
-    if ((it.unlock.level && S.level >= it.unlock.level) || (it.unlock.ach && S.ach[it.unlock.ach])) { S.owned.push(it.id); got.push(it.id); }
+    if ((it.unlock.level && S.level >= it.unlock.level) || (it.unlock.ach && S.ach[it.unlock.ach]) || (it.unlock.prize && S.quest && S.quest.prizes.includes(it.unlock.prize))) { S.owned.push(it.id); got.push(it.id); }
   }
   return got;
 }
@@ -341,10 +345,14 @@ export function finishRun(S, sum, ctx = {}) {
   st.nearMisses += sum.nearMisses; st.splits += sum.splits || 0; st.charmUses += sum.charmUses || 0; st.forks += sum.forks || 0;
   st.time += Math.round(sum.time || 0); if (ctx.daily) st.dailyRuns++;
   st.grafts += sum.grafts || 0; st.storms += sum.storms || 0; st.pickups += sum.pickups || 0;
-  if (sum.score > S.best.score) { S.best.score = sum.score; out.bestScore = true; }
-  if (sum.height > S.best.height) { S.best.height = sum.height; out.bestHeight = true; }
-  S.topRuns.push({ h: sum.height, s: sum.score, hash: sum.hash, d: dayKey(now), daily: !!ctx.daily });
-  S.topRuns.sort((a, b) => b.h - a.h || b.s - a.s); S.topRuns.length = Math.min(S.topRuns.length, 5);
+  // personal bests and the top-5 come from endless runs only (quest levels, Zen
+  // and Sprint have their own records in the quest block)
+  if (!ctx.noBest) {
+    if (sum.score > S.best.score) { S.best.score = sum.score; out.bestScore = true; }
+    if (sum.height > S.best.height) { S.best.height = sum.height; out.bestHeight = true; }
+    S.topRuns.push({ h: sum.height, s: sum.score, hash: sum.hash, d: dayKey(now), daily: !!ctx.daily });
+    S.topRuns.sort((a, b) => b.h - a.h || b.s - a.s); S.topRuns.length = Math.min(S.topRuns.length, 5);
+  }
   // level goals: finishing all three levels up; the next set starts fresh next run
   for (const g of S.goals) if (advance(g, sum, ctx)) out.goalsDone.push(describe(g));
   out.goalsAfter = S.goals.map((g) => ({ text: describe(g), done: g.done }));
