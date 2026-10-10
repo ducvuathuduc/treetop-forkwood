@@ -19,7 +19,7 @@ export const COLUMN_HW = 24;     // half-width of a thorn column: a forked pair 
 export const CHARMS = {
   ward:  { name: 'Bark Ward',  charge: 5, dur: 0,   blurb: 'Grow a bark shield that blocks the next hit.' },
   sun:   { name: 'Sun Call',   charge: 5, dur: 3,   blurb: 'For 3 s nearby sunlight drifts to your tips.' },
-  roots: { name: 'Deep Roots', charge: 4, dur: 0,   blurb: '+25 sap at once, but your combo drops by 2.' },
+  roots: { name: 'Deep Roots', charge: 5, dur: 0,   blurb: '+25 sap at once, but your combo drops by 2.' },
   still: { name: 'Stillness',  charge: 3, dur: 4,   blurb: 'For 4 s beetles, frost, wind and sliding thorns slow to a crawl and sap drains slower.' },
 };
 
@@ -48,6 +48,29 @@ export const SYNERGIES = {
 };
 const GRAFT_IDS = Object.keys(GRAFTS);
 
+// Run rules: every mode, stake and quest level is the same sim with a few knobs.
+// The default (an empty rules object) is the classic Sapling run.
+export const RULES = {
+  drain: 1,        // sap drain multiplier
+  hazard: 0,       // added to the director's intensity (ramps in over the first 150 m)
+  speed: 1,        // growth speed multiplier
+  beetle: 1,       // beetle speed multiplier
+  dmg: 1,          // hit damage multiplier
+  score: 1,        // points multiplier (stakes and modes)
+  oneHit: false,   // Hardcore: any hit ends the run
+  noDeath: false,  // Zen: sap never runs out
+  timeLimit: 0,    // Sprint: the run ends after this many seconds
+  finishM: 0,      // a finish line (metres); reaching it ends the run as a win
+  script: null,    // quest level: an exact list of chunks (deterministic, pre-built)
+  d: null,         // quest level: fixed intensity for every chunk
+  biome: 0,        // metres added for the look and the stage name (quest worlds)
+  climb: 0,        // metres added to the drain curve (quest worlds feel like their height)
+  storms: null,    // Storm Rush: a custom storm list
+  restSwap: 0,     // Ancient: every Nth rest glade becomes a spike instead
+  noGrafts: false,
+};
+export function makeRules(r = {}) { return { ...RULES, ...r }; }
+
 // Balance knobs (tuned with tests/balance.mjs).
 export const TUNE = {
   drain0: 4.6,      // sap drain per second at ground level
@@ -56,6 +79,7 @@ export const TUNE = {
   moteSap0: 7.0,    // sap from one sunlight mote at ground level
   moteSapMin: 4.8,  // sap from one mote high up
   hazardK: 1.0,     // scales the director's intensity curve
+  drainLate: 2.6,   // extra drain per second phased in between 280 m and 700 m
 };
 
 export const STAGES = [
@@ -94,6 +118,10 @@ export function createSim(opts = {}) {
     tutorial: !!opts.tutorial,
     demo: !!opts.demo,
     pure: !!opts.pure,
+    R: makeRules(opts.rules),
+    won: false,
+    end: '',
+    finishM: 0,
     rng2: mulberry32((seed ^ 0x5bd1e995) >>> 0), // acorns only: never shifts the course itself
     charm: !opts.pure && opts.charm && CHARMS[opts.charm] ? opts.charm : null,
     charge: 0,
@@ -157,7 +185,7 @@ export function createSim(opts = {}) {
     trailSeq: 0,
     trails: new Map(),
     // pass 3: director, power-ups, grafts, storms, skill bonuses
-    dir: { pos: 0, last: [], graftI: 0, stormI: 0, stormOpen: -1, gateN: 0 },
+    dir: { pos: 0, last: [], graftI: 0, stormI: 0, stormOpen: -1, gateN: 0, si: 0, script: null, rests: 0 },
     chunkLog: [],
     pu: { pollen: 0, ink: 0, rush: 0 },
     pickups: 0,
@@ -175,6 +203,14 @@ export function createSim(opts = {}) {
   const main = newPath(s, W / 2, 40, -1);
   main.pts.push({ x: W / 2, y: 0, t: 0 });
   s.tips.push({ x: W / 2, side: 0, path: main.id, staged: 0 });
+  s.stageIdx = stageIndexFor(s.R.biome);
+  if (s.R.finishM) s.finishM = s.R.finishM;
+  if (s.R.script) {
+    // a quest level is built in full up front: same seed, same level, every time
+    s.dir.script = expandScript(s.R.script);
+    while (s.dir.si < s.dir.script.length) s.nextBeatY -= spawnBeat(s, s.nextBeatY);
+    s.finishM = Math.round(-s.nextBeatY / PX_PER_M) - 4;
+  }
   return s;
 }
 
@@ -185,9 +221,11 @@ function newPath(s, x, y, parent) {
 }
 
 export const heightM = (s) => Math.max(0, -s.cy / PX_PER_M);
+/** Metres used for the look and stage names (quest worlds start in their biome). */
+export const biomeM = (s) => heightM(s) + s.R.biome;
 export const hasGraft = (s, id) => s.grafts.includes(id);
 const tipR = (s) => TIP_R + (hasGraft(s, 'shave') ? 2 : 0);
-const scoreK = (s) => (s.pu.ink > 0 ? 2 : 1) * (hasGraft(s, 'crown') ? 1.25 : 1);
+const scoreK = (s) => (s.pu.ink > 0 ? 2 : 1) * (hasGraft(s, 'crown') ? 1.25 : 1) * s.R.score;
 function addScore(s, pts) { const v = Math.round(pts * scoreK(s)); s.score += v; return v; }
 
 function emit(s, type, data = {}) {
@@ -308,9 +346,12 @@ function reachableX(s, y, want) {
 export const SET = ['build', 'build', 'spike', 'rest'];
 
 /** Intensity 0..~1.5 at height m (the macro curve). */
-export function intensity(m) {
+export function intensity(m, add = 0) {
   if (m < 18) return 0;
-  return (Math.min(1, (m - 18) / 600) + 0.5 * clamp((m - 650) / 800, 0, 1)) * TUNE.hazardK;
+  // the opening minute (to ~300 m) is unchanged; after it the pressure rises
+  // much faster (1.0 by ~475 m instead of 618 m) and keeps rising late
+  const base = m < 300 ? (m - 18) / 600 : Math.min(1, 0.47 + (m - 300) / 330);
+  return (base + 0.6 * clamp((m - 560) / 700, 0, 1) + add * clamp((m - 18) / 150, 0, 1)) * TUNE.hazardK;
 }
 
 const sig = (m) => STAGES[stageIndexFor(m)].name;
@@ -441,7 +482,34 @@ export const CHUNKS = [
     addTwinTrail(s, y - 90, x, 4);
     return 600;
   } },
+  // ---- pass 4: late combos (two biome ideas at once)
+  { id: 'frostgate', tier: 3, minM: 420, sig: 'Bough', w: 0.9, gen(s, y, d) {
+    // a frost cloud sits in the run-up, just off the line to the gap: swerve
+    // round it and still line up with the gate (or take the cold way through)
+    const gx = reachableX(s, y - 330, 130 + s.rng() * (W - 260)), gw = Math.max(166, 200 - d * 20);
+    const fr = 56 + d * 12, off = (gx < W / 2 ? 1 : -1) * (30 + s.rng() * 30);
+    s.frosts.push({ x: clamp(gx + off, fr * 0.6, W - fr * 0.6), y: y - 90, r: fr, vx: 0, ph: s.rng() * 6.28 });
+    addTrail(s, y, { n: 4, cx: clamp(gx - off * 3, 60, W - 60), amp: 24 });
+    addGate(s, y - 330, gx, gw, false);
+    return 700;
+  } },
+  { id: 'swarmsplit', tier: 3, minM: 460, w: 0.9, gen(s, y, d) {
+    // beetles patrol the run-up to a split gate: fork late, or weave and fork
+    addTrail(s, y, { n: 4 });
+    for (let i = 0; i < 2; i++) addBeetle(s, 80 + ((i * 0.5 + s.rng() * 0.3) % 1) * (W - 160), y - 70 - i * 120, 55 + s.rng() * 35 + d * 35);
+    addSplit(s, y - 400, reachableX(s, y - 400, 160 + s.rng() * (W - 320)), Math.max(106, 116 - d * 8));
+    return 720;
+  } },
+  { id: 'slidercolumn', tier: 3, minM: 700, sig: 'Cloudline', w: 1, gen(s, y, d) {
+    // a drifting gap, then a column to straddle
+    addSlider(s, y, 150 + s.rng() * (W - 300), Math.max(180, 205 - d * 18), 50, 5.4);
+    const len = 320;
+    const x = addColumn(s, 150 + s.rng() * (W - 300), y - 340, len);
+    addTwinTrail(s, y - 360, x, 4);
+    return 340 + len + 120;
+  } },
 ];
+export const CHUNK = Object.fromEntries(CHUNKS.map((c) => [c.id, c]));
 const heightM2 = (y) => -y / PX_PER_M;
 
 const REST = { id: 'glade', tier: -1, gen(s, y, d, m) {
@@ -493,7 +561,42 @@ function pickChunk(s, tier, m) {
   return CHUNKS[0];
 }
 
+/** Quest scripts: 'chunkId' | 'glade' | 'graft' | { storm: n } (a storm of n lightning chunks). */
+function expandScript(list) {
+  const out = [];
+  for (const it of list) {
+    if (it && typeof it === 'object' && it.storm) { out.push({ stormOpen: it.storm }); for (let i = 1; i < it.storm; i++) out.push('bolts'); }
+    else out.push(it);
+  }
+  return out;
+}
+
+function scriptBeat(s, y) {
+  // one entry of a hand-made quest level; filler glades after the finish
+  const D = s.dir, d = s.R.d ?? 0.3, m = -y / PX_PER_M;
+  if (s.beatIndex++ === 0) { addTrail(s, y, { n: 6, cx: W / 2, amp: 100 }); s.chunkLog.push({ id: 'start', tier: 0, role: 'build', y, m: 0, len: 360 }); return 360; }
+  const it = D.si < (D.script || []).length ? D.script[D.si++] : 'glade';
+  let len, id = typeof it === 'string' ? it : 'bolts', role = 'build', tier = 0;
+  if (it === 'glade') { len = REST.gen(s, y, d, m); role = 'rest'; tier = -1; }
+  else if (it === 'graft') { len = graftGate(s, y); role = 'graft'; tier = -1; }
+  else if (it === 'bolts' || (it && it.stormOpen)) {
+    if (it.stormOpen) s.stormZones.push({ y0: y + 40, y1: y - it.stormOpen * 700 + 120, i: s.storms + s.stormZones.length });
+    len = STORM_CHUNK.gen(s, y, d); role = 'storm'; tier = -2;
+  } else {
+    const c = CHUNK[it] || CHUNKS[0];
+    len = c.gen(s, y, d, m); tier = c.tier;
+  }
+  s.chunkLog.push({ id, tier, role, y, m: Math.round(m), len: Math.round(len) });
+  const r2 = s.rng2;
+  if (role !== 'storm' && r2() < 0.5) {
+    const n = 1 + Math.floor(r2() * 3), ax = 70 + r2() * (W - 140), ay = y - len * (0.2 + r2() * 0.5);
+    for (let i = 0; i < n; i++) s.motes.push({ x: ax, y: ay - i * 38, kind: 'acorn', r: 10, ph: r2() * 6.28, taken: false });
+  }
+  return len;
+}
+
 function spawnBeat(s, y) {
+  if (s.R.script) return scriptBeat(s, y);
   const r = s.rng;
   const m = -y / PX_PER_M;
   const idx = s.beatIndex++;
@@ -505,10 +608,10 @@ function spawnBeat(s, y) {
   if (idx === 3) { addTwinTrail(s, y, W / 2); if (s.tutorial) s.hints.push({ y: y - 290, text: 'TAP again to merge', sub: 'merge = combo ×' }); return 420; }
 
   const D = s.dir;
-  const d = intensity(m);
+  const d = intensity(m, s.R.hazard);
   let chunk, role, len;
-  const st = STORMS[D.stormI];
-  if (D.graftI < GRAFT_AT.length && m >= GRAFT_AT[D.graftI]) {
+  const st = (s.R.storms || STORMS)[D.stormI];
+  if (!s.R.noGrafts && D.graftI < GRAFT_AT.length && m >= GRAFT_AT[D.graftI]) {
     D.graftI++; role = 'graft'; len = graftGate(s, y); chunk = { id: 'graft', tier: -1 };
   } else if (st && m >= st.m) {
     // the storm (a boss stretch): lightning chunks until it passes
@@ -522,6 +625,8 @@ function spawnBeat(s, y) {
     else { D.stormI++; role = 'rest'; chunk = REST; len = REST.gen(s, y, d, m); D.pos = 0; }
   } else {
     role = SET[D.pos]; D.pos = (D.pos + 1) % SET.length;
+    // Ancient stake: every Nth rest glade is taken away and becomes a spike
+    if (role === 'rest' && m >= 18 && s.R.restSwap && ++D.rests % s.R.restSwap === 0) role = 'spike';
     if (role === 'rest' || m < 18) { chunk = REST; if (m < 18) chunk = CHUNKS[0]; len = chunk.gen(s, y, d, m); }
     else {
       const tf = d * 2.3 + (role === 'spike' ? 0.9 : D.pos === 2 ? 0.35 : 0) + (r() - 0.5) * 0.6 - 0.3;
@@ -570,7 +675,7 @@ export function step(s, dt, input = {}) {
 
   // speed and steering
   const frostK = s.inFrost ? 0.62 : 1;
-  const target = (SPEED0 + 90 * prog + Math.min(40, Math.max(0, m - 650) * 0.05)) * frostK * (rush ? 1.8 : 1);
+  const target = (SPEED0 + 90 * prog + Math.min(40, Math.max(0, m - 650) * 0.05)) * frostK * (rush ? 1.8 : 1) * s.R.speed;
   s.speed += (target - s.speed) * Math.min(1, dt * (rush ? 5 : 3));
   let desired = 0;
   if (input.targetX != null) desired = clamp(Math.atan2(input.targetX - s.cx, 120), -1.12, 1.12);
@@ -635,10 +740,11 @@ export function step(s, dt, input = {}) {
   }
 
   // energy
-  const climb = Math.min(2.2, m / 600);
+  const climb = Math.min(2.2, (m + s.R.climb) / 600);
   const forkK = TUNE.forkDrain * (hasGraft(s, 'wild') ? 1.2 : 1);
-  let drain = (TUNE.drain0 + TUNE.drainK * climb) * (s.tips.length === 2 ? forkK : 1) + (s.inFrost ? (s.still > 0 ? 6 : 20) : 0);
-  drain *= (hasGraft(s, 'taproot') ? 0.85 : 1) * (s.storm ? 0.7 : 1);
+  const late = TUNE.drainLate * clamp((m + s.R.climb - 280) / 420, 0, 1); // pass 4: pressure after the opening minute
+  let drain = (TUNE.drain0 + TUNE.drainK * climb + late) * (s.tips.length === 2 ? forkK : 1) + (s.inFrost ? (s.still > 0 ? 6 : 20) : 0);
+  drain *= (hasGraft(s, 'taproot') ? 0.85 : 1) * (s.storm ? 0.7 : 1) * s.R.drain;
   if (!s.demo && !rush) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : s.still > 0 ? 0.6 : 1);
 
   // golden hour, Sun Call, pollen and Sap Rush: sunlight drifts to your tips
@@ -651,7 +757,7 @@ export function step(s, dt, input = {}) {
   // height score
   const mi = Math.floor(m);
   if (mi > s.heightScored) { addScore(s, (mi - s.heightScored) * s.mult); s.heightScored = mi; }
-  const si = stageIndexFor(m);
+  const si = stageIndexFor(m + s.R.biome);
   if (si > s.stageIdx) {
     s.stageIdx = si; emit(s, 'stage', { idx: si }); s.sap = Math.min(SAP_MAX, s.sap + 15);
     if (s.synergies.includes('spring')) { s.pu.pollen = Math.max(s.pu.pollen, 4); emit(s, 'pickup', { kind: 'pollen', x: s.cx, y: s.cy, spring: true }); }
@@ -661,7 +767,7 @@ export function step(s, dt, input = {}) {
   // world update + spawning
   while (s.nextBeatY > s.cy - 1500) s.nextBeatY -= spawnBeat(s, s.nextBeatY);
   const slow = s.still > 0 ? 0.25 : 1;
-  const bk = hasGraft(s, 'bloom') ? 1.15 : 1;
+  const bk = (hasGraft(s, 'bloom') ? 1.15 : 1) * s.R.beetle;
   for (const b of s.beetles) {
     b.x += b.vx * dt * slow * bk; b.ph += dt * 10 * slow;
     if (b.x < 18) { b.x = 18; b.vx = Math.abs(b.vx); }
@@ -687,12 +793,19 @@ export function step(s, dt, input = {}) {
   s.stormZones = s.stormZones.filter((o) => o.y1 < cull || o === s.storm);
   s.hints = s.hints.filter((o) => o.y < cull);
 
-  if (s.sap <= 0) {
-    s.sap = 0; s.dead = true; s.deathT = 0;
-    for (const tip of s.tips) { const p = s.paths[tip.path]; if (p.state === 'live') p.state = 'done'; }
-    emit(s, 'death');
-  }
+  if (s.R.noDeath && s.sap < 1) s.sap = 1;
+  if (s.finishM && heightM(s) >= s.finishM) endRun(s, 'finish');
+  else if (s.R.timeLimit && s.t >= s.R.timeLimit) endRun(s, 'time');
+  else if (s.sap <= 0) { s.sap = 0; endRun(s, s.R.oneHit && s.hits ? 'hit' : 'sap'); }
   return s;
+}
+
+/** End the run: out of sap, one hit in Hardcore, the Sprint clock, or a finish line. */
+function endRun(s, why) {
+  s.dead = true; s.deathT = 0; s.end = why;
+  s.won = why === 'finish' || why === 'time';
+  for (const tip of s.tips) { const p = s.paths[tip.path]; if (p.state === 'live') p.state = 'done'; }
+  emit(s, s.won ? 'finish' : 'death', { why });
 }
 
 function fork(s) {
@@ -791,7 +904,14 @@ function hit(s, tipIdx, dmg, src = '') {
   }
   s.hits++;
   s.graze = 0;
+  if (s.R.oneHit && !s.demo) {
+    // Hardcore: one hit and the tree is done
+    s.sap = 0;
+    emit(s, 'hit', { x: tip.x, y: s.cy, dmg: 0, src, fatal: true });
+    return;
+  }
   if (s.tips.length === 2) { revert(s, tipIdx); return; }
+  dmg *= s.R.dmg;
   if (hasGraft(s, 'crown')) dmg *= 1.5;
   if (!s.demo) s.sap -= dmg;
   s.mult = 1;
@@ -1033,6 +1153,9 @@ export function summary(s) {
     jits: s.jits,
     stage: STAGES[s.stageIdx].name,
     time: s.t,
+    won: s.won,
+    end: s.end,
+    finishM: s.finishM,
     hash: treeHash([s.seed, Math.floor(s.score), ...pts]),
   };
 }
