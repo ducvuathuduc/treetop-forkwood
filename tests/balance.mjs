@@ -10,15 +10,15 @@ const dt = 1 / 60, CAP = 400;
 const q = (a, p) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.floor(p * b.length))]; };
 const out = {};
 for (const sk of skills) {
-  const T = [], H = [], C = { hits: [], merges: [], reverts: [], forks: [], score: [] };
+  const T = [], H = [], C = { hits: [], merges: [], reverts: [], forks: [], score: [], acorns: [], charms: [] };
   for (let i = 0; i < N; i++) {
-    const s = createSim({ seed: 1000 + i, tutorial: true });
+    const s = createSim({ seed: 1000 + i, tutorial: true, charm: process.env.CHARM || null });
     const bot = createBot(sk, i + 1);
     let forks = 0;
     while (!s.dead && s.t < CAP) { step(s, dt, botInput(bot, s)); for (const e of s.events) if (e.type === 'fork') forks++; }
     const sm = summary(s);
-    T.push(s.t); H.push(heightM(s)); C.hits.push(s.hits); C.merges.push(s.merges); C.reverts.push(s.reverts); C.forks.push(forks); C.score.push(sm.score);
+    T.push(s.t); H.push(heightM(s)); C.hits.push(s.hits); C.merges.push(s.merges); C.reverts.push(s.reverts); C.forks.push(forks); C.score.push(sm.score); C.acorns.push(sm.acorns); C.charms.push(sm.charmUses);
   }
-  out[sk] = { medianT: q(T, .5).toFixed(1), p10T: q(T, .1).toFixed(1), p90T: q(T, .9).toFixed(1), medianH: q(H, .5).toFixed(0), p90H: q(H, .9).toFixed(0), capped: T.filter(t => t >= CAP).length, hits: q(C.hits, .5), forks: q(C.forks, .5), merges: q(C.merges, .5), reverts: q(C.reverts, .5), score: q(C.score, .5) };
+  out[sk] = { medianT: q(T, .5).toFixed(1), p10T: q(T, .1).toFixed(1), p90T: q(T, .9).toFixed(1), medianH: q(H, .5).toFixed(0), p90H: q(H, .9).toFixed(0), capped: T.filter(t => t >= CAP).length, hits: q(C.hits, .5), forks: q(C.forks, .5), merges: q(C.merges, .5), reverts: q(C.reverts, .5), score: q(C.score, .5), acorns: q(C.acorns, .5), charms: q(C.charms, .5) };
 }
-console.table(out);
+if (process.env.JSON) console.log(JSON.stringify(out)); else { if (process.env.CHARM) console.log('charm:', process.env.CHARM); console.table(out); }
