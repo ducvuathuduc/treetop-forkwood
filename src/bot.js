@@ -3,6 +3,7 @@
 // sloppier fork timing.
 import { W, FORK_SPREAD, TIP_R, charmReady, PICKUPS } from './sim.js';
 import { mulberry32 } from './rng.js';
+import { trapBot } from './traps.js'; // P6-TRAPS
 
 export function createBot(skill = 0.7, seed = 1) {
   return {
@@ -53,6 +54,7 @@ export function botInput(bot, s) {
     for (const o of s.motes) {
       const dy = y - o.y;
       if (dy < 20 || dy > look) continue;
+      if (o.lure && sk >= 0.55) continue; // P6-TRAPS: a sharp eye ignores the golden lure
       let dx = Math.abs(o.x - s.cx);
       if (forked) dx = Math.min(Math.abs(o.x - (s.cx - s.spread)), Math.abs(o.x - (s.cx + s.spread)));
       if (dx > dy * 1.2 + 40) continue;
@@ -96,6 +98,10 @@ export function botInput(bot, s) {
     if (dy < -f.r || dy > f.r + 220) continue;
     if (Math.abs(aim - f.x) < f.r + 20) aim = f.x + (aim >= f.x ? 1 : -1) * (f.r + 30);
   }
+  // P6-TRAPS: timed rows, twin beetles, lure pockets, twig/sap zones, hedges, crows
+  const tb = trapBot(bot, s, aim, sk, r);
+  aim = tb.aim;
+  // /P6-TRAPS
   // wind compensation
   aim -= s.wind * 0.6 * sk;
   // thorn columns and lightning: straddle them when forked, else go round
@@ -151,7 +157,7 @@ export function botInput(bot, s) {
   }
 
   // fork policy
-  const singleGateSoon = s.brambles.some((b) => (b.kind === 'gate' || b.kind === 'slide') && b.y < y && b.y > y - (forked ? 330 : 520));
+  const singleGateSoon = tb.merge || s.brambles.some((b) => (b.kind === 'gate' || b.kind === 'slide') && b.y < y && b.y > y - (forked ? 330 : 520)); // P6-TRAPS: tb.merge
   const colSoon = s.columns.some((c) => c.y1 < y && c.y0 > y - 560);
   const beetleSoon = s.beetles.some((b) => b.y < y && b.y > y - 220);
   if (!forked) {

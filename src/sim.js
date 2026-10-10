@@ -1,6 +1,10 @@
 // Forkwood simulation: pure, deterministic, no DOM. Shared by the browser game
 // and the headless auto-playtest bot (tests/balance.mjs).
 import { mulberry32, clamp, treeHash } from './rng.js';
+// P6-TRAPS: ten traps + difficulty director knobs (src/traps.js, src/director.js)
+import { TRAP_CHUNKS, trapChunkFor, trapsUpdate, trapsCollide, trapWind, trapsCull } from './traps.js';
+const TRAP_W = 1.4; // trap chunks are a little more common than the classic ones (tuned with tests/balance.mjs)
+// /P6-TRAPS
 
 export const W = 560;            // playfield width in world units
 export const PX_PER_M = 30;      // world units per metre of height
@@ -68,19 +72,28 @@ export const RULES = {
   storms: null,    // Storm Rush: a custom storm list
   restSwap: 0,     // Ancient: every Nth rest glade becomes a spike instead
   noGrafts: false,
+  // P6-SEASONS: seasonal modifiers (src/seasons.js); defaults are no-ops, never set in fair modes
+  slip: 0,         // Winter Snow: steering responds slower (0..1)
+  windK: 1,        // Autumn Maple: wind band force multiplier
+  fireflies: 0,    // Firefly Night: extra sunlight motes (own rng stream, course unchanged)
+  envelopes: 0,    // Tết: some acorns become red envelopes worth 3
+  // /P6-SEASONS
 };
 export function makeRules(r = {}) { return { ...RULES, ...r }; }
 
 // Balance knobs (tuned with tests/balance.mjs).
 export const TUNE = {
-  drain0: 4.6,      // sap drain per second at ground level
-  drainK: 5.8,      // extra drain per second per 600 m climbed
+  drain0: 5.0,      // sap drain per second at ground level (P6-TRAPS: 4.6 -> 5.0)
+  drainK: 6.9,      // extra drain per second per 600 m climbed (P6-TRAPS: 5.8 -> 6.9)
   forkDrain: 1.4,   // drain multiplier while two tips grow
   moteSap0: 7.0,    // sap from one sunlight mote at ground level
   moteSapMin: 4.8,  // sap from one mote high up
   hazardK: 1.0,     // scales the director's intensity curve
-  drainLate: 2.6,   // extra drain per second phased in between 280 m and 700 m
+  drainLate: 3.8,   // extra drain per second phased in between 280 m and 700 m (P6-TRAPS: 2.6 -> 3.8)
 };
+
+// P6-TRAPS: hand-built quest levels were balanced on the pass-5 drain; they keep it
+export const TUNE_QUEST = { drain0: 4.6, drainK: 5.8, drainLate: 2.6 };
 
 export const STAGES = [
   { m: 0, name: 'Twig', sky: '#ffcf9f', haze: '#fff1de', leaf: '#86d66b', news: 'sunlight and beetles' },
@@ -199,6 +212,13 @@ export function createSim(opts = {}) {
     grazeBest: 0,
     lastNear: -9,
     jits: 0,
+    // P6-TRAPS
+    traps: [],
+    trapSeen: {},
+    crowSteals: 0,
+    // director: hidden difficulty offset in [-0.15, 0.15]; only ever set for personal, unseeded runs
+    dk: opts.director && !opts.pure && !opts.rules?.script ? clamp(+opts.director.k || 0, -0.15, 0.15) : 0,
+    // /P6-TRAPS
   };
   const main = newPath(s, W / 2, 40, -1);
   main.pts.push({ x: W / 2, y: 0, t: 0 });
@@ -508,9 +528,21 @@ export const CHUNKS = [
     addTwinTrail(s, y - 360, x, 4);
     return 340 + len + 120;
   } },
+  // P6-TRAPS: trap chunks (src/traps.js), weighted ×1.4 over the classic chunks; a combo whose traps were not met yet plays the missing trap's intro
+  ...TRAP_CHUNKS.map((c) => ({ id: c.id, tier: c.tier, minM: c.minM, w: c.w * TRAP_W, sig: c.sig, trap: c.trap,
+    gen(s, y, d, m) { const k = trapChunkFor(s, c); if (k !== c) s.trapSwap = k.id; return k.gen(s, y, d, TRAP_API); } })),
+  // /P6-TRAPS
 ];
 export const CHUNK = Object.fromEntries(CHUNKS.map((c) => [c.id, c]));
+// P6-TRAPS: the primitives traps.js may use (functions are hoisted)
+const TRAP_API = { addTrail, addTwinTrail, addGate, addBeetle, newTrail, reachableX, emit, addScore,
+  hit: (s, ti, dmg, src) => hit(s, ti, dmg, src), nearMiss: (s, x, y) => nearMiss(s, x, y), tipR: (s) => tipR(s) };
+// /P6-TRAPS
 const heightM2 = (y) => -y / PX_PER_M;
+
+// P6-TRAPS: tests and screenshots: grow one chunk (by id) with its bottom at y
+export function spawnChunkAt(s, id, y, d = 0.4) { const c = CHUNK[id]; return c ? c.gen(s, y, d, -y / PX_PER_M) : 0; }
+// /P6-TRAPS
 
 const REST = { id: 'glade', tier: -1, gen(s, y, d, m) {
   // rest beat: a long sunlight glade, a forkable twin trail and maybe a power-up
@@ -608,7 +640,9 @@ function spawnBeat(s, y) {
   if (idx === 3) { addTwinTrail(s, y, W / 2); if (s.tutorial) s.hints.push({ y: y - 290, text: 'TAP again to merge', sub: 'merge = combo ×' }); return 420; }
 
   const D = s.dir;
-  const d = intensity(m, s.R.hazard);
+  // P6-TRAPS director: tier timing runs up to 15% ahead (harder) or behind (easier)
+  const d = intensity(m * (1 + s.dk), s.R.hazard);
+  // /P6-TRAPS
   let chunk, role, len;
   const st = (s.R.storms || STORMS)[D.stormI];
   if (!s.R.noGrafts && D.graftI < GRAFT_AT.length && m >= GRAFT_AT[D.graftI]) {
@@ -627,11 +661,21 @@ function spawnBeat(s, y) {
     role = SET[D.pos]; D.pos = (D.pos + 1) % SET.length;
     // Ancient stake: every Nth rest glade is taken away and becomes a spike
     if (role === 'rest' && m >= 18 && s.R.restSwap && ++D.rests % s.R.restSwap === 0) role = 'spike';
+    // P6-TRAPS director: rest-beat frequency ±15% (never two changes in a row)
+    if (s.dk && m >= 18) {
+      const q = s.rng();
+      if (s.dk > 0 && role === 'rest' && !D.dkSwap && q < s.dk) { role = 'build'; D.dkSwap = 1; }
+      else if (s.dk < 0 && role === 'build' && !D.dkSwap && q < -s.dk) { role = 'rest'; D.dkSwap = 1; }
+      else D.dkSwap = 0;
+    }
+    // /P6-TRAPS
     if (role === 'rest' || m < 18) { chunk = REST; if (m < 18) chunk = CHUNKS[0]; len = chunk.gen(s, y, d, m); }
     else {
       const tf = d * 2.3 + (role === 'spike' ? 0.9 : D.pos === 2 ? 0.35 : 0) + (r() - 0.5) * 0.6 - 0.3;
       chunk = pickChunk(s, clamp(Math.round(tf), 0, 3), m);
+      s.trapSwap = null;
       len = chunk.gen(s, y, d, m);
+      if (s.trapSwap) chunk = { id: s.trapSwap, tier: CHUNK[s.trapSwap].tier }; // P6-TRAPS
       D.last.push(chunk.id); if (D.last.length > 2) D.last.shift();
     }
   }
@@ -647,6 +691,13 @@ function spawnBeat(s, y) {
     const n = 1 + Math.floor(r2() * 3), ax = 70 + r2() * (W - 140), ay = y - len * (0.2 + r2() * 0.5), dx = (r2() - 0.5) * 60;
     for (let i = 0; i < n; i++) s.motes.push({ x: clamp(ax + dx * i, 40, W - 40), y: ay - i * 38, kind: 'acorn', r: 10, ph: r2() * 6.28, taken: false });
   }
+  // P6-SEASONS: fireflies (sunlight) and red envelopes, from their own stream so the course never shifts
+  if ((s.R.fireflies || s.R.envelopes) && m > 6) {
+    const r3 = s.rng3 || (s.rng3 = mulberry32((s.seed ^ 0x9e3779b9) >>> 0));
+    if (s.R.fireflies && r3() < 0.6) { const n = 1 + Math.floor(r3() * 2); for (let i = 0; i < n; i++) s.motes.push({ x: 60 + r3() * (W - 120), y: y - len * r3(), kind: 'sun', r: 11, ph: r3() * 6.28, taken: false, ff: true }); }
+    if (s.R.envelopes && r3() < 0.22) s.motes.push({ x: 60 + r3() * (W - 120), y: y - len * (0.3 + r3() * 0.4), kind: 'acorn', r: 12, ph: r3() * 6.28, taken: false, env: true });
+  }
+  // /P6-SEASONS
   return len;
 }
 
@@ -680,7 +731,7 @@ export function step(s, dt, input = {}) {
   let desired = 0;
   if (input.targetX != null) desired = clamp(Math.atan2(input.targetX - s.cx, 120), -1.12, 1.12);
   else desired = (input.dir || 0) * 0.98;
-  const maxTurn = 5.2 * dt;
+  const maxTurn = 5.2 * dt * (1 - (s.R.slip || 0)); // P6-SEASONS: slippery branches
   s.heading += clamp(desired - s.heading, -maxTurn, maxTurn);
 
   // wind bands
@@ -691,6 +742,8 @@ export function step(s, dt, input = {}) {
       wind += w.force * k;
     }
   }
+  wind *= s.R.windK ?? 1; // P6-SEASONS: leaf wind
+  wind += trapWind(s); // P6-TRAPS crosswind gusts
   if (s.still > 0) wind *= 0.35;
   if (rush) wind *= 0.3;
   s.wind = wind;
@@ -742,8 +795,9 @@ export function step(s, dt, input = {}) {
   // energy
   const climb = Math.min(2.2, (m + s.R.climb) / 600);
   const forkK = TUNE.forkDrain * (hasGraft(s, 'wild') ? 1.2 : 1);
-  const late = TUNE.drainLate * clamp((m + s.R.climb - 280) / 420, 0, 1); // pass 4: pressure after the opening minute
-  let drain = (TUNE.drain0 + TUNE.drainK * climb + late) * (s.tips.length === 2 ? forkK : 1) + (s.inFrost ? (s.still > 0 ? 6 : 20) : 0);
+  const TU = s.R.script ? TUNE_QUEST : TUNE; // P6-TRAPS: quest levels keep their pass-5 drain
+  const late = TU.drainLate * clamp((m + s.R.climb - 280) / 420, 0, 1); // pass 4: pressure after the opening minute
+  let drain = (TU.drain0 + TU.drainK * climb + late) * (s.tips.length === 2 ? forkK : 1) + (s.inFrost ? (s.still > 0 ? 6 : 20) : 0);
   drain *= (hasGraft(s, 'taproot') ? 0.85 : 1) * (s.storm ? 0.7 : 1) * s.R.drain;
   if (!s.demo && !rush) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : s.still > 0 ? 0.6 : 1);
 
@@ -779,7 +833,9 @@ export function step(s, dt, input = {}) {
     if (c.kind === 'bolt' && !c.live && s.cy < c.y0 + 330) { c.live = true; s.strikes++; emit(s, 'strike', { x: c.x, y: c.y0, top: c.y1 }); }
   }
 
+  trapsUpdate(s, dt, slow, TRAP_API); // P6-TRAPS
   collide(s);
+  trapsCollide(s, dt, TRAP_API); // P6-TRAPS
   retract(s, dt);
 
   const cull = s.cy + 1000;
@@ -792,6 +848,7 @@ export function step(s, dt, input = {}) {
   s.tokens = s.tokens.filter((o) => o.y < cull);
   s.stormZones = s.stormZones.filter((o) => o.y1 < cull || o === s.storm);
   s.hints = s.hints.filter((o) => o.y < cull);
+  trapsCull(s, cull); // P6-TRAPS
 
   if (s.R.noDeath && s.sap < 1) s.sap = 1;
   if (s.finishM && heightM(s) >= s.finishM) endRun(s, 'finish');
@@ -1046,9 +1103,10 @@ function collect(s, o, tip) {
     addScore(s, 25 * s.mult);
     emit(s, 'dew', { x: o.x, y: o.y, sap: hasGraft(s, 'taproot') ? 15 : 30 });
   } else if (o.kind === 'acorn') {
-    s.acorns++;
+    s.acorns += o.env ? 3 : 1; // P6-SEASONS: a red envelope holds 3
+    if (o.env) s.envelopes = (s.envelopes || 0) + 1;
     addScore(s, 5 * s.mult);
-    emit(s, 'acorn', { x: o.x, y: o.y, n: s.acorns });
+    emit(s, 'acorn', { x: o.x, y: o.y, n: s.acorns, env: !!o.env });
   } else if (o.kind === 'bark') {
     s.shield = true;
     emit(s, 'shield', { x: o.x, y: o.y });
@@ -1151,6 +1209,8 @@ export function summary(s) {
     storms: s.storms,
     grazeBest: s.grazeBest,
     jits: s.jits,
+    crowSteals: s.crowSteals, // P6-TRAPS
+    trapsSeen: Object.keys(s.trapSeen), // P6-TRAPS
     stage: STAGES[s.stageIdx].name,
     time: s.t,
     won: s.won,

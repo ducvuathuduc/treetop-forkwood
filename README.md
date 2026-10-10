@@ -18,6 +18,18 @@ Your branch grows by itself; you steer it into sunlight. **Tap to fork** it into
 * **Short, readable runs.** A weak player lasts about a minute; experts fight for the stars.
 * **Your tree as a postcard.** Every run ends with a printed card of the whole tree, its height, score and commit hash.
 
+## What's new in 0.8.0
+
+* **A calmer world.** The painted plates behind the play band are replaced by a quiet procedural woodblock backdrop that changes by height (meadow, oak, canopy, clouds, stars), with side art on wide screens, a zone bar, and a **record flag** planted on the trunk at your best height. Before and after: [before](screenshots/before-after/bg-before.webp), [after](screenshots/before-after/bg-after.webp).
+* **9 telegraphed traps:** cracked twig, pulse thorns, trapdoor gate, crosswind, sap drain, golden lure, twin beetles, rising thorns and the crow. Each one warns you at least 0.8 s before it can hurt, comes in a gentle intro version the first time you meet it, and after 45 s they start arriving in combos. Close calls trigger a short slow-mo, and sap drain was retuned (quest levels keep their old drain).
+* **A quiet difficulty director** in free play only: from your last 5 runs it moves pacing by at most ±15% (rest glades, how soon harder chunks come). It is off for daily, weekly, quest levels, challenge and duel links, and live races.
+* **Seasons on your local clock:** Firefly Night, Golden Dawn, Autumn Maple, Winter Snow, Tết and the Weekend Twin Storm, shown as cards on the title with a countdown. They recolour the backdrop everywhere, but their gameplay modifiers only apply in free play; daily, weekly, quest, challenge, duel and race runs stay the same for everyone.
+* **Live race** with a friend (below).
+
+### Live race
+
+Tap **Live** on the title card (next to Daily tree). You get a link (`?race=forkwood-<code>-<random>`); when your friend opens it you both land in a lobby, tap Ready, count down 3-2-1 and grow the **same 90-second tree** at the same time. Each of you sees the other's branch climbing as a dashed ghost with their name, plus a height bar at the bottom. When both trees are done the finish card names the winner (height, then points) and offers a rematch on a fresh course. Connections are peer-to-peer over WebRTC using [PeerJS](https://peerjs.com/) 1.5.5 and its free public broker; the library loads only when you start or join a race. If the connection cannot be made within about 8 seconds (or your friend drops), you can play the same course as an ordinary duel link instead. No accounts, nothing stored on a server. `npm run race` tests it with two browsers.
+
 ## What's new in v0.7: the Grove update
 
 | Story intro | Painted world (dusk, 550 m) | Practice league |

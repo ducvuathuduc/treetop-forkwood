@@ -650,3 +650,80 @@ body.intro-hold #title, body.intro-hold #metabar, body.intro-hold #dock, body.in
   .chip { padding: 0 7px 0 5px; gap: 4px; font-size: 13px; }
   .chip .lv { padding-left: 2px; }
 }
+
+/* P6-SEASONS: "open now" season cards on the title (one scrollable row); the season tint lives in the backdrop palette */
+.season-cards { width: 0; min-width: calc(100% + 8px); /* never widens the card */ display: flex; gap: 6px; margin: 10px -4px 0; padding: 2px 4px 5px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; text-align: left; scroll-snap-type: x proximity; }
+.season-cards::-webkit-scrollbar { display: none; }
+.season-cards[hidden] { display: none; }
+.season-card { flex: 1 0 auto; scroll-snap-align: start; display: flex; gap: 7px; align-items: center; padding: 5px 9px 5px 6px; border: 2px solid var(--ink); border-radius: 10px; background: var(--paper-2); box-shadow: 2px 2px 0 var(--ink); }
+.season-card .sc-ico { flex: 0 0 24px; height: 24px; border: 2px solid var(--ink); border-radius: 50%; display: grid; place-items: center; }
+.season-card .sc-ico svg { width: 14px; height: 14px; }
+.season-card .sc-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.18; white-space: nowrap; }
+.season-card b { font: 700 13px var(--ui); }
+.season-card small { font-size: 11px; color: rgba(30,26,22,.8); }
+.season-card em { font: 600 10px var(--mono); font-style: normal; color: rgba(30,26,22,.72); }
+.sc-night .sc-ico { background: #2b3560; color: #e8f59a; } .sc-dawn .sc-ico { background: #ffd08a; color: var(--ink); }
+.sc-autumn .sc-ico { background: #e08a2e; color: var(--ink); } .sc-winter .sc-ico { background: #dfeaf4; color: #3c6c94; }
+.sc-tet .sc-ico { background: #d62f22; color: #f2c14e; } .sc-storm .sc-ico { background: #8a97ad; color: #f4ecd8; }
+.sc-tet { background: #f6dccf; } .sc-night { background: #e1e3ee; }
+.season-cards.more { -webkit-mask-image: linear-gradient(90deg, #000 82%, transparent); mask-image: linear-gradient(90deg, #000 82%, transparent); }
+.season-cards.more.end { -webkit-mask-image: none; mask-image: none; }
+/* short screens: the season row takes the how-to strip's place (the first run teaches it anyway) */
+@media (max-height: 700px) { #title.has-seasons .howto { display: none; } }
+/* /P6-SEASONS */
+/* ---------------------------------------------------------------- P6-RACE: live race */
+#title .title-row .race-btn { flex: 0 0 auto; gap: 6px; padding: 10px 12px; }
+.live-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--coral); border: 2px solid var(--ink); flex: none; }
+#race { background: rgba(30, 26, 22, 0.38); z-index: 12; }
+.race-panel { width: min(440px, 100%); padding: 20px 22px 18px; text-align: center; max-height: 94vh; overflow: auto; }
+.race-body h2 { margin: 10px 0 6px; font: 800 clamp(28px, 8vw, 38px)/1.05 var(--display); letter-spacing: -0.02em; }
+.race-body p { margin: 8px 0; font-size: 15px; line-height: 1.4; }
+.race-body .kicker { display: inline-flex; align-items: center; gap: 6px; }
+.race-body .kicker svg { width: 16px; height: 16px; }
+.race-body .row { justify-content: center; margin-top: 14px; }
+.race-body .row.small { margin-top: 10px; }
+.race-body .primary[disabled] { opacity: .7; font-size: 17px; cursor: default; transform: none; box-shadow: 2px 2px 0 var(--ink); }
+.rc-link { display: flex; gap: 8px; margin: 12px 0 4px; }
+.rc-link input { flex: 1; min-width: 0; font: 600 12.5px var(--mono); padding: 9px 10px; border: 2px solid var(--ink); border-radius: 10px; background: #fffaf0; color: var(--ink); user-select: all; -webkit-user-select: all; }
+.rc-link .btn { padding: 9px 14px; }
+.rc-code { font: 600 13px var(--mono); color: rgba(30,26,22,.75); }
+.rc-code b { font: 800 18px var(--mono); letter-spacing: .14em; color: var(--ink); }
+.rc-status { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; }
+.rc-status.warn { background: #ffe0d6; border: 2px solid var(--ink); border-radius: 10px; padding: 8px 10px; font-weight: 600; }
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 3px solid rgba(30,26,22,.2); border-top-color: var(--ink); animation: rc-spin .8s linear infinite; flex: none; }
+@keyframes rc-spin { to { transform: rotate(360deg); } }
+.rc-vs { display: flex; align-items: stretch; justify-content: center; gap: 8px; margin: 14px 0 6px; }
+.rc-vs .vs { align-self: center; font: 800 20px var(--display); }
+.rc-player { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper-2); }
+.rc-player b { font-size: 16px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-player small { font: 600 12px var(--mono); color: rgba(30,26,22,.75); }
+.rc-player.ready { background: #dcefc4; }
+.rc-player.winner { background: var(--ochre); box-shadow: 3px 3px 0 var(--ink); }
+.rc-result { font-size: clamp(32px, 9vw, 44px) !important; }
+#race-count { position: fixed; inset: 0; z-index: 13; display: none; place-items: center; align-content: center; gap: 10px; pointer-events: none; background: rgba(30,26,22,.25); }
+#race-count.show { display: grid; }
+#race-count b { font: 800 150px/1 var(--display); color: var(--paper); -webkit-text-stroke: 4px var(--ink); text-shadow: 7px 7px 0 var(--ink); animation: rc-pop .9s var(--out) both; }
+#race-count small { font: 800 14px var(--ui); letter-spacing: .08em; text-transform: uppercase; background: var(--paper); border: 2px solid var(--ink); border-radius: 8px; padding: 6px 10px; }
+@keyframes rc-pop { from { transform: scale(1.6); opacity: 0; } 30% { transform: scale(1); opacity: 1; } }
+#race-hud { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); z-index: 6; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; justify-content: center; white-space: nowrap;
+  padding: 5px 10px; background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--ink); font: 800 14px var(--mono); pointer-events: none; max-width: calc(100vw - 24px); }
+#race-hud[hidden] { display: none; }
+#race-hud .me, #race-hud .op { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+#race-hud .op em { font: 700 10px var(--ui); font-style: normal; text-transform: uppercase; background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: 5px; padding: 1px 4px; }
+#race-hud .bar { position: relative; width: 54px; height: 12px; border: 2px solid var(--ink); border-radius: 6px; background: var(--paper-2); overflow: hidden; }
+#race-hud .bar i { position: absolute; left: 0; top: 0; height: 50%; width: calc(var(--a) * 100%); background: var(--moss); }
+#race-hud .bar i.o { top: 50%; background: var(--ochre); }
+#race-hud .gap { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -4px); padding: 2px 7px; background: var(--paper); border: 2px solid var(--ink); border-radius: 7px; font: 800 10.5px var(--ui); letter-spacing: .06em; text-transform: uppercase; }
+#race-hud .gap.behind { color: #a8341c; }
+body.calm #race-count b { animation: none; }
+/* P6-RACE end */
+body:has(#race-hud:not([hidden])) #btn-pause { visibility: hidden; } /* P6-RACE */
+@media (max-width: 400px) { #title .title-row { gap: 6px; } #title .title-row .secondary { padding: 10px 6px; font-size: 13.5px; } #title .title-row .race-btn { padding: 10px 9px; } #title .title-row .race-btn .lbl { display: none; } } /* P6-RACE */
+
+/* version label in the title card corner (out of the layout flow) */
+#title .title-card { position: relative; }
+.app-version { position: absolute; right: 10px; bottom: 6px; font: 600 9.5px var(--mono); color: rgba(30,26,22,.45); pointer-events: none; }
+/* v0.8.0 integration: with the Live button in the row, size buttons by content and drop the daily date so nothing clips */
+#title .title-row .secondary { flex: 1 1 auto; }
+.title-row #daily-best { display: none; }
+@media (max-width: 400px) { #title .title-row #quest-ico { display: none; } #title .title-row .qn.new { padding: 2px 4px 1px; letter-spacing: .04em; } }

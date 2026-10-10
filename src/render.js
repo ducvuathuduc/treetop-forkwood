@@ -4,7 +4,9 @@
 // The sky is posterised into stepped bands, and a paper grain sits on top.
 import { W, PX_PER_M, STAGES, SAP_MAX, CHARMS, PICKUPS, GRAFTS, heightM, stageIndexFor } from './sim.js';
 import { THEME, leafColor } from './skins.js';
-import { drawPlates, drawFoliageFrame, drawSunSprite, drawBeetleSprite, drawBrambleSprite, drawGroundSprite } from './art.js';
+import { drawSunSprite, drawBeetleSprite, drawBrambleSprite, drawGroundSprite } from './art.js';
+import { backdrop } from './backdrop.js'; // P6-ART
+import { drawTraps } from './render-traps.js'; // P6-TRAPS
 
 const TAU = Math.PI * 2;
 export const INK = '#1e1a16';
@@ -369,8 +371,11 @@ export class Renderer {
     }
     // ---- painted backdrop plate for this height (falls back to the print sky until loaded)
     this._screen(ctx);
-    const plated = !ui.noArt && drawPlates(ctx, cw, ch, camM);
+    // P6-ART begin: calm procedural woodblock band (painted plates retired)
+    const plated = !ui.noArt;
     this.plated = plated;
+    if (plated) backdrop.draw(ctx, cw, ch, { m: camM, camPx: -cam.y * sc, playL: this.ox, playR: this.ox + W * sc, t: performance.now() / 1000, calm: ui.calm });
+    // P6-ART end
     if (plated) {
       if (THEME.sky.id !== 'sky.print') {
         // sky plates recolour the painting
@@ -395,7 +400,7 @@ export class Renderer {
       }
     }
     this.drawSun(ctx, cw, ch, camM, night, now);
-    } else if (night > 0) {
+    } else if (night > 0 && false) { // P6-ART: stars now come from backdrop.js
       // a few twinkling stars over the painted night
       for (let i = 0; i < 26; i++) {
         const x = hash(i) * cw, y = ((hash(i + 99) * ch + (cam.y * sc) * 0.05) % ch + ch) % ch;
@@ -407,16 +412,18 @@ export class Renderer {
 
     // ---- world
     this._world(ctx);
-    if (plated) this.drawDrift(ctx, cam, topY, botY, now, camM, leftX, rightX);
-    else this.drawBackdrop(ctx, cam, topY, botY, now, camM, sb);
-    if (leftX < -40 && !(plated && drawFoliageFrame(ctx, cam.y, topY, botY, leftX, rightX, W, camM))) this.drawCanopyFrame(ctx, cam, topY, botY, leftX, rightX, now, sb, night);
+    // P6-ART: no drifting leaves over the play band and no mirrored foliage tiles; side art is in backdrop.js
+    if (!plated) this.drawBackdrop(ctx, cam, topY, botY, now, camM, sb);
+    if (leftX < -40 && !plated) this.drawCanopyFrame(ctx, cam, topY, botY, leftX, rightX, now, sb, night);
     this.drawGround(ctx, leftX, rightX, botY);
     for (const w of s.winds) this.drawWind(ctx, w, now, topY, botY);
     if (ui.bestM > 3) this.drawBestLine(ctx, -ui.bestM * PX_PER_M, topY, botY, s.newBest, now, ui.bestLabel);
+    if (ui.bestM > 3) this.drawRecordFlag(ctx, s, -ui.bestM * PX_PER_M, topY, botY, ui); // P6-ART
     if (ui.finishM) this.drawFinish(ctx, -ui.finishM * PX_PER_M, topY, botY, now);
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
+    if (!ui.reveal) drawTraps(this, ctx, s, now, topY, botY, ui.calm); // P6-TRAPS
     if (!ui.reveal) for (const g of s.tokens) if (!g.taken && g.y > topY - 60 && g.y < botY + 60) this.drawToken(ctx, g, now, s);
     drawTree(ctx, s, now, topY, botY, px);
     if (!ui.reveal) {
@@ -424,6 +431,7 @@ export class Renderer {
       for (const b of s.beetles) if (b.y > topY - 30 && b.y < botY + 30) this.drawBeetle(ctx, b, now);
       if (ui.hud || ui.trail) this.drawTrail(ctx, s, now);
       if (ui.ghostM != null) this.drawGhost(ctx, s, ui.ghostM, now);
+      if (ui.raceDraw) ui.raceDraw(ctx, s, now); // P6-RACE: live rival branch
       this.drawTips(ctx, s, now, fx, gold);
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
     }
@@ -466,6 +474,7 @@ export class Renderer {
     // paper grain over everything but the HUD
     ctx.globalAlpha = 1; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch);
     if (ui.hud) this.drawHud(ctx, s, fx, ui, now);
+    if (ui.hud && !ui.finishM) backdrop.drawZoneBar(ctx, cw, camM, f(800, cw < 520 ? 9.5 : 10.5)); // P6-ART
     this.drawSparks(ctx, fx);
   }
 
@@ -809,11 +818,26 @@ export class Renderer {
     const blink = urgent && Math.sin(now * 14) > 0;
     ctx.save();
     ctx.font = f(800, 22, 'display'); ctx.textAlign = 'center';
-    const t = `0:${String(Math.min(59, sec)).padStart(2, '0')}`;
+    const t = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; // m:ss (live races run 90 s)
     const w = ctx.measureText(t).width + 22;
     this.card(ctx, x - w / 2, y - 22, w, 30, 9, urgent ? (blink ? CORAL : '#ffc2b0') : PAPER, 2.5);
-    ctx.fillStyle = INK; ctx.fillText(sec >= 60 ? '1:00' : t, x, y);
+    ctx.fillStyle = INK; ctx.fillText(t, x, y);
     ctx.restore();
+  }
+
+  // P6-ART: the record flag, planted on the trunk where it crosses your best
+  // height (or at the playfield edge until this tree gets there)
+  drawRecordFlag(ctx, s, y, topY, botY, ui) {
+    if (y < topY - 80 || y > botY + 20) return;
+    let x = 18;
+    for (const p of s.paths) {
+      if (p.state === 'gone' || p.pts.length < 2) continue;
+      const pts = p.pts;
+      if (pts[pts.length - 1].y > y || pts[0].y < y) continue;
+      const i = findIndexBelow(pts, y);
+      if (pts[i]) { x = pts[i].x; if (p.id === 0) break; }
+    }
+    backdrop.drawRecordFlag(ctx, x, y, 22, `${Math.round(ui.bestM)}`, ui.calm ? 0 : performance.now() / 1000);
   }
 
   drawBestLine(ctx, y, topY, botY, passed, now, label = 'BEST') {

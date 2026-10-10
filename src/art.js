@@ -34,7 +34,8 @@ export const PLATES = [
   { img: 'bg-night', m0: 600, m1: 1e9, span: 700, edge: 0.1 },
 ];
 const FADE = 26;
-export const CRITICAL = ['bg-dawn', 'ground', 'sun', 'bramble', 'beetle', 'foliage'];
+// P6-ART: the bg-* plates and side foliage are no longer drawn in play (see backdrop.js), so they are not preloaded
+export const CRITICAL = ['ground', 'sun', 'bramble', 'beetle'];
 /** Load the first plate and the sprites now. */
 export function preloadArt() {
   // the other plates load as you climb toward them (see drawPlates)

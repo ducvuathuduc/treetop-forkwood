@@ -14,7 +14,19 @@ import * as Q from './quest.js';
 import { ICON } from './icons.js';
 import { preloadArt } from './art.js';
 import * as R from './retention.js';
+import * as Dir from './director.js'; // P6-TRAPS
+import * as SEA from './seasons.js'; // P6-SEASONS
+import { backdrop } from './backdrop.js'; // P6-ART x P6-SEASONS: season palette
 const ICON_STAR = ICON.star, ICON_STAR_OFF = ICON.starOff;
+// P6-SEASONS: the season clock is the player's local time. ?season=<ISO local time> pins it (tests,
+// previews); automated browsers without ?season= get no seasons so older tests stay deterministic.
+const SEASON_PIN = (() => { const v = new URLSearchParams(location.search).get('season'); if (!v) return null; const d = new Date(v); return isNaN(d) ? null : d; })();
+const SEASON_T0 = Date.now();
+const seasonClock = () => (SEASON_PIN ? new Date(SEASON_PIN.getTime() + (Date.now() - SEASON_T0)) : navigator.webdriver ? null : new Date());
+const seasonNow = () => { const d = seasonClock(); return d ? SEA.active(d) : { list: [], theme: SEA.themeFor([]) }; };
+let SEASON = seasonNow();
+let runSeasons = []; // seasons whose gameplay modifiers are on in the current run
+// /P6-SEASONS
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -33,6 +45,11 @@ const CHALLENGE = DUEL ? { seed: DUEL.seed, m: Math.max(1, DUEL.h), lvl: null, w
   : params.has('beat') && (FIXED_SEED != null || LINK_LVL || LINK_WEEK)
   ? { seed: FIXED_SEED, m: BEAT, lvl: LINK_LVL, week: LINK_WEEK, mode: LINK_MODE || 'classic', stake: LINK_STAKE } : null;
 
+// P6-RACE: live race links (?race=forkwood-<code>-<random>); ?rt=local|dead picks a test transport
+const RACE_ROOM = params.get('race');
+const RACE_RT = ['local', 'dead'].includes(params.get('rt')) ? params.get('rt') : 'peer';
+let raceUI = null, raceLoading = null, raceSeed = null, raceRules = null;
+// P6-RACE end
 const canvas = $('game');
 const renderer = new Renderer(canvas);
 preloadArt();
@@ -52,7 +69,7 @@ const REPLY = DUEL && DUEL.r ? R.settleReply(S, DUEL) : null;
 persist();
 // first launch: the story plays, then the first run starts with no menu in between
 // (automated browsers skip it unless the URL says ?intro=1, so headless tests stay on the title)
-const FIRST_LAUNCH = !BOT_MODE && !CHALLENGE && !LINK_LVL && !LINK_WEEK && !LINK_MODE && S.stats.runs === 0 && !S.ret.introSeen && (!navigator.webdriver || params.get('intro') === '1');
+const FIRST_LAUNCH = !BOT_MODE && !CHALLENGE && !LINK_LVL && !LINK_WEEK && !LINK_MODE && S.stats.runs === 0 && !S.ret.introSeen && !params.has('race') /* P6-RACE */ && (!navigator.webdriver || params.get('intro') === '1');
 const motionQuery = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
 const isCalm = () => (S.calm == null ? !!(motionQuery && motionQuery.matches) : S.calm);
 
@@ -130,6 +147,8 @@ else if (LINK_WEEK) run = { mode: 'weekly', stake: 'oak', level: null, week: LIN
 else if (LINK_MODE) run.mode = LINK_MODE;
 run.stake = CHALLENGE ? run.stake : S.quest.stake;
 let timeScale = 1;
+let runDirector = null; // P6-TRAPS: director params of the current run (null = off)
+let dirMode = 'classic'; // P6-TRAPS: mode name the director sees for this run
 const TREETOP_IDX = STAGES.findIndex((st) => st.name === 'Treetop');
 
 function setMode(m) {
@@ -152,12 +171,13 @@ function startDemo() {
 
 function resetFx() {
   fx.particles.length = 0; fx.floaters.length = 0; fx.sparks.length = 0; fx.flash = 0; fx.banner = null; fx.multPulse = 0; fx.sapPulse = 0; fx.squash = 0;
-  fx.shownScore = 0; fx.shownSap = SAP_MAX; fx.hitStop = 0; cam.trauma = 0; cam.punch = 0; fx.plate = null;
+  fx.shownScore = 0; fx.shownSap = SAP_MAX; fx.hitStop = 0; fx.slowmo = 0; cam.trauma = 0; cam.punch = 0; fx.plate = null;
 }
 
 /** What the HUD calls this run, e.g. "OAK", "SPRINT", "2-3 ZIG-ZAG". */
 function runLabel() {
   if (daily) return 'DAILY';
+  if (run.mode === 'race') return 'LIVE RACE'; // P6-RACE
   if (run.level) return `${run.level} ${LEVEL[run.level].name.toUpperCase()}`;
   if (run.mode === 'weekly') return `WEEKLY ${weekCode(run.week || weekKey()).slice(3)}`;
   if (run.mode !== 'classic') return MODE[run.mode].name.toUpperCase();
@@ -191,13 +211,26 @@ function startRun(isDaily = daily) {
   if (qui.isOpen) qui.hide();
   const lv = run.level && !daily ? LEVEL[run.level] : null;
   const challenge = isChallengeRun();
-  const seed = daily ? dailySeed() : lv ? lv.seed : run.mode === 'weekly' ? weekSeed(run.week || weekKey()) : (challenge && CHALLENGE.seed != null) ? CHALLENGE.seed : FIXED_SEED ?? ((Math.random() * 1e9) >>> 0);
+  const seed = run.mode === 'race' && !daily ? raceSeed : daily ? dailySeed() : lv ? lv.seed : run.mode === 'weekly' ? weekSeed(run.week || weekKey()) : (challenge && CHALLENGE.seed != null) ? CHALLENGE.seed : FIXED_SEED ?? ((Math.random() * 1e9) >>> 0);
   const bestM = bestFor();
   // daily, weekly, quest levels and challenge links: same rules for everyone, no charms
-  const pure = daily || challenge || !!lv || run.mode === 'weekly';
-  const rules = daily ? {} : lv ? levelRules(lv) : rulesFor(run);
+  const pure = daily || challenge || !!lv || run.mode === 'weekly' || run.mode === 'race'; // P6-RACE: race = pure
+  let rules = daily ? {} : lv ? levelRules(lv) : run.mode === 'race' ? { ...raceRules } : rulesFor(run);
+  const isRace = !daily && (run.mode === 'race' || rules.mode === 'race'); // P6-RACE: race rules carry mode 'race'
+  // P6-SEASONS: modifiers only in free play; daily / weekly / race / quest / challenge stay fair (tint only)
+  SEASON = seasonNow();
+  const seaFair = SEA.isFair({ daily, challenge, level: !!lv, mode: isRace ? 'race' : run.mode, race: isRace || !!run.race, pure }) || (!S.tutorial && !lv && run.mode === 'classic'); // first (tutorial) run stays plain
+  rules = SEA.applyRules(rules, SEASON.list, { fair: seaFair });
+  runSeasons = seaFair ? [] : SEASON.list;
+  applySeasonLook();
+  // /P6-SEASONS
   const tutorial = !S.tutorial && !lv && (daily || run.mode === 'classic');
-  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules });
+  // P6-TRAPS: the hidden director only touches personal, unseeded runs
+  dirMode = daily ? 'daily' : isRace ? 'race' : lv ? 'quest' : challenge ? (CHALLENGE.duel ? 'duel' : 'challenge') : run.mode === 'weekly' ? 'weekly' : FIXED_SEED != null ? 'seeded' : (BOT_MODE || autoplay) ? 'bot' : run.mode;
+  const director = pure || isRace ? null : Dir.params(dirMode); // race: director always off
+  runDirector = director;
+  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director });
+  // /P6-TRAPS
   coach.step = sim.tutorial ? 'steer' : null; coach.t = 0; coach.collects = 0; coach.retry = false; coach.slow = false;
   timeScale = 1;
   bot = createBot(botSkill, seed & 0xffff);
@@ -216,7 +249,8 @@ function startRun(isDaily = daily) {
   shake(5); fx.squash = 1;
   if (!sim.tutorial) {
     const m = MODE[run.mode], k = STAKE[run.stake];
-    const goal = lv ? { text: `${lv.id} ${lv.name.toUpperCase()}`, sub: `reach the ribbon at ${sim.finishM} m · ${goalText(lv.goals[0])} · ${goalText(lv.goals[1])}`, sub2: challenge ? `friend scored ${CHALLENGE.m.toLocaleString('en-US')}` : '' }
+    const goal = run.mode === 'race' && !daily ? { text: 'GO!', sub: `live race · ${sim.R.timeLimit} s · highest tree wins` } // P6-RACE
+      : lv ? { text: `${lv.id} ${lv.name.toUpperCase()}`, sub: `reach the ribbon at ${sim.finishM} m · ${goalText(lv.goals[0])} · ${goalText(lv.goals[1])}`, sub2: challenge ? `friend scored ${CHALLENGE.m.toLocaleString('en-US')}` : '' }
       : challenge && CHALLENGE.week ? { text: `BEAT ${CHALLENGE.m} m`, sub: `weekly tree ${weekCode(run.week)} · same course as your friend` }
       : challenge ? { text: `BEAT ${CHALLENGE.m} m`, sub: `same course as your friend${run.mode !== 'classic' ? ' · ' + m.name : run.stake !== 'sapling' ? ' · ' + k.name : ''}` }
       : daily ? { text: bestM > 0 ? `BEAT ${bestM} m` : 'DAILY TREE', sub: `${dailyLabel()} · same course for all · no charms` }
@@ -229,11 +263,14 @@ function startRun(isDaily = daily) {
       : run.stake !== 'sapling' ? { text: bestM > 0 ? `BEAT ${bestM} m` : `${k.name.toUpperCase()} STAKE`, sub: `points ×${k.mult} · ${k.adds.slice(-2).join(' · ')}` }
       : S.best.height < STAGES[TREETOP_IDX].m ? { text: 'REACH THE TREETOP', sub: `${STAGES[TREETOP_IDX].m} m · fork, merge, climb` }
       : { text: `BEAT ${S.best.height} m`, sub: sim.charm ? `your best · ${CHARMS[sim.charm].name} charm ready to charge` : 'your best · gold line' };
+    if (runSeasons.length) goal.sub2 = goal.sub2 || runSeasons.map((x) => `${x.name}: ${x.effect}`).join(' · '); // P6-SEASONS
     fx.banner = { ...goal, t: 0, max: lv ? 3.2 : 2.2, small: true };
   }
 }
 
 function toMenu() {
+  if (raceUI && raceUI.active) { raceUI.leave(false); } // P6-RACE
+  if (run.mode === 'race') run = { mode: 'classic', stake: S.quest.stake, level: null, week: null }; // P6-RACE
   sound.stop();
   if (!CHALLENGE) run = { mode: 'classic', stake: S.quest.stake, level: null, week: null };
   if (sound.ready) sound.startMenu();
@@ -278,7 +315,34 @@ function refreshTitle() {
   const d = store.get('forkwood.daily.' + dailySeed(), null);
   $('daily-best').textContent = d ? `· today ${d.height} m` : `· ${dailyLabel()}`;
   refreshGroveChip();
+  refreshSeasons(); // P6-SEASONS
 }
+
+// P6-SEASONS: title cards with "open until …" countdowns, the tint layer, the overlay particles
+function refreshSeasons() {
+  if (mode === 'title') SEASON = seasonNow();
+  const box = $('season-cards');
+  if (!box) return;
+  const now = seasonClock() || new Date();
+  box.hidden = SEASON.list.length === 0;
+  box.innerHTML = SEASON.list.map((x) => `<div class="season-card sc-${x.id}" data-season="${x.id}"><span class="sc-ico" aria-hidden="true">${SEA.ICONS[x.id] || ''}</span><span class="sc-txt"><b>${x.name}</b><small>${x.effect}</small><em>${SEA.untilText(x.until, now)}</em></span></div>`).join('');
+  box.title = SEASON.list.length ? 'Open in free play. Daily, weekly, race and quest trees stay the same for everyone: looks only.' : '';
+  $('title').classList.toggle('has-seasons', SEASON.list.length > 0);
+  requestAnimationFrame(() => { box.classList.toggle('more', box.scrollWidth > box.clientWidth + 2); box.classList.toggle('end', box.scrollLeft + box.clientWidth >= box.scrollWidth - 2); });
+  applySeasonLook();
+}
+function applySeasonLook() {
+  const th = SEASON.theme;
+  document.body.dataset.season = th.ids.join(' ');
+  // P6-SEASONS x P6-ART: the season tint goes into the backdrop palette (canvas only),
+  // so the HUD and title are never tinted (the old CSS #season-tint layer is gone).
+  backdrop.setTheme(th.backdrop);
+}
+setInterval(() => { if (mode === 'title') refreshSeasons(); }, 30000);
+$('season-cards').addEventListener('scroll', (e) => { const b = e.currentTarget; b.classList.toggle('end', b.scrollLeft + b.clientWidth >= b.scrollWidth - 2); }, { passive: true });
+// a mouse wheel scrolls the season row sideways
+$('season-cards').addEventListener('wheel', (e) => { const b = e.currentTarget; if (b.scrollWidth > b.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { b.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
+// /P6-SEASONS
 
 // ------------------------------------------------------------------ effects
 function burst(x, y, n, color, speed = 160, size = 4, life = 0.6, kind = 'dot') {
@@ -381,8 +445,31 @@ function handleEvents(s, quiet) {
         if (!quiet) { hitStop(0.09); sound.hit(); shake(12); flash('255,60,60', 0.8); vibrate(70); floater(e.x, e.y - 30, `−${e.dmg} sap`, '#ff9a86', 22, 0.9); }
         break;
       case 'near':
+        // P6-TRAPS: a brief slow-mo (~120 ms) on a close call, at most once a second, never in calm mode
+        if (!quiet && !isCalm() && s.t - (fx.slowAt ?? -9) > 1) { fx.slowmo = 0.12; fx.slowAt = s.t; }
         if (!quiet) { sound.near(); floater(e.x, e.y - 20, e.n > 1 ? `close ×${Math.min(5, e.n)} +${e.bonus}` : `close +${e.bonus}`, '#c4e88a', 17 + Math.min(4, e.n), 0.8); }
         break;
+      // P6-TRAPS: trap intros and trap events
+      case 'trapintro':
+        if (!quiet) fx.banner = { text: e.name, sub: e.hint, t: 0, max: 2.6, small: true };
+        break;
+      case 'snap':
+        burst(e.x, e.y, 10, '#8a6a44', 220, 6, 0.8, 'leaf');
+        break;
+      case 'crow':
+        if (!quiet) { sound.near(); floater(e.x, e.y - 70, 'crow! merge now', '#ffd27a', 20, 1.1); }
+        break;
+      case 'crowsteal':
+        if (!quiet) { sound.emptyMerge(); floater(e.x, e.y - 50, e.lost ? `crow stole ${e.lost}` : 'crow!', '#ff9a86', 20, 1.0); }
+        break;
+      case 'crowfoil':
+        ring(e.x, e.y, '#ffd27a', 80, 0.5);
+        if (!quiet) floater(e.x, e.y - 60, `crow foiled +${e.bonus}`, '#c4e88a', 18, 0.9);
+        break;
+      case 'tide':
+        if (!quiet) floater(s.cx, s.cy + 80, 'thorns rising: climb!', '#ff9a86', 18, 1.0);
+        break;
+      // /P6-TRAPS
       case 'graze':
         ring(e.x, e.y, '#c4e88a', 70, 0.5);
         if (!quiet) { sound.graze(e.n); floater(e.x, e.y - 52, `graze chain ${e.n} · +sap`, '#c4e88a', 22, 1.0); shake(2); }
@@ -477,7 +564,7 @@ function handleEvents(s, quiet) {
       }
       case 'acorn':
         burst(e.x, e.y, 5, '#d99a52', 150, 6, 0.5, 'leaf');
-        if (!quiet) { sound.acorn(e.n); fx.acornPulse = 1; floater(e.x, e.y - 16, '+1 acorn', '#f3cf8e', 15, 0.7); }
+        if (!quiet) { sound.acorn(e.n); fx.acornPulse = 1; floater(e.x, e.y - 16, e.env ? 'red envelope +3' : '+1 acorn', e.env ? '#ff8a7a' : '#f3cf8e', 15, 0.7); } // P6-SEASONS: envelope
         break;
       case 'charged':
         if (!quiet) { sound.charged(); floater(s.cx, s.cy - 70, `${CHARMS[e.charm].name} ready`, '#ffe08a', 19, 1.1); }
@@ -544,6 +631,9 @@ function updateFx(dt) {
 // ------------------------------------------------------------------ game over
 function showGameOver() {
   deathShown = true;
+  // P6-RACE: a live race shows its own finish card (no rewards, nothing saved)
+  if (run.mode === 'race' && raceUI && raceUI.active) { const rs = summary(sim); lastSum = rs; setMode('over'); $('over').classList.remove('show'); raceUI.localEnd(rs); return; }
+  // P6-RACE end
   const sum = summary(sim);
   lastSum = sum;
   let newBest = false;
@@ -553,6 +643,7 @@ function showGameOver() {
   const lv = run.level && !daily ? LEVEL[run.level] : null;
   const challengeRun = isChallengeRun();
   lastQuest = null;
+  if (!BOT_MODE && !autoplay) Dir.record(sum, dirMode); // P6-TRAPS
   if (!BOT_MODE) {
     const challengeWon = !!(challengeRun && (CHALLENGE.lvl ? sum.won && sum.score > CHALLENGE.m : sum.height > CHALLENGE.m));
     rewards = M.finishRun(S, sum, { daily, challengeWon, noBest: !!lv || (run.mode !== 'classic' && !daily) || (run.stake !== 'sapling' && !daily) });
@@ -605,6 +696,15 @@ function showGameOver() {
     : toGo > 0 ? `${toGo} m to the Treetop. ${runTip(sum)}`
     : (sum.height > prevBest && prevBest >= STAGES[TREETOP_IDX].m) ? 'Above the treetop and climbing. Stars next.' : runTip(sum);
   $('over-tip').classList.toggle('goals', !!lv);
+  // P6-ART begin: retry hook, how far the record flag is from where this tree stopped
+  {
+    let rec = $('over-record');
+    if (!rec) { rec = document.createElement('p'); rec.id = 'over-record'; rec.className = 'over-score'; rec.style.fontWeight = '800'; $('over-tip').before(rec); }
+    const short = prevBest - sum.height;
+    rec.textContent = lv || run.mode !== 'classic' || run.stake !== 'sapling' || daily || !prevBest ? '' : short > 0 ? `⚑ ${short} m short of your record (${prevBest} m)` : sum.height > prevBest ? `⚑ New record flag planted at ${sum.height} m` : '⚑ Level with your record';
+    rec.hidden = !rec.textContent;
+  }
+  // P6-ART end
   document.querySelector('.over-panel').classList.toggle('lvl', !!lv);
   // stars for quest levels: this run's stars light up, newly earned ones stamp in
   const os = $('over-stars');
@@ -724,6 +824,7 @@ const mirrorX = (x) => (mirrored() ? W - x : x);
 canvas.addEventListener('pointerdown', (e) => {
   sound.unlock();
   input.kind = e.pointerType === 'mouse' ? 'mouse' : 'touch';
+  if (raceUI && raceUI.active && mode !== 'play') return; // P6-RACE
   if (mode === 'title') { playMain(); return; }
   else if (mode === 'play' && paused) { resume(); return; }
   const cz = renderer.layout.charm;
@@ -762,6 +863,8 @@ window.addEventListener('keydown', (e) => {
   if (qui.isOpen) { if (k === 'Escape') qui.hide(); return; }
   if (gui.isOpen) { if (k === 'Escape') gui.hide(); return; }
   if (document.body.classList.contains('in-intro')) return;
+  if (raceUI && raceUI.active && mode !== 'play') return; // P6-RACE: the race card owns the keys
+  if (raceUI && raceUI.active && (k === 'r' || k === 'R' || k === 'p' || k === 'P' || k === 'Escape')) return; // P6-RACE: no restart/pause mid-race
   if (k === 'm' || k === 'M') { toggleMute(); return; }
   if (k === 'r' || k === 'R') { startRun(daily && mode !== 'title'); return; }
   if (mode === 'title') { if (k === 'Enter' || k === ' ') playMain(); else if (k === 'd' || k === 'D') startRun(true); return; }
@@ -783,6 +886,7 @@ window.addEventListener('keyup', (e) => {
 
 function pause() {
   if (mode !== 'play' || paused || sim.dead) return;
+  if (run.mode === 'race') return; // P6-RACE: a live race never pauses
   paused = true;
   $('pause').classList.add('show');
   sound.suspend();
@@ -863,6 +967,7 @@ function playTick(dt, inp) {
   timeScale += (want - timeScale) * Math.min(1, dt * (want < timeScale ? 10 : 4));
   let sdt = dt * timeScale;
   if (fx.hitStop > 0) { fx.hitStop -= dt; sdt = 0; }
+  else if (fx.slowmo > 0) { fx.slowmo -= dt; sdt *= 0.35; } // P6-TRAPS near-miss slow-mo
   if (inp.toggle || inp.charm) sdt = Math.max(sdt, 1 / 240); // never swallow a tap during a freeze
   step(sim, sdt, inp);
   handleEvents(sim, false);
@@ -896,6 +1001,7 @@ function frame(nowMs) {
     else inp = { targetX: input.dir !== 0 ? null : input.targetX, dir: mirrored() ? -input.dir : input.dir, toggle: input.toggle, charm: input.charm };
     input.toggle = false; input.charm = false;
     playTick(dt, inp);
+    if (raceUI && raceUI.active) raceUI.tick(sim, heightM(sim), dt); // P6-RACE
     sound.setFrost(sim.inFrost && !sim.dead);
     sound.setLowSap(sim.dead ? 1 : sim.sap / SAP_MAX);
     sound.update(Math.min(1, heightM(sim) / 600) * 0.8 + (sim.mult / 8) * 0.2, sim.mult);
@@ -912,6 +1018,7 @@ function frame(nowMs) {
     }
   } else if (mode === 'over') {
     step(sim, dt, {});
+    if (raceUI && raceUI.active) raceUI.tick(sim, heightM(sim), dt); // P6-RACE
     cam.scale += (base * 0.42 - cam.scale) * Math.min(1, dt * 2);
     cam.anchor += (0.32 - cam.anchor) * Math.min(1, dt * 2);
   }
@@ -931,14 +1038,18 @@ function frame(nowMs) {
     calm: isCalm(),
     acornPulse: fx.acornPulse || 0,
     touch: input.kind === 'touch',
+    raceDraw: raceUI && raceUI.racing && run.mode === 'race' ? raceUI.draw : null, // P6-RACE
     ghostM: mode === 'play' && CHALLENGE && CHALLENGE.duel && isChallengeRun() ? R.ghostHeight(CHALLENGE.duel, sim.t) : null,
   });
+  SEA.drawOverlay(renderer, sim, SEASON.theme, paused ? 0 : dt, isCalm()); // P6-SEASONS
   frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
   requestAnimationFrame(frame);
 }
 
 // testing hooks (used by tests/smoke.mjs)
+export const VERSION = '0.8.0';
 window.forkwood = {
+  version: VERSION,
   get mode() { return mode; },
   get paused() { return paused; },
   get sim() { return sim; },
@@ -962,11 +1073,17 @@ window.forkwood = {
   forceGolden: () => { if (!sim || sim.dead) return; sim.mult = 8; sim.maxMult = 8; sim.golden = 6; sim.goldens++; sim.events = [{ type: 'golden', x: sim.cx, y: sim.cy }]; handleEvents(sim, false); sim.events = []; },
   summary: () => sim && summary(sim),
   get run() { return run; },
+  get seasons() { return { list: SEASON.list, theme: SEASON.theme, run: runSeasons, api: SEA }; }, // P6-SEASONS
   get quest() { return Q; },
   get qui() { return qui; },
   get gui() { return gui; },
   get retention() { return R; },
   get duel() { return DUEL; },
+  get race() { return raceUI; }, // P6-RACE
+  get dirMode() { return dirMode; }, // P6-TRAPS
+  get director() { return runDirector; }, // P6-TRAPS
+  get backdropTheme() { return backdrop.theme; }, // P6-ART x P6-SEASONS
+  loadRaceUI: () => loadRaceUI(), // P6-RACE
   get session() { return SESSION; },
   duelUrl: () => duelUrl(),
   loadGroveUI,
@@ -1009,6 +1126,29 @@ setMode('title');
 refreshTitle();
 document.querySelector('#btn-grove .fl').innerHTML = ICON.flame;
 $('btn-grove').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); sound.startMenu(); sound.page(); gui.show('streak'); });
+// P6-RACE: live race (loads race code + PeerJS only when used)
+function loadRaceUI() {
+  if (raceUI) return Promise.resolve(raceUI);
+  raceLoading = raceLoading || import('./ui-race.js').then(({ createRaceUI }) => (raceUI = createRaceUI({
+    transport: RACE_RT, sound,
+    getMe: () => ({ name: S.ret.name || '', p: (R.PORTRAIT[S.ret.avatar.portrait] || R.PORTRAIT.sparrow).i, f: (R.FRAME[S.ret.avatar.frame] || R.FRAME.twig).i }),
+    onStart: (seed, rules) => { raceSeed = seed; raceRules = rules; run = { mode: 'race', stake: 'sapling', level: null, week: null }; $('title').classList.remove('show'); startRun(false); },
+    onExit: () => toMenu(),
+    onFallback: (seed) => { location.href = `${location.pathname}?seed=${seed}&fb=race`; },
+  })));
+  return raceLoading;
+}
+function openRace(room) {
+  if (!room) sound.unlock(); // a race link opens without a gesture: audio waits for the Ready tap
+  $('title').classList.remove('show');
+  return loadRaceUI().then((r) => (room ? r.join(room) : r.host()));
+}
+$('btn-race').addEventListener('click', (e) => { e.stopPropagation(); openRace(null); });
+if (RACE_ROOM) {
+  import('./race.js').then(({ parseRoom }) => { const room = parseRoom(RACE_ROOM); if (room) openRace(room); else ui.toast('That race link is broken. Ask your friend for a new one.', 'badge'); });
+}
+if (params.get('fb') === 'race') setTimeout(() => ui.toast('Live race could not connect. Grow this course, then tap Duel to send your friend the same tree.', 'gift'), 1700);
+// P6-RACE end
 $('btn-story').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); replayStory(); });
 if (FIRST_LAUNCH) {
   // the story, then straight into the first (tutorial) run; the menu appears only after it
