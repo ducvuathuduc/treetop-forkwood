@@ -1,7 +1,7 @@
 // Greedy auto-player. Drives the title-screen attract mode and the headless
 // balance tests. `skill` in [0,1]: lower = slower reactions, noisier aim,
 // sloppier fork timing.
-import { W, FORK_SPREAD, TIP_R } from './sim.js';
+import { W, FORK_SPREAD, TIP_R, charmReady } from './sim.js';
 import { mulberry32 } from './rng.js';
 
 export function createBot(skill = 0.7, seed = 1) {
@@ -52,7 +52,7 @@ export function botInput(bot, s) {
       let dx = Math.abs(o.x - s.cx);
       if (forked) dx = Math.min(Math.abs(o.x - (s.cx - s.spread)), Math.abs(o.x - (s.cx + s.spread)));
       if (dx > dy * 1.2 + 40) continue;
-      const val = o.kind === 'dew' ? (s.sap < 60 ? 3 : 1) : o.kind === 'bark' ? 1.5 : 1;
+      const val = o.kind === 'dew' ? (s.sap < 60 ? 3 : 1) : o.kind === 'bark' ? 1.5 : o.kind === 'acorn' ? 0.6 : 1;
       const sc = val * 100 - dy * 0.15 - dx * 0.6;
       if (sc > bs) {
         bs = sc;
@@ -88,6 +88,13 @@ export function botInput(bot, s) {
   bot.noise = bot.noise * 0.6 + (r() - 0.5) * (1 - sk) * 260;
   bot.aim = Math.max(10, Math.min(W - 10, aim + bot.noise));
   out.targetX = bot.aim;
+
+  // charm policy: fire it when it would help right now
+  if (charmReady(s) && r() < 0.2 + sk * 0.8) {
+    const danger = s.beetles.some((b) => b.y < y && b.y > y - 260) || s.brambles.some((b) => b.y < y && b.y > y - 260);
+    const sunAhead = s.motes.filter((o) => o.kind === 'sun' && o.y < y && o.y > y - 240).length >= 3;
+    if ((s.charm === 'ward' && !s.shield && danger) || (s.charm === 'still' && danger) || (s.charm === 'sun' && sunAhead) || (s.charm === 'roots' && s.sap < 35)) out.charm = true;
+  }
 
   // fork policy
   const singleGateSoon = s.brambles.some((b) => b.kind === 'gate' && b.y < y && b.y > y - (forked ? 330 : 520));
