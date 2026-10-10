@@ -7,6 +7,9 @@ import { ICON } from './icons.js';
 import * as M from './meta.js';
 import { SKINS, SKIN, SLOTS, THEME } from './skins.js';
 import { CHARMS } from './sim.js';
+import * as Q from './quest.js';
+import { MODE, STAKE } from './modes.js';
+import { WORLDS } from './campaign.js';
 import { drawBud, skinLeaf, blossom, drawCharmIcon, drawAcorn, INK, PAPER, OCHRE } from './render.js';
 
 const $ = (id) => document.getElementById(id);
@@ -319,6 +322,17 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
     for (const a of out.achs) stamps.push({ k: 'badge', t: M.ACH[a].name, s: `+${M.ACH[a].reward}` });
     for (const c of out.daily) stamps.push({ k: 'daily', t: 'Daily done', s: `+${c.reward}` });
     for (const c of out.weekly) stamps.push({ k: 'weekly', t: 'Weekly done', s: `+${c.reward}` });
+    const q = out.quest;
+    if (q) {
+      // quest: chests, titles and unlocks stamp in first; they matter most
+      const qs = [];
+      if (q.newStars) qs.push({ k: 'level', t: `+${q.newStars} star${q.newStars > 1 ? 's' : ''}`, s: `${q.stars}/3` });
+      for (const c of q.chests) qs.push({ k: 'level', t: `Chest ${c.k}`, s: `+${c.acorns}` });
+      for (const t of q.titles) qs.push({ k: 'badge', t: `Title: ${Q.TITLE[t].name}`, s: 'earned' });
+      for (const u of q.unlocks) { const [kind, id] = u.split(':'); qs.push({ k: 'charm', t: kind === 'mode' ? `${MODE[id].name} mode` : kind === 'stake' ? `${STAKE[id].name} stake` : `World ${id}: ${WORLDS[id - 1].name}`, s: 'unlocked' }); }
+      if (q.stakeBest && q.stakeBestId) qs.push({ k: 'level', t: 'Stake best', s: '' });
+      stamps.unshift(...qs);
+    }
     const ul = $('rw-stamps');
     ul.innerHTML = stamps.slice(0, 6).map((s, i) => `<li class="stamp st-${s.k}" style="--d:${0.75 + i * 0.32}s;--r:${(i % 2 ? 2 : -3)}deg"><b>${esc(s.t)}</b><small>${esc(s.s)}</small></li>`).join('') + (stamps.length > 6 ? `<li class="stamp more" style="--d:${0.75 + 6 * 0.32}s">+${stamps.length - 6} more</li>` : '');
     ul.hidden = !stamps.length;
