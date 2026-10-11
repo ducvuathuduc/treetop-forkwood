@@ -18,6 +18,19 @@ Your branch grows by itself; you steer it into sunlight. **Tap to fork** it into
 * **Short, readable runs.** A weak player lasts about a minute; experts fight for the stars.
 * **Your tree as a postcard.** Every run ends with a printed card of the whole tree, its height, score and commit hash.
 
+## What's new in 1.0
+
+| Manga intro | Seven maps | Crow attack |
+|---|---|---|
+| ![Manga page: the sprout opens its eyes, a speech bubble says it will bring the light back](screenshots/25-manga-intro.webp) | ![Map carousel on a phone: Arashiyama Bamboo, Kyoto, with its price in acorns](screenshots/26-maps-carousel.webp) | ![The crow dives on a marked lane and pecks the branch: sap and sunlight fly off](screenshots/27-crow-hit.webp) |
+
+* **A manga intro.** Your first launch opens on an eight-panel manga: a storm, a crow that steals the light, and one sprout that decides to bring it back. Panels slam in, the page shakes on impact, and the last page breaks out of its frame into your first run. Under 30 seconds, Skip any time, replay it from the title.
+* **Seven maps to grow in.** Forkwood, **Phong Nha Caves** (Việt Nam) and five more to unlock with acorns: **Arashiyama Bamboo** (Kyoto), **Redwood Giants** (California), **Black Forest** (Hansel & Gretel), **Amazon Canopy** and **Beanstalk Sky** (Jack and the Beanstalk). Each has its own painted plates, day-to-night palette, zone names and weather, and stamps its own postage stamp on your game-over postcard.
+* **An endless-runner economy, earned only by playing** (no money anywhere): acorns plus rare **dew gems**; **boosts**, **upgrades** that make power-ups last longer, **seed pods** with their odds published in full, a **second chance** for 1, 2, 4, 8 gems, a daily **word hunt** (gold letter tiles in the tree) and a **grower multiplier**. Maps (900-2,400 acorns) and 20 new map-themed skins (filter the shop by map) are the big things to save for. All of it is off on the daily and weekly trees, quest levels, challenge links and races. Numbers and a 30-day simulation of casual, average and hardcore players: [ECONOMY.md](ECONOMY.md).
+* **Traps you can feel.** Every trap warns you about 1.2 s ahead and lands with real impact: hit-stop, a coral burst, sap draining into the meter, damage numbers; near misses get a mint swoosh. The crow always dives on a marked lane: swerve out or fork round it, or lose sap, staged sunlight and 5% of your points ([TRAP-EVENTS.md](TRAP-EVENTS.md)).
+* **Harder, fairer.** On Oak the bots last about 33 s (weak), 57 s (average) and 85 s (expert); Ancient is brutal. 300 seeded courses checked, 0 fairness problems.
+* Still under 700 KB on first load: the story, the map art, the carousel, the race and the shop sections load only when you open them.
+
 ## What's new in 0.8.0
 
 * **A calmer world.** The painted plates behind the play band are replaced by a quiet procedural woodblock backdrop that changes by height (meadow, oak, canopy, clouds, stars), with side art on wide screens, a zone bar, and a **record flag** planted on the trunk at your best height. Before and after: [before](screenshots/before-after/bg-before.webp), [after](screenshots/before-after/bg-after.webp).
@@ -32,11 +45,11 @@ Tap **Live** on the title card (next to Daily tree). You get a link (`?race=fork
 
 ## What's new in v0.7: the Grove update
 
-| Story intro | Painted world (dusk, 550 m) | Practice league |
+| Story intro (v0.7) | Painted world (dusk, 550 m) | Practice league |
 |---|---|---|
-| ![Storybook plate of the Great Tree with a line of story text](screenshots/18-story-intro.webp) | ![Forked branch over a pink cloud sea with blossom trees at dusk](screenshots/24-dusk-desktop.webp) | ![League table: you and nine labelled ghost growers, promotion and demotion zones](screenshots/19-league-desktop.webp) |
+| ![The v1.0 manga intro: the sprout decides to bring the light back](screenshots/25-manga-intro.webp) | ![Forked branch over a pink cloud sea with blossom trees at dusk](screenshots/24-dusk-desktop.webp) | ![League table: you and nine labelled ghost growers, promotion and demotion zones](screenshots/19-league-desktop.webp) |
 
-* **A story before your first run.** Five illustrated storybook plates (about 25 s, tap to advance, Skip any time) tell how a storm reverted the Great Tree and a sparrow saved one seed. Then the game drops you straight into your first tree, no menu in between. Replay it any time from the title (Story) or your profile.
+* **A story before your first run** (replaced by the manga intro in 1.0). Illustrated storybook plates told how a storm reverted the Great Tree and a sparrow saved one seed. Then the game drops you straight into your first tree, no menu in between. Replay it any time from the title (Story) or your profile.
 * **A painted world.** Every stage now has its own illustrated backdrop in the woodblock style (dawn meadow, sunlit forest, amber canopy, dusk above the clouds, starlight), drifting with the climb and cross-fading between stages, with painted boughs framing the playfield on wide screens, a painted meadow and soil, and illustrated thorn vines, beetles and sun tokens. Buttons and cards got a finished edition look. Before and after: [desktop play](screenshots/before-after/desktop-play.webp), [title](screenshots/before-after/desktop-title.webp), [late game](screenshots/before-after/desktop-late.webp), [phone play](screenshots/before-after/phone-play.webp), [phone title](screenshots/before-after/phone-title.webp).
 * **The Grove** (tap your portrait, top left):
   * **Streak** with milestones at 3, 7, 14, 30, 60 and 100 days, up to two frost guards that each save a missed day, and a 28-day calendar. Finishing a run counts; so does the daily gift.

@@ -29,7 +29,7 @@ function glow(ctx, col, x, y, r, a) {
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 }
 import { backdrop } from './backdrop.js'; // P6-ART
-import { drawTraps } from './render-traps.js'; // P6-TRAPS
+import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud } from './render-traps.js'; // P6-TRAPS / P8-FX
 
 const TAU = Math.PI * 2;
 export const INK = '#1e1a16';
@@ -497,7 +497,7 @@ export class Renderer {
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
-    if (!ui.reveal) drawTraps(this, ctx, s, now, topY, botY, ui.calm); // P6-TRAPS
+    if (!ui.reveal) drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui); // P6-TRAPS (P8: + fx events)
     if (!ui.reveal) for (const g of s.tokens) if (!g.taken && g.y > topY - 60 && g.y < botY + 60) this.drawToken(ctx, g, now, s);
     drawTree(ctx, s, now, topY, botY, px);
     if (!ui.reveal) {
@@ -507,6 +507,7 @@ export class Renderer {
       if (ui.ghostM != null) this.drawGhost(ctx, s, ui.ghostM, now);
       if (ui.raceDraw) ui.raceDraw(ctx, s, now); // P6-RACE: live rival branch
       this.drawTips(ctx, s, now, fx, gold);
+      drawTrapFx(this, ctx, s, now, px, ui); // P8-FX: boosts, hit / avoid / pickup effects
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
     }
     this.drawParticles(ctx, fx, px);
@@ -532,6 +533,7 @@ export class Renderer {
       for (let i = 0; i < 3; i++) { ctx.strokeStyle = `rgba(122,26,20,${(a * (1 - i * 0.28)).toFixed(3)})`; ctx.lineWidth = 18 + i * 22; ctx.strokeRect(0, 0, cw, ch); }
     }
     if (fx.flash > 0) { ctx.fillStyle = `rgba(${fx.flashColor},${(fx.flash * 0.3).toFixed(3)})`; ctx.fillRect(0, 0, cw, ch); }
+    drawTrapFxScreen(this, ctx, cw, ch, ui); // P8-FX: coral edge pulse on a hit
     // stage change: the next colour plate is rolled across the print
     if (fx.plate && !ui.calm) {
       const k = Math.min(1, fx.plate.t / 0.7), x = cw * (k < 1 ? 1 - Math.pow(1 - k, 2) : 1) * 1.08 - 20;
@@ -550,6 +552,7 @@ export class Renderer {
     if (plated) backdrop.drawPost(ctx, cw, ch, camM);
     ctx.globalAlpha = 0.55; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch); ctx.globalAlpha = 1;
     if (ui.hud) this.drawHud(ctx, s, fx, ui, now);
+    drawTrapFxHud(this, ctx, ui); // P8-FX: sap streaks into the meter
     if (ui.hud && !ui.finishM) backdrop.drawZoneBar(ctx, cw, camM, f(600, cw < 520 ? 12 : 13)); // P6-ART
     this.drawSparks(ctx, fx);
   }
@@ -1000,6 +1003,34 @@ export class Renderer {
       ctx.strokeStyle = INK; ctx.lineWidth = 4.5; ctx.lineJoin = 'round'; ctx.stroke();
       ctx.fillStyle = '#78bfe0'; ctx.fill();
       ctx.fillStyle = '#f4fbff'; ctx.beginPath(); ctx.ellipse(o.x - r * 0.25, o.y, r * 0.15, r * 0.3, 0, 0, TAU); ctx.fill();
+    } else if (o.kind === 'acorn' && o.gem) {
+      // v1.0: dew gem = a small faceted violet-blue drop with a twinkling sparkle
+      const y = o.y + Math.sin(now * 2.6 + o.ph) * 2.5, rr = 11;
+      glow(ctx, '#8fa8ff', o.x, y, rr * 2.9, 0.5 + 0.12 * Math.sin(now * 4 + o.ph));
+      const P = [[0, -1.5], [0.82, -0.2], [0.62, 0.72], [0, 1.08], [-0.62, 0.72], [-0.82, -0.2]].map(([a, b]) => [o.x + a * rr, y + b * rr]);
+      ctx.beginPath(); P.forEach(([a, b], k) => (k ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath();
+      ctx.strokeStyle = INK; ctx.lineWidth = 4.5; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.fillStyle = '#6f6fe6'; ctx.fill();
+      const C = [o.x, y + rr * 0.15];
+      const facet = (i, j, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(C[0], C[1]); ctx.lineTo(P[i][0], P[i][1]); ctx.lineTo(P[j][0], P[j][1]); ctx.closePath(); ctx.fill(); };
+      facet(5, 0, '#a9c4ff'); facet(0, 1, '#8fa0ff'); facet(1, 2, '#5a56d0'); facet(2, 3, '#4b46b8'); facet(3, 4, '#6a62dc'); facet(4, 5, '#c3d6ff');
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
+      ctx.beginPath(); for (const [a, b] of P) { ctx.moveTo(C[0], C[1]); ctx.lineTo(a, b); } ctx.stroke();
+      const tw = 0.5 + 0.5 * Math.sin(now * 6 + o.ph * 3), sx = o.x + rr * 0.5, sy = y - rr * 0.9, sl = 3 + 5 * tw;
+      ctx.strokeStyle = `rgba(255,255,255,${(0.45 + 0.55 * tw).toFixed(3)})`; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(sx - sl, sy); ctx.lineTo(sx + sl, sy); ctx.moveTo(sx, sy - sl); ctx.lineTo(sx, sy + sl); ctx.stroke();
+    } else if (o.kind === 'acorn' && o.letter) {
+      // v1.0: word-hunt letter = a gold tile with its letter, gently rocking
+      const y = o.y + Math.sin(now * 2.4 + o.ph) * 2.5, h = 13;
+      glow(ctx, '#ffd36a', o.x, y, h * 2.6, 0.42);
+      ctx.save(); ctx.translate(o.x, y); ctx.rotate(Math.sin(now * 1.8 + o.ph) * 0.12);
+      const tile = (e, col) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-h - e, -h - e, (h + e) * 2, (h + e) * 2, 5 + e); else ctx.rect(-h - e, -h - e, (h + e) * 2, (h + e) * 2); ctx.fillStyle = col; ctx.fill(); };
+      tile(2.5, INK); tile(0, '#f2b33d');
+      ctx.fillStyle = '#ffe08a'; ctx.fillRect(-h + 3, -h + 3, h * 2 - 6, 4);
+      ctx.fillStyle = '#c98a2a'; ctx.fillRect(-h + 3, h - 5, h * 2 - 6, 2.5);
+      ctx.font = f(800, 17); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = INK;
+      ctx.fillText(String(o.letter).slice(0, 1), 0, 1.5);
+      ctx.restore();
     } else if (o.kind === 'acorn') {
       const bob = Math.sin(now * 3 + o.ph) * 2;
       ctx.save(); ctx.translate(o.x, o.y + bob); ctx.rotate(Math.sin(now * 2 + o.ph) * 0.18);
@@ -1287,12 +1318,7 @@ export class Renderer {
       ctx.save(); ctx.translate(x, y); ctx.rotate(s.heading); ctx.scale(sx, sy);
       drawBud(ctx, gold > 0);
       ctx.restore();
-      if (s.shield) {
-        ctx.setLineDash([6, 5]); ctx.lineDashOffset = -now * 20;
-        ctx.strokeStyle = INK; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.arc(x, y, 20, 0, TAU); ctx.stroke();
-        ctx.strokeStyle = '#c98a4a'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 20, 0, TAU); ctx.stroke();
-        ctx.setLineDash([]);
-      }
+      // P8-FX: the shield bubble is drawn by drawTrapFx (render-traps.js)
     }
   }
 

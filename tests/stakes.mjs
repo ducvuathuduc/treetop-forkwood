@@ -27,7 +27,12 @@ for (const mode of ['hardcore', 'storm', 'sprint', 'mirror']) for (const skill o
 if (process.env.JSON) console.log(JSON.stringify(out));
 console.log('cell              median s  median m  ≥400 m  median pts');
 for (const [k, v] of Object.entries(out)) console.log(`${k.padEnd(17)} ${String(v.medT).padStart(8)}  ${String(v.medH).padStart(8)}  ${String(v.tree).padStart(5)}%  ${String(v.medS).padStart(10)}`);
-ok(out['sapling 0.3'].medT >= 45 && out['sapling 0.3'].medT <= 65, `weak bot on Sapling lasts ~50 s (${out['sapling 0.3'].medT} s)`);
+ok(out['sapling 0.3'].medT >= 36 && out['sapling 0.3'].medT <= 55, `weak bot on Sapling lasts ~40 s (${out['sapling 0.3'].medT} s)`); // P8-ECON: harder
+// P8-ECON: Oak is the reference stake: weak ~35 s, average ~55 s, expert ~85 s
+ok(Math.abs(out['oak 0.3'].medT - 35) <= 5, `weak bot on Oak ~35 s (${out['oak 0.3'].medT} s)`);
+ok(Math.abs(out['oak 0.6'].medT - 55) <= 6, `average bot on Oak ~55 s (${out['oak 0.6'].medT} s)`);
+ok(Math.abs(out['oak 0.95'].medT - 85) <= 8, `expert bot on Oak ~85 s (${out['oak 0.95'].medT} s)`);
+ok(out['ancient 0.3'].medT < 30 && out['ancient 0.95'].medT < out['oak 0.95'].medT * 0.75, `Ancient is brutal (weak ${out['ancient 0.3'].medT} s, expert ${out['ancient 0.95'].medT} s)`);
 for (const sk of SK) ok(out[`oak ${sk}`].medH <= out[`sapling ${sk}`].medH && out[`ancient ${sk}`].medH <= out[`oak ${sk}`].medH, `bot ${sk}: Sapling ${out[`sapling ${sk}`].medH} m ≥ Oak ${out[`oak ${sk}`].medH} m ≥ Ancient ${out[`ancient ${sk}`].medH} m`);
 ok(out['ancient 0.95'].tree >= 15, `Ancient is hard, not a wall: expert reaches the Treetop ${out['ancient 0.95'].tree}% of runs`);
 ok(out['oak 0.95'].medS > out['sapling 0.95'].medS * 0.9, 'the Oak multiplier pays back the extra risk for a strong player');

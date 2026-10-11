@@ -2,7 +2,7 @@
 // and the headless auto-playtest bot (tests/balance.mjs).
 import { mulberry32, clamp, treeHash } from './rng.js';
 // P6-TRAPS: ten traps + difficulty director knobs (src/traps.js, src/director.js)
-import { TRAP_CHUNKS, trapChunkFor, trapsUpdate, trapsCollide, trapWind, trapsCull } from './traps.js';
+import { TRAP_CHUNKS, trapChunkFor, trapsUpdate, trapsCollide, trapWind, trapsCull, WARN_LEAD } from './traps.js';
 const TRAP_W = 1.4; // trap chunks are a little more common than the classic ones (tuned with tests/balance.mjs)
 // /P6-TRAPS
 
@@ -78,6 +78,12 @@ export const RULES = {
   fireflies: 0,    // Firefly Night: extra sunlight motes (own rng stream, course unchanged)
   envelopes: 0,    // Tết: some acorns become red envelopes worth 3
   // /P6-SEASONS
+  // P8-ECON: stakes reward skill with sap (expert play) and punish hits harder
+  bloomSap: 0,     // extra sap for every full bloom
+  mergeSap: 1,     // multiplier on the sap a scoring merge gives back
+  drainAdd: 0,     // flat sap drain per second added from the ground up
+  lateK: 1,        // multiplier on the height part of the drain curve
+  // /P8-ECON
 };
 export function makeRules(r = {}) { return { ...RULES, ...r }; }
 
@@ -219,7 +225,12 @@ export function createSim(opts = {}) {
     // director: hidden difficulty offset in [-0.15, 0.15]; only ever set for personal, unseeded runs
     dk: opts.director && !opts.pure && !opts.rules?.script ? clamp(+opts.director.k || 0, -0.15, 0.15) : 0,
     // /P6-TRAPS
+    // P8-ECON: boosts, upgrades, grower multiplier, word-hunt letter and gem drops (never on pure runs)
+    econ: !opts.pure && opts.econ ? opts.econ : null,
+    gems: 0, letter: null, revives: 0, drops: [],
+    // /P8-ECON
   };
+  if (s.econ) applyEcon(s); // P8-ECON
   const main = newPath(s, W / 2, 40, -1);
   main.pts.push({ x: W / 2, y: 0, t: 0 });
   s.tips.push({ x: W / 2, side: 0, path: main.id, staged: 0 });
@@ -233,6 +244,35 @@ export function createSim(opts = {}) {
   }
   return s;
 }
+
+// P8-ECON: run-start effects of the economy (src/economy.js builds opts.econ)
+const UP_PER = { pollen: 0.15, ink: 0.15, rush: 0.12, golden: 0.10, dew: 0.08 };
+export const upK = (s, id) => 1 + (s.econ && s.econ.up ? (UP_PER[id] || 0) * (s.econ.up[id] | 0) : 0);
+function applyEcon(s) {
+  const E = s.econ, b = E.boosts || [];
+  if (E.mult > 1) s.R.score *= E.mult;
+  if (b.includes('ink')) s.R.score *= 1.5;
+  if (b.includes('mega')) s.pu.rush = 18; else if (b.includes('sprout')) s.pu.rush = 8;
+  if (b.includes('pollen')) s.pu.pollen = 15;
+  if (b.includes('bark')) s.shield = true;
+  const r4 = mulberry32((s.seed ^ 0x2545f491) >>> 0); // own stream: the course never shifts
+  if (E.letter) s.drops.push({ y: -(60 + r4() * 100) * PX_PER_M, x: 80 + r4() * (W - 160), letter: E.letter });
+  if (E.gemDrop && r4() < 0.10) s.drops.push({ y: -(250 + r4() * 350) * PX_PER_M, x: 80 + r4() * (W - 160), gem: true });
+}
+/** Second chance: bring a run that just ran out of sap back to life (main.js charges the gems). */
+export function revive(s) {
+  if (!s.dead || s.won) return false;
+  s.dead = false; s.deathT = 0; s.end = ''; s.revives++;
+  s.sap = 70; s.invuln = 2.5; s.pu.rush = Math.max(s.pu.rush, 1.5);
+  const ahead = s.cy - 700; // clear what was right on top of the tip
+  const keep = (y) => y > s.cy + 40 || y < ahead;
+  s.brambles = s.brambles.filter((o) => keep(o.y)); s.beetles = s.beetles.filter((o) => keep(o.y));
+  s.columns = s.columns.filter((o) => keep(o.y0) && keep(o.y1)); s.traps = s.traps.filter((o) => o.kind === 'label' || keep(o.y ?? o.y0));
+  for (const tip of s.tips) { const p = s.paths[tip.path]; p.state = 'live'; }
+  emit(s, 'revive', { x: s.cx, y: s.cy, n: s.revives });
+  return true;
+}
+// /P8-ECON
 
 function newPath(s, x, y, parent) {
   const p = { id: s.paths.length, parent, pts: [{ x, y, t: s.t }], commits: [], state: 'live', born: s.t, endT: 0 };
@@ -698,6 +738,8 @@ function spawnBeat(s, y) {
     if (s.R.envelopes && r3() < 0.22) s.motes.push({ x: 60 + r3() * (W - 120), y: y - len * (0.3 + r3() * 0.4), kind: 'acorn', r: 12, ph: r3() * 6.28, taken: false, env: true });
   }
   // /P6-SEASONS
+  // P8-ECON: word-hunt letter and gem drops (fixed heights from their own stream)
+  if (s.drops.length) for (const d of s.drops) if (!d.done && d.y <= y && d.y > y - len) { d.done = true; s.motes.push({ x: d.x, y: d.y, kind: 'acorn', r: 13, ph: 0, taken: false, letter: d.letter || null, gem: !!d.gem }); }
   return len;
 }
 
@@ -797,7 +839,7 @@ export function step(s, dt, input = {}) {
   const forkK = TUNE.forkDrain * (hasGraft(s, 'wild') ? 1.2 : 1);
   const TU = s.R.script ? TUNE_QUEST : TUNE; // P6-TRAPS: quest levels keep their pass-5 drain
   const late = TU.drainLate * clamp((m + s.R.climb - 280) / 420, 0, 1); // pass 4: pressure after the opening minute
-  let drain = (TU.drain0 + TU.drainK * climb + late) * (s.tips.length === 2 ? forkK : 1) + (s.inFrost ? (s.still > 0 ? 6 : 20) : 0);
+  let drain = (TU.drain0 + s.R.drainAdd + (TU.drainK * climb + late) * s.R.lateK) * (s.tips.length === 2 ? forkK : 1) /* P8-ECON drainAdd, lateK */ + (s.inFrost ? (s.still > 0 ? 6 : 20) : 0);
   drain *= (hasGraft(s, 'taproot') ? 0.85 : 1) * (s.storm ? 0.7 : 1) * s.R.drain;
   if (!s.demo && !rush) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : s.still > 0 ? 0.6 : 1);
 
@@ -834,6 +876,7 @@ export function step(s, dt, input = {}) {
   }
 
   trapsUpdate(s, dt, slow, TRAP_API); // P6-TRAPS
+  approachWarn(s); // P8-ECON
   collide(s);
   trapsCollide(s, dt, TRAP_API); // P6-TRAPS
   retract(s, dt);
@@ -910,7 +953,7 @@ function merge(s) {
     s.mult = Math.min(MAX_MULT, s.mult + 1);
     s.maxMult = Math.max(s.maxMult, s.mult);
     const goldenNow = s.mult === MAX_MULT && s.golden <= 0;
-    s.sap = Math.min(SAP_MAX, s.sap + 4 * staged);
+    s.sap = Math.min(SAP_MAX, s.sap + 4 * staged * s.R.mergeSap); // P8-ECON: mergeSap
     s.merges++;
     s.commits++;
     if (jit) s.jits++;
@@ -924,7 +967,7 @@ function merge(s) {
   }
 }
 
-function startGolden(s) { s.golden = GOLDEN_SEC; s.goldens++; emit(s, 'golden', { x: s.cx, y: s.cy }); }
+function startGolden(s) { s.golden = GOLDEN_SEC * upK(s, 'golden'); /* P8-ECON */ s.goldens++; emit(s, 'golden', { x: s.cx, y: s.cy }); }
 function bumpMult(s) {
   s.mult = Math.min(MAX_MULT, s.mult + 1); s.maxMult = Math.max(s.maxMult, s.mult);
   if (s.mult === MAX_MULT && s.golden <= 0) startGolden(s);
@@ -950,6 +993,12 @@ function revert(s, tipIdx) {
   emit(s, 'revert', { x: tip.x, y: s.cy, lost, src: s.lastHitSrc });
 }
 
+// P8-ECON: hit sources -> trap ids for the trapHit event (see TRAP-EVENTS.md)
+export const HIT_TRAP = { cap: 'lure', wall: 'lure', hedge: 'gust', twig: 'twig', pulse: 'pulse', door: 'door', tide: 'tide', crow: 'crow', twins: 'twins' };
+function hitEvent(s, tip, src, effect, dmg) {
+  s.hitLog = s.hitLog || {}; s.hitLog[src] = (s.hitLog[src] || 0) + 1;
+  emit(s, 'trapHit', { trap: HIT_TRAP[src] || src, src, hazard: !HIT_TRAP[src], effect, dmg: Math.round(dmg || 0), x: tip.x, y: s.cy, sap: Math.round(s.sap) });
+}
 function hit(s, tipIdx, dmg, src = '') {
   s.lastHitSrc = src;
   if (s.invuln > 0 || s.pu.rush > 0) return;
@@ -957,6 +1006,7 @@ function hit(s, tipIdx, dmg, src = '') {
   if (s.shield) {
     s.shield = false; s.invuln = 1; s.blocks++;
     emit(s, 'shieldbreak', { x: tip.x, y: s.cy });
+    hitEvent(s, tip, src, 'shield', 0); // P8-ECON
     return;
   }
   s.hits++;
@@ -965,9 +1015,10 @@ function hit(s, tipIdx, dmg, src = '') {
     // Hardcore: one hit and the tree is done
     s.sap = 0;
     emit(s, 'hit', { x: tip.x, y: s.cy, dmg: 0, src, fatal: true });
+    hitEvent(s, tip, src, 'fatal', 0); // P8-ECON
     return;
   }
-  if (s.tips.length === 2) { revert(s, tipIdx); return; }
+  if (s.tips.length === 2) { const sap0 = s.sap; revert(s, tipIdx); hitEvent(s, tip, src, 'cut', sap0 - s.sap); return; } // P8-ECON
   dmg *= s.R.dmg;
   if (hasGraft(s, 'crown')) dmg *= 1.5;
   if (!s.demo) s.sap -= dmg;
@@ -978,6 +1029,7 @@ function hit(s, tipIdx, dmg, src = '') {
   const p = s.paths[tip.path];
   s.scars.push({ x: tip.x, y: s.cy, path: p.id, i: p.pts.length - 1 });
   emit(s, 'hit', { x: tip.x, y: s.cy, dmg: Math.round(dmg), src });
+  hitEvent(s, tip, src, 'sap', dmg); // P8-ECON
 }
 
 function collide(s) {
@@ -1054,6 +1106,20 @@ function collide(s) {
   }
 }
 
+// P8-ECON: one trapWarn per trap / hazard, WARN_LEAD s before the tip reaches it
+const WARN_KIND = { twig: 'twig', sap: 'sap', pulse: 'pulse', door: 'door', gust: 'gust', wall: 'lure', twins: 'twins' };
+function approachWarn(s) {
+  if (s.demo) return;
+  const reach = s.cy - Math.max(120, s.speed) * WARN_LEAD;
+  const w = (o, trap, y, x, hazard) => { if (o.w8 || y > s.cy || y < reach) return; o.w8 = 1; emit(s, 'trapWarn', { trap, x, y, t: +((s.cy - y) / Math.max(60, s.speed)).toFixed(2), hazard: !!hazard }); };
+  for (const tr of s.traps) { const k = WARN_KIND[tr.kind]; if (k) w(tr, k, tr.y ?? tr.y0, tr.x ?? ((tr.x0 ?? 0) + (tr.x1 ?? W)) / 2); }
+  for (const b of s.brambles) w(b, b.kind, b.y, b.gaps[0] ? (b.gaps[0][0] + b.gaps[0][1]) / 2 : W / 2, true);
+  for (const c of s.columns) w(c, c.kind, c.y0, c.x, true);
+  for (const b of s.beetles) w(b, 'beetle', b.y, b.x, true);
+  for (const f of s.frosts) w(f, 'frost', f.y + f.r, f.x, true);
+  for (const z of s.winds) w(z, 'wind', z.y0, W / 2, true);
+}
+
 function nearMiss(s, x, y) {
   // close calls chain: each one inside 2.5 s of the last pays more
   s.nearMisses++;
@@ -1091,7 +1157,7 @@ function collect(s, o, tip) {
       s.trails.delete(o.trail);
       if (tr.n >= need) {
         const bonus = addScore(s, 15 * tr.n * s.mult);
-        s.sap = Math.min(SAP_MAX, s.sap + 4 + (hasGraft(s, 'bloom') ? 6 : 0));
+        s.sap = Math.min(SAP_MAX, s.sap + 4 + (hasGraft(s, 'bloom') ? 6 : 0) + s.R.bloomSap); // P8-ECON: bloomSap
         s.blooms++;
         p.commits.push({ i: p.pts.length - 1, kind: 'bloom', born: s.t });
         emit(s, 'bloom', { x: tip.x, y: s.cy, n: tr.n, bonus });
@@ -1099,9 +1165,14 @@ function collect(s, o, tip) {
       }
     }
   } else if (o.kind === 'dew') {
-    s.sap = Math.min(SAP_MAX, s.sap + (hasGraft(s, 'taproot') ? 15 : 30));
+    const dsap = Math.round((hasGraft(s, 'taproot') ? 15 : 30) * upK(s, 'dew')); // P8-ECON upgrades
+    s.sap = Math.min(SAP_MAX, s.sap + dsap);
     addScore(s, 25 * s.mult);
-    emit(s, 'dew', { x: o.x, y: o.y, sap: hasGraft(s, 'taproot') ? 15 : 30 });
+    emit(s, 'dew', { x: o.x, y: o.y, sap: dsap });
+  } else if (o.kind === 'acorn' && (o.letter || o.gem)) { // P8-ECON
+    if (o.letter) { s.letter = o.letter; emit(s, 'letter', { x: o.x, y: o.y, ch: o.letter }); }
+    else { s.gems++; emit(s, 'gem', { x: o.x, y: o.y, n: s.gems }); }
+    addScore(s, 25 * s.mult);
   } else if (o.kind === 'acorn') {
     s.acorns += o.env ? 3 : 1; // P6-SEASONS: a red envelope holds 3
     if (o.env) s.envelopes = (s.envelopes || 0) + 1;
@@ -1111,7 +1182,7 @@ function collect(s, o, tip) {
     s.shield = true;
     emit(s, 'shield', { x: o.x, y: o.y });
   } else if (PICKUPS[o.kind]) {
-    const dur = PICKUPS[o.kind].dur * (hasGraft(s, 'pollen') ? 1.5 : 1);
+    const dur = PICKUPS[o.kind].dur * (hasGraft(s, 'pollen') ? 1.5 : 1) * upK(s, o.kind); // P8-ECON upgrades
     const was = s.pu[o.kind] > 0;
     s.pu[o.kind] = Math.min(dur * 2, s.pu[o.kind] + dur);
     s.pickups++;
@@ -1211,6 +1282,7 @@ export function summary(s) {
     jits: s.jits,
     crowSteals: s.crowSteals, // P6-TRAPS
     trapsSeen: Object.keys(s.trapSeen), // P6-TRAPS
+    gems: s.gems, letter: s.letter, revives: s.revives, crowFoils: s.crowFoils || 0, // P8-ECON
     stage: STAGES[s.stageIdx].name,
     time: s.t,
     won: s.won,

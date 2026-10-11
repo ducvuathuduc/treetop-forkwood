@@ -6,10 +6,17 @@
 import { ICON } from './icons.js';
 import * as M from './meta.js';
 import { SKINS, SKIN, SLOTS, THEME } from './skins.js';
+import { MAPS as MAP_LIST, MAP as MAP_BY_ID } from './maps.js'; // v1.0: shop filter by map
+const MAP_SHORT = { phongnha: 'Phong Nha', arashiyama: 'Kyoto', redwoods: 'Redwoods', blackforest: 'Black Forest', amazon: 'Amazon', beanstalk: 'Beanstalk' };
 import { CHARMS } from './sim.js';
 import * as Q from './quest.js';
 import { MODE, STAKE } from './modes.js';
 import { WORLDS } from './campaign.js';
+import * as UE from './ui-econ.js'; // P8-ECON
+// v1.0: shop economy sections load when the shop first opens (prefetched after boot)
+let UES = null;
+const loadUES = () => (UES ? Promise.resolve(UES) : import('./ui-econ-shop.js').then((m) => (UES = m)));
+if (typeof window !== 'undefined') setTimeout(() => loadUES().catch(() => {}), 3000);
 import { drawBud, skinLeaf, blossom, drawCharmIcon, drawAcorn, trailBit, INK, PAPER, OCHRE } from './render.js';
 
 const $ = (id) => document.getElementById(id);
@@ -118,13 +125,14 @@ function iconCanvas(draw, size = 44) {
 // ------------------------------------------------------------------ UI
 export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose }) {
   const bar = $('metabar'), dock = $('dock'), book = $('meta'), body = $('meta-body');
-  let tab = 'goals', shopSlot = 'bark', open = false;
+  let tab = 'goals', shopSlot = 'bark', shopMap = '', open = false, shopView = 'skins'; // P8-ECON: shopView
   $('acorn-ico').innerHTML = ICON.acorn;
   $('gift-ico').innerHTML = ICON.gift;
   for (const b of dock.querySelectorAll('[data-tab]')) b.querySelector('.di').innerHTML = ICON[b.dataset.tab];
   for (const b of book.querySelectorAll('.tabs [data-tab]')) b.querySelector('.ti').innerHTML = ICON[b.dataset.tab];
   $('btn-meta-close').innerHTML = ICON.close;
   $('rw-acorn-ico').innerHTML = ICON.acorn;
+  if ($('gem-ico')) $('gem-ico').innerHTML = UE.GEM_ICON; // P8-ECON
 
   function today() { return M.dayKey(); }
 
@@ -134,6 +142,7 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
     bar.hidden = !show;
     dock.hidden = !(show && mode === 'title');
     $('acorn-n').textContent = fmt(S.acorns);
+    if ($('gem-n')) $('gem-n').textContent = fmt((S.econ && S.econ.gems) || 0); // P8-ECON
     $('lvl-n').textContent = S.level;
     $('lvl-pips').innerHTML = S.goals.map((g) => `<i class="${g.done ? 'on' : ''}"></i>`).join('');
     const gift = M.giftReady(S, today());
@@ -191,6 +200,7 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
         <header><span class="lv-badge">${ICON.level}<b>${S.level}</b></span><div><h3>Level ${S.level}</h3><p>Finish all three goals to reach level ${S.level + 1} and earn <b>${M.levelReward(S.level)}</b> acorns${nextUnlock(S)}.</p></div></header>
         <ul class="tasks">${S.goals.map((g) => task(g)).join('')}</ul>
       </section>
+      ${UE.wordCard(S)}<!-- P8-ECON -->
       <section class="card streak-card">
         <header><span class="hico">${ICON.flame}</span><div><h3>${st.count > 0 ? `${st.count}-day streak` : 'Daily gift'}</h3><p>Open Forkwood each day for a bigger gift. Every 7th day adds a frost guard that saves a missed day (${st.freezes}/2).</p></div></header>
         <ol class="gift-cal">${cal}</ol>
@@ -232,13 +242,32 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
 
   // ---- shop
   function renderShop(S) {
+    // P8-ECON: the shop has five sections; skins is the original page
+    if (shopView !== 'skins') {
+      if (!UES) { body.innerHTML = UE.sectionTabs(shopView) + '<p class="muted center">Opening…</p>'; loadUES().then(() => { if (open && tab === 'shop') render(); }); return; }
+      body.innerHTML = UE.sectionTabs(shopView);
+      UES.renderSection(body, S, shopView, { getSave, persist, sound, toast, countWallet, rerender: render, showPod });
+      body.querySelectorAll('[data-eco]').forEach((b) => b.addEventListener('click', () => { shopView = b.dataset.eco; sound.page(); render(); }));
+      const on = body.querySelector('.eco-tabs .on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+      return;
+    }
+    renderSkins(S);
+    body.insertAdjacentHTML('afterbegin', UE.sectionTabs(shopView));
+    body.querySelectorAll('[data-eco]').forEach((b) => b.addEventListener('click', () => { shopView = b.dataset.eco; sound.page(); render(); }));
+  }
+  function showPod(r, golden) { toast(`${golden ? 'Golden pod' : 'Seed pod'}: ${UES ? UES.podText(r) : ''}`, 'gift'); }
+  function renderSkins(S) {
+    // /P8-ECON
     const deal = M.featured(S, today());
-    const items = SKINS.filter((it) => it.slot === shopSlot);
+    const items = shopMap ? SKINS.filter((it) => it.map === shopMap) : SKINS.filter((it) => it.slot === shopSlot);
     const col = M.collection(S);
+    const mapChips = MAP_LIST.filter((m) => SKINS.some((it) => it.map === m.id));
+    const hint = shopMap ? `Looks themed to ${MAP_BY_ID[shopMap].name}` : SLOTS.find((s) => s.id === shopSlot).hint;
     body.innerHTML = `
       ${deal ? `<section class="card deal"><canvas class="pv big" data-skin="${deal.id}"></canvas><div><p class="kick">Today's print · 25% off</p><h3>${esc(deal.name)} <small>${esc(SLOTS.find((s) => s.id === deal.slot).name)}</small></h3><p><s>${deal.unlock.cost}</s> <b class="price">${ICON.acorn}${M.priceOf(S, deal.id, today())}</b></p><button class="btn secondary" data-buy="${deal.id}" ${M.canBuy(S, deal.id, today()) ? '' : 'disabled'}>${M.canBuy(S, deal.id, today()) ? 'Buy and wear' : `Need ${M.priceOf(S, deal.id, today()) - S.acorns} more`}</button></div></section>` : ''}
-      <div class="slots" role="tablist">${SLOTS.map((s) => `<button class="slot ${s.id === shopSlot ? 'on' : ''}" data-slot="${s.id}">${esc(s.name)}</button>`).join('')}</div>
-      <p class="muted center">${esc(SLOTS.find((s) => s.id === shopSlot).hint)} · collection ${col.owned}/${col.total} · skins never change the game</p>
+      <div class="slots" role="tablist">${SLOTS.map((s) => `<button class="slot ${!shopMap && s.id === shopSlot ? 'on' : ''}" data-slot="${s.id}">${esc(s.name)}</button>`).join('')}</div>
+      <div class="slots map-filter" role="tablist" aria-label="Looks by map"><span class="mf-l">Maps</span>${mapChips.map((m) => `<button class="slot mf ${shopMap === m.id ? 'on' : ''}" data-shopmap="${m.id}" aria-pressed="${shopMap === m.id}"><i style="background:linear-gradient(160deg,${m.swatch[0]},${m.swatch[1]} 70%,${m.swatch[2]})"></i>${esc(MAP_SHORT[m.id] || m.name)}</button>`).join('')}</div>
+      <p class="muted center">${esc(hint)} · collection ${col.owned}/${col.total} · skins never change the game</p>
       <ul class="grid">${items.map((it) => {
         const own = S.owned.includes(it.id), worn = S.loadout[it.slot] === it.id;
         const price = M.priceOf(S, it.id, today());
@@ -249,7 +278,9 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
         else act = `<span class="state locked">${ICON.lock}${esc(M.unlockText(it))}</span>`;
         return `<li class="item ${worn ? 'worn' : ''} ${own ? 'own' : ''}"><canvas class="pv" data-skin="${it.id}"></canvas><p class="nm">${esc(it.name)}</p>${act}</li>`;
       }).join('')}</ul>`;
-    body.querySelectorAll('[data-slot]').forEach((b) => b.addEventListener('click', () => { shopSlot = b.dataset.slot; sound.page(); render(); }));
+    body.querySelectorAll('[data-slot]').forEach((b) => b.addEventListener('click', () => { shopSlot = b.dataset.slot; shopMap = ''; sound.page(); render(); }));
+    body.querySelectorAll('[data-shopmap]').forEach((b) => b.addEventListener('click', () => { shopMap = shopMap === b.dataset.shopmap ? '' : b.dataset.shopmap; sound.page(); render(); }));
+    { const onm = body.querySelector('.map-filter .on'); if (onm) { const row = onm.parentElement; row.scrollLeft += onm.getBoundingClientRect().left - row.getBoundingClientRect().left - (row.clientWidth - onm.clientWidth) / 2; } }
     body.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
       const S2 = getSave(), id = b.dataset.buy, before = S2.acorns;
       if (!M.buy(S2, id, today())) return;
@@ -332,6 +363,8 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
     for (const c of out.daily) stamps.push({ k: 'daily', t: 'Daily done', s: `+${c.reward}` });
     for (const c of out.weekly) stamps.push({ k: 'weekly', t: 'Weekly done', s: `+${c.reward}` });
     if (out.extra && out.extra.length) stamps.unshift(...out.extra);
+    // P8-ECON: gems and the word hunt
+    if (out.econ) { if (out.econ.word) stamps.unshift({ k: 'daily', t: `Word: ${out.econ.word.word}`, s: out.econ.word.reward }); else if (out.econ.letter) stamps.unshift({ k: 'daily', t: `Letter ${out.econ.letter}`, s: 'word hunt' }); if (out.econ.gems) stamps.unshift({ k: 'badge', t: `+${out.econ.gems} dew gem${out.econ.gems > 1 ? 's' : ''}`, s: out.econ.parts.map((p) => p[0]).join(', ') }); }
     if (out.rings) $('rw-parts').textContent += ` · +${out.rings.total} rings`;
     const q = out.quest;
     if (q) {
@@ -398,5 +431,6 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
   $('btn-lvl').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); sound.startMenu(); show('goals'); });
   $('btn-gift').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); sound.startMenu(); claim($('btn-gift')); });
 
-  return { refreshBar, show, hide, get isOpen() { return open; }, get tab() { return tab; }, showRewards, toast, claim };
+  if ($('btn-gems')) $('btn-gems').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); sound.startMenu(); shopView = 'gems'; show('shop'); }); // P8-ECON
+  return { refreshBar, show, hide, get isOpen() { return open; }, get tab() { return tab; }, showRewards, toast, claim, showShop(v) { shopView = v || 'skins'; show('shop'); } };
 }

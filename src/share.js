@@ -1,8 +1,17 @@
-// End-of-run share card: the player's tree as a printed postcard, with height,
-// score and a commit-style hash. Same woodblock style as the game.
+// End-of-run share card: the player's tree as a postcard from the map it grew
+// in, with height, score and a commit-style hash.
+// P8-MAPS: retheme to the layered-silhouette world (haze window built from the
+// map's palette and plates, hairline frame, light type on the dark papers) and
+// a postage stamp unique to each map (motif, colours, perforated edge,
+// denomination = height) with a postmark naming the map and country. The
+// postcard skins (THEME.card: cream / kraft / night / stamp / storm) still set
+// paper, ink and edge; the default cream takes the map's own paper tint.
 import { PX_PER_M, STAGES, SKY_STOPS, stageIndexFor } from './sim.js';
 import { roundRect, INK, PAPER, OCHRE, MOSS, FONT, skyAt, flagPath, skinLeaf, drawBud } from './render.js';
 import { THEME, leafColor } from './skins.js';
+import { MAP, selected as selectedMap, zonePalettes } from './maps.js'; // P8-MAPS
+import { ZONES } from './backdrop.js'; // P8-MAPS: classic zone palettes
+import { art } from './art.js'; // P8-MAPS: the map's plates, when already decoded
 
 const TAU = Math.PI * 2;
 const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -117,114 +126,186 @@ function grain(ctx, w, h, seed = 3) {
   }
 }
 
+
+// ------------------------------------------------------------------ P8-MAPS: card helpers
+const hx = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const rgba = (h, a = 1) => { const c = hx(h); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; };
+const mixh = (a, b, t) => { const A = hx(a), B = hx(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+const lum = (h) => { const [r, g, b] = hx(h); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
+/** The five zone palettes (sky top/bot, mass, mid, lite, deep, fog, ray) for a map. */
+function palsFor(map) { return zonePalettes(map) || ZONES.map((z) => z); }
+const ZM = [0, 200, 450, 800, 1200];
+function zoneIdx(m) { let i = 0; for (let k = 0; k < ZM.length; k++) if (m >= ZM[k]) i = k; return i; }
+
+/** Haze window: the map's sky through every zone climbed, plates or procedural treelines, tree on top. */
+function drawWindow(ctx, s, sum, map, P) {
+  const pals = palsFor(map);
+  const topM = Math.max(60, sum.height * 1.12);
+  const zTop = zoneIdx(topM);
+  // sky: bottom = zone 0 horizon, top = the highest zone reached
+  const g = ctx.createLinearGradient(0, P.y + P.h, 0, P.y);
+  g.addColorStop(0, pals[0].bot);
+  for (let i = 1; i <= zTop; i++) g.addColorStop(Math.min(0.98, ZM[i] / topM), mixh(pals[i - 1].top, pals[i].bot, 0.5));
+  g.addColorStop(1, pals[zTop].top);
+  ctx.fillStyle = g; ctx.fillRect(P.x, P.y, P.w, P.h);
+  const top = pals[zTop], base = pals[0];
+  // sky plate of the map, faint, for its signature (cave skylight, castle, sun...)
+  const sky = art(map.plates ? `m-sky-${map.plates}` : 'w-sky-meadow');
+  if (sky) { ctx.globalAlpha = zTop >= 3 ? 0.18 : 0.5; const k = Math.max(P.w / sky.naturalWidth, P.h / sky.naturalHeight); ctx.drawImage(sky, P.x + (P.w - sky.naturalWidth * k) / 2, P.y + (P.h - sky.naturalHeight * k) / 2, sky.naturalWidth * k, sky.naturalHeight * k); ctx.globalAlpha = 1; }
+  // stars above dusk
+  if (zTop >= 3) for (let i = 0; i < 90; i++) { ctx.fillStyle = rgba(top.acc, (0.3 + hash(i) * 0.6).toFixed(2)); ctx.fillRect(P.x + hash(i + 1) * P.w, P.y + hash(i + 2) * P.h * 0.45, 2.4, 2.4); }
+  // sun / moon: soft disc in the ray colour
+  const sx = P.x + P.w * 0.78, sy = P.y + 150;
+  for (let k = 3; k >= 1; k--) { ctx.fillStyle = rgba(top.ray, 0.09); ctx.beginPath(); ctx.arc(sx, sy, 56 * (1 + k * 0.45), 0, TAU); ctx.fill(); }
+  ctx.fillStyle = rgba(top.ray, 0.95); ctx.beginPath(); ctx.arc(sx, sy, 56, 0, TAU); ctx.fill();
+  // far layer: the map's plate tiled, else code-drawn treelines
+  const far = art(map.plates ? `m-far-${map.plates}` : 'w-far-meadow');
+  const groundY = P.y + P.h - 96;
+  if (far) {
+    const k = P.w / far.naturalWidth, th = far.naturalHeight * k;
+    ctx.globalAlpha = 0.5;
+    for (let y = groundY - th * 0.92; y > P.y - th; y -= th) ctx.drawImage(far, P.x, y, P.w, th);
+    ctx.drawImage(far, P.x, groundY - th * 0.92 + th, P.w, th);
+    ctx.globalAlpha = 1;
+  } else {
+    for (let L = 0; L < 3; L++) {
+      ctx.fillStyle = rgba([base.mass, base.mid, base.lite][L], 0.55 + L * 0.15);
+      ctx.beginPath(); ctx.moveTo(P.x, P.y + P.h);
+      for (let x = 0; x <= P.w; x += 12) { const h = 140 - L * 40 + 40 * Math.sin(x * 0.012 + L * 2) + 30 * hash(Math.floor(x / 36) + L * 50); ctx.lineTo(P.x + x, groundY - h); }
+      ctx.lineTo(P.x + P.w, P.y + P.h); ctx.fill();
+    }
+  }
+  // haze over the far layer, thicker low down
+  const fg = ctx.createLinearGradient(0, P.y, 0, P.y + P.h);
+  fg.addColorStop(0, rgba(top.fog, 0)); fg.addColorStop(0.6, rgba(base.fog, 0.22)); fg.addColorStop(1, rgba(base.fog, 0.5));
+  ctx.fillStyle = fg; ctx.fillRect(P.x, P.y, P.w, P.h);
+  // side frames at the window edges
+  const side = art(map.plates ? `m-side-${map.plates}` : 'w-side-meadow');
+  if (side) {
+    const k = (P.w / side.naturalWidth) * 0.9, hw = side.naturalWidth / 2, th = side.naturalHeight * k;
+    ctx.globalAlpha = 0.92;
+    for (const [sx0, dx, off] of [[0, P.x, 0], [hw, P.x + P.w - hw * k, th * 0.4]]) {
+      for (let y = P.y - off; y < P.y + P.h; y += th) ctx.drawImage(side, sx0, 0, hw, side.naturalHeight, dx, y, hw * k, th);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // ground: two silhouette hills
+  for (const [col, off, amp] of [[base.lite, 0, 14], [base.deep, 26, 9]]) {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(P.x, P.y + P.h);
+    for (let x = 0; x <= P.w; x += 16) ctx.lineTo(P.x + x, groundY + off - amp * Math.sin(x * 0.009 + off));
+    ctx.lineTo(P.x + P.w, P.y + P.h); ctx.fill();
+  }
+  return groundY;
+}
+
+// P8-MAPS: the stamp + postmark drawing lives in stamps.js, fetched after boot
+// (keeps first load under budget); a card rendered before it lands has no stamp.
+let ST = null;
+export const loadStamps = () => (ST ? Promise.resolve(ST) : import('./stamps.js').then((m) => (ST = m)));
+if (typeof window !== 'undefined') setTimeout(() => loadStamps().catch(() => {}), 2500);
+
 export function renderCard(s, sum, meta) {
   const Wc = 1080, Hc = 1350;
   const c = document.createElement('canvas');
   c.width = Wc; c.height = Hc;
   const ctx = c.getContext('2d');
   const reached = stageIndexFor(sum.height);
-  // paper (postcard skin)
-  const CARD = THEME.card, CI = CARD.ink;
-  const inkA = (a) => { const n = parseInt(CI.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
-  ctx.fillStyle = CARD.paper; ctx.fillRect(0, 0, Wc, Hc);
-  // print window: posterised sky through every stage the tree climbed
+  const map = (meta.map && (MAP[meta.map] || meta.map)) || selectedMap() || MAP.forkwood;
+  // paper: the postcard skin; the default cream takes the map's own tint
+  const CARD = THEME.card;
+  const paper = CARD.id === 'card.cream' && map.paper ? map.paper : CARD.paper, CI = CARD.ink;
+  const dark = lum(paper) < 0.4;
+  const inkA = (a) => rgba(CI, a);
+  ctx.fillStyle = paper; ctx.fillRect(0, 0, Wc, Hc);
+  // a whisper of the map's colours across the paper
+  const pg = ctx.createLinearGradient(0, 0, Wc, Hc);
+  pg.addColorStop(0, rgba(map.swatch[0], dark ? 0.1 : 0.07)); pg.addColorStop(1, rgba(map.swatch[1], dark ? 0.06 : 0.1));
+  ctx.fillStyle = pg; ctx.fillRect(0, 0, Wc, Hc);
+  // the window: the map, hazy, with the tree in it
   const P = { x: 56, y: 262, w: Wc - 112, h: 930 };
   ctx.save();
-  roundRect(ctx, P.x, P.y, P.w, P.h, 22); ctx.clip();
-  const topM = Math.max(60, sum.height * 1.12);
-  const bands = 18;
-  for (let i = 0; i < bands; i++) {
-    const m = topM * (1 - (i + 0.5) / bands) + ((s.R && s.R.biome) || 0);
-    ctx.fillStyle = css(skyAt(m));
-    ctx.fillRect(P.x, P.y + (P.h * i) / bands, P.w, P.h / bands + 1);
-  }
-  if (reached >= 5) for (let i = 0; i < 110; i++) { ctx.fillStyle = `rgba(255,248,226,${(0.35 + hash(i) * 0.6).toFixed(2)})`; ctx.fillRect(P.x + hash(i + 1) * P.w, P.y + hash(i + 2) * P.h * 0.4, 2.4, 2.4); }
-  // sun (or moon) disc
-  const sunC = reached >= 5 ? 'rgba(250,240,214,0.95)' : 'rgba(255,244,214,0.95)';
-  for (let k = 3; k >= 1; k--) { ctx.fillStyle = `rgba(255,244,214,${0.1})`; ctx.beginPath(); ctx.arc(P.x + P.w * 0.8, P.y + 150, 60 * (1 + k * 0.5), 0, TAU); ctx.fill(); }
-  ctx.fillStyle = sunC; ctx.beginPath(); ctx.arc(P.x + P.w * 0.8, P.y + 150, 60, 0, TAU); ctx.fill();
-  // ground
-  const groundY = P.y + P.h - 70;
-  ctx.fillStyle = MOSS;
-  ctx.beginPath(); ctx.moveTo(P.x, groundY + 20);
-  for (let x = P.x; x <= P.x + P.w; x += 20) ctx.lineTo(x, groundY - 8 - 12 * Math.sin(x * 0.01 + 1));
-  ctx.lineTo(P.x + P.w, P.y + P.h); ctx.lineTo(P.x, P.y + P.h); ctx.fill();
-  ctx.strokeStyle = INK; ctx.lineWidth = 3;
-  ctx.beginPath(); for (let x = P.x; x <= P.x + P.w; x += 20) x === P.x ? ctx.moveTo(x, groundY - 8 - 12 * Math.sin(x * 0.01 + 1)) : ctx.lineTo(x, groundY - 8 - 12 * Math.sin(x * 0.01 + 1)); ctx.stroke();
-  ctx.fillStyle = '#4a3324'; ctx.fillRect(P.x, groundY + 26, P.w, P.h);
-  ctx.fillStyle = INK; ctx.fillRect(P.x, groundY + 24, P.w, 4);
-  // stage marks on the left
-  const rect = { x: P.x + 150, y: P.y + 70, w: P.w - 230, h: groundY + 26 - (P.y + 70) };
+  roundRect(ctx, P.x, P.y, P.w, P.h, 28); ctx.clip();
+  const groundY = drawWindow(ctx, s, sum, map, P);
+  const rect = { x: P.x + 150, y: P.y + 90, w: P.w - 230, h: groundY + 20 - (P.y + 90) };
   const { mapY } = drawTreeCompact(ctx, s, rect, { leafLen: 24 });
+  // stage marks: hairlines with small glass labels
   ctx.textAlign = 'left';
   let lastLabelY = 1e9;
   for (let i = 1; i <= reached; i++) {
     const y = mapY(-STAGES[i].m * PX_PER_M);
-    if (y < rect.y - 10 || lastLabelY - y < 70 || y > groundY - 60) continue;
+    if (y < rect.y + 40 || lastLabelY - y < 70 || y > groundY - 60) continue;
     lastLabelY = y;
     const goal = STAGES[i].name === 'Treetop';
-    ctx.strokeStyle = 'rgba(30,26,22,0.55)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 8]);
-    ctx.beginPath(); ctx.moveTo(P.x + 18, y); ctx.lineTo(P.x + 170, y); ctx.stroke(); ctx.setLineDash([]);
-    ctx.font = f(800, 20);
-    const label = `${STAGES[i].name.toUpperCase()}  ${STAGES[i].m} m`;
+    ctx.strokeStyle = 'rgba(255,246,230,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([6, 8]);
+    ctx.beginPath(); ctx.moveTo(P.x + 18, y); ctx.lineTo(P.x + 180, y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = f(700, 19);
+    const label = `${STAGES[i].name}  ${STAGES[i].m} m`;
     const tw = ctx.measureText(label).width;
-    ctx.fillStyle = INK; roundRect(ctx, P.x + 20, y - 36, tw + 20, 28, 8); ctx.fill();
-    ctx.fillStyle = goal ? OCHRE : PAPER; ctx.fillText(label, P.x + 30, y - 15);
-    if (goal) { flagPath(ctx, P.x + tw + 50, y - 22, 12); ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.fillStyle = OCHRE; ctx.fill(); ctx.strokeStyle = INK; ctx.stroke(); }
+    ctx.fillStyle = 'rgba(12,18,24,0.58)'; roundRect(ctx, P.x + 20, y - 36, tw + 24, 28, 14); ctx.fill();
+    ctx.fillStyle = goal ? '#ffc94d' : '#fff6e6'; ctx.fillText(label, P.x + 32, y - 16);
+    if (goal) { flagPath(ctx, P.x + tw + 54, y - 22, 12); ctx.lineJoin = 'round'; ctx.lineWidth = 2.5; ctx.fillStyle = '#ffc94d'; ctx.fill(); ctx.strokeStyle = 'rgba(12,18,24,0.7)'; ctx.stroke(); }
   }
+  // "greetings from" caption, top-left of the window
+  ctx.textAlign = 'left';
+  ctx.font = f(600, 22); ctx.fillStyle = 'rgba(255,246,230,0.92)';
+  ctx.shadowColor = 'rgba(8,11,28,0.45)'; ctx.shadowBlur = 12;
+  ctx.fillText('GREETINGS FROM', P.x + 34, P.y + 50);
+  ctx.font = f(500, 52, 'display'); ctx.fillText(map.name, P.x + 32, P.y + 104, P.w * 0.62);
+  ctx.font = f(600, 22); ctx.fillStyle = 'rgba(255,246,230,0.8)';
+  ctx.fillText(`${map.place}${map.country && map.country !== map.place ? ' · ' + map.country : ''}${map.tale ? ' · ' + map.tale : ''}`, P.x + 34, P.y + 138, P.w * 0.62);
+  ctx.shadowBlur = 0;
   ctx.restore();
-  ctx.strokeStyle = CI; ctx.lineWidth = 5; roundRect(ctx, P.x, P.y, P.w, P.h, 22); ctx.stroke();
+  ctx.strokeStyle = inkA(0.22); ctx.lineWidth = 2; roundRect(ctx, P.x, P.y, P.w, P.h, 28); ctx.stroke();
 
   // header on the paper
   ctx.fillStyle = CI; ctx.textAlign = 'left';
-  ctx.font = f(800, 26); ctx.fillText('F O R K W O O D', 62, 86);
-  if (meta.title) { const tw0 = ctx.measureText('F O R K W O O D').width; ctx.font = f(700, 22); ctx.fillStyle = inkA(0.75); ctx.fillText(`· ${meta.title}`, 74 + tw0, 86); ctx.fillStyle = CI; }
-  ctx.font = f(800, 168, 'display');
+  ctx.font = f(700, 24); ctx.fillText('F O R K W O O D', 62, 86);
+  if (meta.title) { const tw0 = ctx.measureText('F O R K W O O D').width; ctx.font = f(600, 22); ctx.fillStyle = inkA(0.7); ctx.fillText(`· ${meta.title}`, 74 + tw0, 86); ctx.fillStyle = CI; }
+  ctx.font = f(400, 168, 'display');
   const ht = `${sum.height}`;
-  ctx.fillText(ht, 54, 236);
+  ctx.fillText(ht, 50, 236);
   const hw = ctx.measureText(ht).width;
-  ctx.font = f(800, 70, 'display'); ctx.fillText('m', 70 + hw, 236);
+  ctx.font = f(400, 70, 'display'); ctx.fillText('m', 64 + hw, 236);
   ctx.textAlign = 'right';
   ctx.font = f(700, 34, 'mono'); ctx.fillText(`${sum.score.toLocaleString('en-US')} pts`, Wc - 60, 92);
-  ctx.font = f(600, 26); ctx.fillStyle = inkA(0.8);
+  ctx.font = f(600, 26); ctx.fillStyle = inkA(0.75);
   ctx.fillText(`reached ${sum.stage}`, Wc - 60, 134);
   let ry = 170;
   if (meta.modeLine) { ctx.fillText(meta.modeLine, Wc - 60, ry, 560); ry += 36; }
   if (meta.stars) {
-    // quest stars: this run's stars inked, the level's best as outlines
     for (let i = 0; i < 3; i++) {
       const cx = Wc - 60 - 26 - (2 - i) * 58, cy = ry + 4;
       ctx.beginPath();
       for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 11 : 25; ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); }
       ctx.closePath();
-      ctx.fillStyle = i < meta.stars.run ? OCHRE : CARD.paper; ctx.fill();
-      ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeStyle = CI; ctx.stroke();
+      ctx.fillStyle = i < meta.stars.run ? '#ffc94d' : paper; ctx.fill();
+      ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = CI; ctx.stroke();
     }
     ry += 48;
   }
   if (meta.daily) { ctx.fillText(`Daily tree · ${meta.dailyLabel}`, Wc - 60, ry); ry += 36; }
   if (meta.challenge) { const u = meta.challenge.pts ? ' pts' : ' m'; ctx.fillText(meta.challenge.won ? `beat a friend's ${meta.challenge.m.toLocaleString('en-US')}${u}` : `friend's best: ${meta.challenge.m.toLocaleString('en-US')}${u}`, Wc - 60, ry); ry += 36; }
   if (meta.newBest) {
-    ctx.save(); ctx.translate(Wc - 160, Math.max(ry, 200) + 12); ctx.rotate(-0.06);
-    ctx.fillStyle = INK; roundRect(ctx, -96, -26, 200, 54, 12); ctx.fill();
-    ctx.fillStyle = OCHRE; roundRect(ctx, -100, -30, 200, 54, 12); ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 4; roundRect(ctx, -100, -30, 200, 54, 12); ctx.stroke();
-    ctx.fillStyle = INK; ctx.textAlign = 'center'; ctx.font = f(800, 26); ctx.fillText('NEW BEST', 0, 6);
+    ctx.save(); ctx.translate(Wc - 160, Math.min(236, Math.max(ry, 200)) + 4); ctx.rotate(-0.04);
+    ctx.fillStyle = '#ffc94d'; roundRect(ctx, -100, -28, 200, 50, 25); ctx.fill();
+    ctx.fillStyle = '#2a1e08'; ctx.textAlign = 'center'; ctx.font = f(800, 24); ctx.fillText('NEW BEST', 0, 6);
     ctx.restore();
   }
-  // footer: git-flavoured summary
+  // footer: git-flavoured summary (left), stamp + postmark (right)
   ctx.textAlign = 'left';
   ctx.font = f(700, 27, 'mono');
   const h1 = `tree ${sum.hash}`;
   ctx.fillStyle = CI; ctx.fillText(h1, 62, 1252);
-  ctx.fillStyle = inkA(0.78);
-  ctx.fillText(` · ${sum.commits} commits · ${sum.merges} merges${sum.blooms ? ` · ${sum.blooms} blooms` : ''} · ×${sum.maxMult}`, 62 + ctx.measureText(h1).width, 1252, 850 - 62 - ctx.measureText(h1).width);
-  ctx.font = f(600, 21); ctx.fillStyle = inkA(0.68);
-  ctx.fillText(`${meta.url || 'Forkwood'}${meta.seed != null ? `  ·  course #${meta.seed}` : ''}`, 62, 1296, Wc - 300);
-  // hanko-style seal: the grower's level and this print's number
-  seal(ctx, Wc - 150, 1250, CARD, meta);
+  ctx.fillStyle = inkA(0.72);
+  ctx.fillText(` · ${sum.commits} commits · ${sum.merges} merges${sum.blooms ? ` · ${sum.blooms} blooms` : ''} · ×${sum.maxMult}`, 62 + ctx.measureText(h1).width, 1252, 650 - 62 - ctx.measureText(h1).width);
+  ctx.font = f(600, 21); ctx.fillStyle = inkA(0.62);
+  ctx.fillText(`${meta.url || 'Forkwood'}${meta.seed != null ? `  ·  course #${meta.seed}` : ''}`, 62, 1296, 590);
+  if (ST) {
+    ST.drawStamp(ctx, map, Wc - 172, 1166, 236, 300, { height: sum.height, rot: 0.035 });
+    ST.drawPostmark(ctx, map, Wc - 336, 1238, 74, dark ? '#fff6e6' : (map.stamp.ink), meta);
+  } else loadStamps().catch(() => {});
   if (CARD.edge === 'perforated') {
-    ctx.strokeStyle = inkA(0.5); ctx.lineWidth = 3; ctx.setLineDash([2, 9]); roundRect(ctx, 26, 26, Wc - 52, Hc - 52, 8); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = inkA(0.4); ctx.lineWidth = 3; ctx.setLineDash([2, 9]); roundRect(ctx, 26, 26, Wc - 52, Hc - 52, 8); ctx.stroke(); ctx.setLineDash([]);
   }
   grain(ctx, Wc, Hc);
   if (CARD.edge === 'perforated') {
@@ -271,19 +352,3 @@ function downloadBlob(blob, filename) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 
-function seal(ctx, x, y, CARD, meta) {
-  const lv = meta.level || 1, no = meta.printNo || 1;
-  ctx.save(); ctx.translate(x, y); ctx.rotate(-0.07);
-  const sz = 104;
-  ctx.fillStyle = CARD.seal; roundRect(ctx, -sz / 2, -sz / 2, sz, sz, 14); ctx.fill();
-  // worn print edge: knock a few flecks out of the seal
-  ctx.fillStyle = CARD.paper;
-  for (let i = 0; i < 26; i++) { const h1 = hash(i * 3.3 + lv), h2 = hash(i * 7.1 + no); ctx.fillRect(-sz / 2 + h1 * sz, -sz / 2 + h2 * sz, 2.2, 2.2); }
-  ctx.strokeStyle = CARD.paper; ctx.lineWidth = 3.5; roundRect(ctx, -sz / 2 + 7, -sz / 2 + 7, sz - 14, sz - 14, 9); ctx.stroke();
-  ctx.fillStyle = CARD.paper; ctx.textAlign = 'center';
-  ctx.font = f(800, 15); ctx.fillText('GROWER', 0, -22);
-  ctx.font = f(800, 40, 'display'); ctx.fillText(`${lv}`, 0, 16);
-  ctx.font = f(700, 13, 'mono'); ctx.fillText(`PRINT ${no}`, 0, 38);
-  ctx.restore();
-  ctx.textAlign = 'left';
-}

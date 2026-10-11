@@ -14,6 +14,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const server = process.env.URL ? null : spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
 for (let i = 0; i < 40; i++) { try { await fetch(`http://localhost:${PORT}/`); break; } catch { await new Promise((r) => setTimeout(r, 150)); } } // P7-UI: wait for the server, not a fixed 800 ms
 const base = process.env.URL || `http://localhost:${PORT}/`;
+async function waitOver(p, ms = 7000) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await p.evaluate(() => window.forkwood.mode) === 'over') break; await p.waitForTimeout(150); } await p.waitForTimeout(900); }
 const OUT = ROOT + 'tests/out/';
 fs.mkdirSync(OUT, { recursive: true });
 const fails = [];
@@ -105,7 +106,8 @@ await p.click('#meta .tabs [data-tab="charms"]');
 if (await p.$('[data-charm-eq="ward"]')) await p.click('[data-charm-eq="ward"]');
 ok(await fw(p, () => window.forkwood.save.charm) === 'ward', 'Bark Ward equipped');
 await p.keyboard.press('Escape');
-await p.waitForTimeout(400);
+for (let i = 0; i < 10 && !(await p.isHidden('#meta')); i++) await p.waitForTimeout(150);
+await p.waitForTimeout(250);
 ok(await p.isHidden('#meta') && await p.isVisible('#title'), 'Esc closes the book and brings the title back');
 
 // 4. charm in play, skins in play, frame time
@@ -131,7 +133,7 @@ await fw(p, () => { window.forkwood.fastForward(30, 0.95); });
 await p.waitForTimeout(500);
 await p.screenshot({ path: OUT + 'meta-07-play-skins.png' });
 await fw(p, () => window.forkwood.killNow());
-await p.waitForTimeout(2600);
+await waitOver(p); // v1.0: wait for the result card, not a fixed time (slow headless frames)
 await p.screenshot({ path: OUT + 'meta-08-over-skins.png' });
 const card = await fw(p, () => document.getElementById('card-img').src);
 fs.writeFileSync(OUT + 'meta-09-card-stamp.png', Buffer.from(card.split(',')[1], 'base64'));
@@ -139,12 +141,12 @@ fs.writeFileSync(OUT + 'meta-09-card-stamp.png', Buffer.from(card.split(',')[1],
 await fw(p, () => window.forkwood.start(true));
 ok(await fw(p, () => window.forkwood.sim.charm) === null && await fw(p, () => window.forkwood.sim.pure), 'daily tree runs with no charm');
 await fw(p, () => window.forkwood.killNow());
-await p.waitForTimeout(2400);
+await waitOver(p);
 
 // 5. reload keeps everything
 await p.reload(); await p.waitForTimeout(1500);
 const S2 = await fw(p, () => window.forkwood.save);
-ok(S2.owned.includes('bark.cherry') && S2.loadout.bark === 'bark.cherry' && S2.stats.runs === 3 && S2.charm === 'ward', 'progress survives a reload');
+ok(S2.owned.includes('bark.cherry') && S2.loadout.bark === 'bark.cherry' && S2.stats.runs === 3 && S2.charm === 'ward', `progress survives a reload (${JSON.stringify({ cherry: S2.owned.includes('bark.cherry'), bark: S2.loadout.bark, runs: S2.stats.runs, charm: S2.charm })})`);
 await ctx.close();
 
 // 6. migration from the first public build

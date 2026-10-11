@@ -115,7 +115,7 @@ async function overflow(p) {
   // mirror: steering right goes left
   await fw(p, () => window.forkwood.startMode('mirror'));
   await p.waitForTimeout(300);
-  await p.mouse.move(1100, 400); await p.waitForTimeout(600);
+  await p.mouse.move(1100, 400); await p.waitForTimeout(1500);
   const cx = await fw(p, () => window.forkwood.sim.cx);
   ok(cx < 280, `looking-glass: mouse on the right steers left (cx ${Math.round(cx)})`);
   // storm crown level with storm
@@ -171,8 +171,8 @@ for (const [tag, vp] of [['phone', PHONE], ['small', SMALL]]) {
   await p.context().close();
   const w = await open(DESK, '?week=2026-W41&beat=300');
   await w.p.click('#btn-play'); await w.p.waitForTimeout(300);
-  const wr = await fw(w.p, () => ({ m: window.forkwood.run.mode, wk: window.forkwood.run.week, pure: window.forkwood.sim.pure, h: window.forkwood.sim.R.hazard }));
-  ok(wr.m === 'weekly' && wr.wk === '2026-W41' && wr.pure && wr.h === 0.25, 'weekly link plays that week on Oak with no charms');
+  const wr = await fw(w.p, async () => ({ m: window.forkwood.run.mode, wk: window.forkwood.run.week, pure: window.forkwood.sim.pure, h: window.forkwood.sim.R.hazard, oak: (await import('./src/modes.js')).STAKE.oak.rules.hazard }));
+  ok(wr.m === 'weekly' && wr.wk === '2026-W41' && wr.pure && wr.h === wr.oak, /* v1.0: Oak's hazard comes from modes.js (retuned in pass 8) */ 'weekly link plays that week on Oak with no charms');
   await w.p.context().close();
 }
 

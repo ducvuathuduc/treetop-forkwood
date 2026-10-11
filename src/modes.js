@@ -4,11 +4,13 @@
 // Stakes: a difficulty ladder (Balatro-style). Each stake keeps the rules of
 // the one below it and adds its own, and pays a score multiplier for it.
 export const STAKES = [
-  { id: 'sapling', name: 'Sapling', mult: 1, blurb: 'The tree as it grows.', adds: [], rules: {} },
-  { id: 'oak', name: 'Oak', mult: 1.5, blurb: 'Thornier and thirstier.', adds: ['hazards come sooner', 'sap drains 10% faster', 'beetles 15% faster'],
-    rules: { hazard: 0.25, drain: 1.1, beetle: 1.15 } },
-  { id: 'ancient', name: 'Ancient', mult: 2.2, blurb: 'For growers who have seen the stars.', adds: ['everything in Oak', 'hazards sooner still', 'sap drains 28% faster', 'hits cost 30% more', 'every 2nd rest glade is gone', 'growth 5% faster'],
-    rules: { hazard: 0.7, drain: 1.28, beetle: 1.3, dmg: 1.3, restSwap: 2, speed: 1.05 } },
+  { id: 'sapling', name: 'Sapling', mult: 1, blurb: 'The tree as it grows.', adds: [], rules: { dmg: 1.25, drainAdd: 1.0, lateK: 0.7, bloomSap: 8 } }, // P8-ECON: thirstier from the start, blooms pay sap
+  // P8-ECON: harder stakes (tuned with tests/stakes.mjs: Oak bots ~35 / ~55 / ~85 s). Thirst
+  // starts at the ground, hits bite harder, and skilful play (blooms) pays sap back.
+  { id: 'oak', name: 'Oak', mult: 1.5, blurb: 'Thornier and thirstier.', adds: ['hazards come sooner', 'thirsty from the first metre', 'hits cost 45% more', 'beetles 15% faster', 'full blooms give +8 sap'],
+    rules: { hazard: 0.35, drain: 1, drainAdd: 1.7, lateK: 0.62, dmg: 1.45, bloomSap: 8, beetle: 1.15 } },
+  { id: 'ancient', name: 'Ancient', mult: 2.2, blurb: 'Brutal. For growers who have seen the stars.', adds: ['everything in Oak', 'hazards at full strength early', 'sap drains hard from the start', 'hits cost 75% more', 'every 2nd rest glade is gone', 'growth 6% faster'],
+    rules: { hazard: 0.8, drain: 1.08, drainAdd: 2.4, lateK: 0.72, dmg: 1.75, bloomSap: 8, beetle: 1.35, restSwap: 2, speed: 1.06 } },
 ];
 export const STAKE = Object.fromEntries(STAKES.map((s) => [s.id, s]));
 

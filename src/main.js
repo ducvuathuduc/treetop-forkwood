@@ -3,7 +3,10 @@ import { createSim, step, summary, heightM, W, PX_PER_M, STAGES, SAP_MAX, CHARMS
 import { Renderer } from './render.js';
 import { Sound } from './audio.js';
 import { createBot, botInput } from './bot.js';
-import { renderCard, shareCard, downloadCard } from './share.js';
+// v1.0: the postcard renderer loads after boot (first-load budget); it is ready long before a run ends
+let SHARE = null;
+const loadShare = () => (SHARE ? Promise.resolve(SHARE) : import('./share.js').then((m) => (SHARE = m)));
+setTimeout(() => loadShare().catch(() => {}), 2000);
 import { dailySeed, dailyLabel } from './rng.js';
 import * as M from './meta.js';
 import { applyLoadout, SKIN } from './skins.js';
@@ -17,6 +20,9 @@ import * as R from './retention.js';
 import * as Dir from './director.js'; // P6-TRAPS
 import * as SEA from './seasons.js'; // P6-SEASONS
 import { backdrop } from './backdrop.js'; // P6-ART x P6-SEASONS: season palette
+import * as EC from './economy.js'; import { revive as reviveSim } from './sim.js'; import { createRevive, createMapBuy, armed as armedBoosts } from './ui-econ.js'; // P8-ECON
+import { selectedId as mapId, maps as MAPS_API } from './maps.js'; // P8-MAPS
+import { createMapsUI, loadCss } from './ui-maps.js'; // P8-MAPS
 const ICON_STAR = ICON.star, ICON_STAR_OFF = ICON.starOff;
 // P6-SEASONS: the season clock is the player's local time. ?season=<ISO local time> pins it (tests,
 // previews); automated browsers without ?season= get no seasons so older tests stay deterministic.
@@ -93,6 +99,7 @@ const fx = { particles: [], floaters: [], sparks: [], flash: 0, flashColor: '255
 const input = { targetX: null, dir: 0, toggle: false, keys: new Set(), pointerId: null, downT: 0, downX: 0, downY: 0, moved: 0, anchor: W / 2, kind: window.matchMedia && matchMedia('(pointer: coarse)').matches ? 'touch' : 'mouse' };
 // first-run coach: steer -> fork -> merge, taught by doing (screen-space, never overlaps the world)
 const coach = { step: null, t: 0, collects: 0, retry: false, slow: false };
+const rv = createRevive({ getSave: () => S, sound, isCalm }); let reviveAsked = false; // P8-ECON
 const ui = createMetaUI({ getSave: () => S, persist, sound, isCalm, onOpen: () => { $('title').classList.remove('show'); }, onClose: () => { if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } else ui.refreshBar(mode); } });
 // the quest map UI loads on first open (keeps the first load small)
 let questUI = null, questLoading = null;
@@ -229,7 +236,12 @@ function startRun(isDaily = daily) {
   dirMode = daily ? 'daily' : isRace ? 'race' : lv ? 'quest' : challenge ? (CHALLENGE.duel ? 'duel' : 'challenge') : run.mode === 'weekly' ? 'weekly' : FIXED_SEED != null ? 'seeded' : (BOT_MODE || autoplay) ? 'bot' : run.mode;
   const director = pure || isRace ? null : Dir.params(dirMode); // race: director always off
   runDirector = director;
-  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director });
+  // P8-ECON: boosts, upgrades, grower multiplier, word-hunt letter (free play only)
+  const econ = BOT_MODE || autoplay ? null : EC.runOptions(S, { pure, race: isRace, level: !!lv, tutorial }, armedBoosts(S));
+  if (econ) { S.econ.armed = []; persist(false); }
+  reviveAsked = false;
+  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director, econ });
+  // /P8-ECON
   // /P6-TRAPS
   coach.step = sim.tutorial ? 'steer' : null; coach.t = 0; coach.collects = 0; coach.retry = false; coach.slow = false;
   timeScale = 1;
@@ -442,7 +454,7 @@ function handleEvents(s, quiet) {
       case 'hit':
         burst(e.x, e.y, 10, '#6b4429', 200, 4, 0.7);
         burst(e.x, e.y, 6, STAGES[s.stageIdx].leaf, 160, 7, 1.2, 'leaf');
-        if (!quiet) { hitStop(0.09); sound.hit(); shake(12); flash('255,60,60', 0.8); vibrate(70); floater(e.x, e.y - 30, `−${e.dmg} sap`, '#ff9a86', 22, 0.9); }
+        if (!quiet) { const now = performance.now(), rep = now - (fx.lastHitAt || -1e9) < 700; fx.lastHitAt = now; hitStop(rep ? 0.05 : 0.09); sound.hit(); shake(rep ? 7 : 12); flash('255,60,60', rep ? 0.3 : 0.8); vibrate(70); floater(e.x, e.y - 30, `−${e.dmg} sap`, '#ff9a86', 22, 0.9); }
         break;
       case 'near':
         // P6-TRAPS: a brief slow-mo (~120 ms) on a close call, at most once a second, never in calm mode
@@ -457,10 +469,10 @@ function handleEvents(s, quiet) {
         burst(e.x, e.y, 10, '#8a6a44', 220, 6, 0.8, 'leaf');
         break;
       case 'crow':
-        if (!quiet) { sound.near(); floater(e.x, e.y - 70, 'crow! merge now', '#ffd27a', 20, 1.1); }
+        if (!quiet) { sound.near(); floater(e.x, e.y - 70, 'crow! swerve or fork', '#ffd27a', 20, 1.1); /* P8-ECON */ }
         break;
       case 'crowsteal':
-        if (!quiet) { sound.emptyMerge(); floater(e.x, e.y - 50, e.lost ? `crow stole ${e.lost}` : 'crow!', '#ff9a86', 20, 1.0); }
+        if (!quiet) { sound.emptyMerge(); floater(e.x, e.y - 50, e.lost ? `crow stole ${e.lost}` : e.pts ? `crow −${e.pts} pts` : 'pecked!', '#ff9a86', 20, 1.0); /* P8-ECON */ }
         break;
       case 'crowfoil':
         ring(e.x, e.y, '#ffd27a', 80, 0.5);
@@ -565,6 +577,16 @@ function handleEvents(s, quiet) {
       case 'acorn':
         burst(e.x, e.y, 5, '#d99a52', 150, 6, 0.5, 'leaf');
         if (!quiet) { sound.acorn(e.n); fx.acornPulse = 1; floater(e.x, e.y - 16, e.env ? 'red envelope +3' : '+1 acorn', e.env ? '#ff8a7a' : '#f3cf8e', 15, 0.7); } // P6-SEASONS: envelope
+        break;
+      case 'letter': // P8-ECON word hunt
+        ring(e.x, e.y, '#f2b33d', 90, 0.55); ring(e.x, e.y, '#fff4c8', 54, 0.4);
+        burst(e.x, e.y, 10, '#ffe08a', 200, 7, 0.7, 'spark');
+        if (!quiet) { sound.sparkle(); floater(e.x, e.y - 20, `letter ${e.ch}!`, '#ffe08a', 22, 1.1); }
+        break;
+      case 'gem': // P8-ECON dew gem
+        ring(e.x, e.y, '#8fa8ff', 110, 0.6); ring(e.x, e.y, '#e4ecff', 64, 0.45);
+        burst(e.x, e.y, 14, '#a9b8ff', 240, 7, 0.85, 'spark');
+        if (!quiet) { sound.sparkle(); floater(e.x, e.y - 20, '+1 dew gem', '#9fe3ff', 22, 1.1); }
         break;
       case 'charged':
         if (!quiet) { sound.charged(); floater(s.cx, s.cy - 70, `${CHARMS[e.charm].name} ready`, '#ffe08a', 19, 1.1); }
@@ -675,12 +697,18 @@ function showGameOver() {
   const challenge = challengeRun ? { m: CHALLENGE.m, won: CHALLENGE.lvl ? sum.won && sum.score > CHALLENGE.m : sum.height > CHALLENGE.m, pts: !!CHALLENGE.lvl } : null;
   const modeLine = lv ? `Quest ${lv.id} · ${lv.name}${sum.won ? '' : ' · not finished'}` : run.mode === 'weekly' ? `Weekly tree ${weekCode(run.week)} · Oak` : run.mode !== 'classic' && !daily ? MODE[run.mode].name : (!daily && run.stake !== 'sapling' ? `${STAKE[run.stake].name} stake ×${STAKE[run.stake].mult}` : '');
   const cardStars = lv && lastQuest ? { run: lastQuest.runStars || 0, best: lastQuest.stars || 0 } : null;
-  try {
-    cardCanvas = renderCard(sim, sum, { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '' });
-    $('card-img').src = cardCanvas.toDataURL('image/png');
-  } catch (e) {
-    console.warn('card render failed', e && e.stack || e);
-  }
+  const cardMeta = { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '', map: mapId() }; // P8-MAPS: map
+  const paintCard = (SH, cs) => {
+    try {
+      cardCanvas = SH.renderCard(cs, sum, cardMeta);
+      $('card-img').src = cardCanvas.toDataURL('image/png');
+    } catch (e) {
+      console.warn('card render failed', e && e.stack || e);
+    }
+  };
+  cardCanvas = null;
+  if (SHARE) paintCard(SHARE, sim);
+  else { const cs = sim; loadShare().then((SH) => paintCard(SH, cs)).catch((e) => console.warn('card module failed', e)); }
   const toGo = STAGES[TREETOP_IDX].m - sum.height;
   const why = { hit: 'one hit', time: "time's up", sap: 'out of sap', finish: 'finished' }[sum.end] || '';
   $('over-kicker').textContent = challenge ? (challenge.won ? `★ CHALLENGE BEATEN (${challenge.pts ? challenge.m.toLocaleString('en-US') + ' pts' : challenge.m + ' m'})` : challenge.pts ? `CHALLENGE: friend scored ${challenge.m.toLocaleString('en-US')}` : `CHALLENGE: ${challenge.m - sum.height + 1} m short`)
@@ -935,12 +963,12 @@ $('btn-resume').addEventListener('click', resume);
 $('pause').addEventListener('pointerdown', (e) => { if (e.target === $('pause')) resume(); });
 $('btn-save').addEventListener('click', () => {
   if (!cardCanvas) return;
-  downloadCard(cardCanvas, `forkwood-${lastSum.hash}-${lastSum.height}m.png`);
+  SHARE.downloadCard(cardCanvas, `forkwood-${lastSum.hash}-${lastSum.height}m.png`);
   $('share-msg').textContent = 'Saved your tree as a PNG.';
 });
 $('btn-share').addEventListener('click', async () => {
   if (!cardCanvas) return;
-  const r = await shareCard(cardCanvas, shareText(), `forkwood-${lastSum.hash}.png`);
+  const r = await SHARE.shareCard(cardCanvas, shareText(), `forkwood-${lastSum.hash}.png`);
   let copiedText = false;
   if (r !== 'shared' && r !== 'cancelled') {
     try { if (r !== 'copied') { await navigator.clipboard.writeText(shareText()); copiedText = true; } } catch { /* ignore */ }
@@ -1014,7 +1042,12 @@ function frame(nowMs) {
       cam.scale += (base * 0.42 - cam.scale) * Math.min(1, dt * 2.2);
       cam.anchor += (0.32 - cam.anchor) * Math.min(1, dt * 2.2);
       cam.y += (sim.cy - cam.y) * Math.min(1, dt * 3);
-      if (sim.deathT > 1.1 && !deathShown) showGameOver();
+      // P8-ECON: second chance (gems, cost doubles each time in a run)
+      if (sim.deathT > 0.5 && !deathShown && !reviveAsked && sim.econ && sim.end === 'sap') {
+        reviveAsked = true;
+        rv.offer(sim.revives, (yes) => { if (yes && EC.payRevive(S, sim.revives) !== false && reviveSim(sim)) { persist(false); reviveAsked = false; fx.banner = { text: 'SECOND CHANCE', sub: 'sap refilled · the way ahead is clear', t: 0, max: 1.6, small: true }; sound.sprout(); } });
+      }
+      if (sim.deathT > 1.1 && !deathShown && !rv.open && (sim.dead)) showGameOver();
     }
   } else if (mode === 'over') {
     step(sim, dt, {});
@@ -1047,7 +1080,7 @@ function frame(nowMs) {
 }
 
 // testing hooks (used by tests/smoke.mjs)
-export const VERSION = '0.9.0';
+export const VERSION = '1.0.0';
 window.forkwood = {
   version: VERSION,
   get mode() { return mode; },
@@ -1129,7 +1162,7 @@ $('btn-grove').addEventListener('click', (e) => { e.stopPropagation(); sound.unl
 // P6-RACE: live race (loads race code + PeerJS only when used)
 function loadRaceUI() {
   if (raceUI) return Promise.resolve(raceUI);
-  raceLoading = raceLoading || import('./ui-race.js').then(({ createRaceUI }) => (raceUI = createRaceUI({
+  raceLoading = raceLoading || Promise.all([import('./ui-race.js'), loadCss('race.css')]).then(([{ createRaceUI }]) => (raceUI = createRaceUI({
     transport: RACE_RT, sound,
     getMe: () => ({ name: S.ret.name || '', p: (R.PORTRAIT[S.ret.avatar.portrait] || R.PORTRAIT.sparrow).i, f: (R.FRAME[S.ret.avatar.frame] || R.FRAME.twig).i }),
     onStart: (seed, rules) => { raceSeed = seed; raceRules = rules; run = { mode: 'race', stake: 'sapling', level: null, week: null }; $('title').classList.remove('show'); startRun(false); },
@@ -1150,6 +1183,17 @@ if (RACE_ROOM) {
 if (params.get('fb') === 'race') setTimeout(() => ui.toast('Live race could not connect. Grow this course, then tap Duel to send your friend the same tree.', 'gift'), 1700);
 // P6-RACE end
 $('btn-story').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); replayStory(); });
+// P8-MAPS: map chip + carousel on the title; the chosen map themes the backdrop and the postcard
+// v1.0: maps are owned through the save (S.econ.maps), bought with acorns
+{ const E0 = EC.ensureEcon(S), legacy = MAPS_API.takeLegacyOwned(); if (legacy.length) { for (const id of legacy) if (EC.MAP_PRICE[id] && !E0.maps.includes(id)) E0.maps.push(id); persist(false); } }
+MAPS_API.setOwnership({ owned: () => EC.ensureEcon(S).maps, level: () => S.level | 0,
+  grant: (id) => { const E1 = EC.ensureEcon(S); if (EC.MAP_PRICE[id] && !E1.maps.includes(id)) { E1.maps.push(id); persist(false); } } });
+const mapBuy = createMapBuy({ getSave: () => S, sound, maps: MAPS_API, toast: (t, k) => ui.toast(t, k),
+  buy: (id) => { const paid = EC.buyMap(S, id); if (paid) persist(false); return paid; },
+  onBought: (m) => { MAPS_API.grantMap(m.id); MAPS_API.select(m.id); ui.refreshBar('title'); } }); // grantMap is a no-op on the save here (buyMap already added it); it re-renders
+window.addEventListener('forkwood:map-unlock', (e) => { const d = (e && e.detail) || {}; if (d.id) mapBuy.offer(d.id); });
+const mapsUI = createMapsUI({ sound, onPlay: () => $('btn-play').click() });
+if (window.forkwood) window.forkwood.maps = mapsUI;
 if (FIRST_LAUNCH) {
   // the story, then straight into the first (tutorial) run; the menu appears only after it
   document.body.classList.add('intro-hold');

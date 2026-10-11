@@ -11,7 +11,14 @@
 //
 // Seasons / skins can retint it: backdrop.setTheme({ tint: '#hex', amount: 0.25,
 // zones: { oak: { top: '#hex', ... } } }); backdrop.setTheme(null) resets.
+//
+// P8-MAPS: backdrop.setMap(map) swaps the whole world for a map theme from
+// src/maps.js: its own sky/far/side plates (m-*-<id>.webp, streamed on pick),
+// five zone palettes (day -> night with height), zone names, particles and a
+// foreground clump style. setMap(null) (or the 'forkwood' map) restores the
+// classic per-zone plates. The API above is unchanged; themes stack on top.
 import { loadArt, art } from './art.js';
+import { zonePalettes as zonePal } from './maps.js';
 
 const TAU = Math.PI * 2;
 const FADE = 46; // metres of cross-fade around each zone boundary
@@ -50,11 +57,19 @@ const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return
 
 let theme = null, themeRev = 0;
 let pal = null;
+// P8-MAPS: the active map (null = classic) and its five zone palettes
+let mapDef = null, mapPal = null;
+const ZONE_NAMES = ZONES.map((z) => z.name);
+// per-zone plate treatment for maps: one plate set re-lit from day to night
+const SKY_A = [1, 0.9, 0.62, 0.36, 0.16];
+const WASH = [0, 0.14, 0.34, 0.56, 0.82];
+const FAR_A = [0.62, 0.58, 0.52, 0.46, 0.4];
+const farA = (zi) => (mapDef && mapDef.plates ? FAR_A[zi] : ZONES[zi].farA);
 function resolve() {
   if (pal) return pal;
   const tint = theme && theme.tint ? hex(theme.tint) : null, amt = theme && theme.amount != null ? theme.amount : 0.25;
-  pal = ZONES.map((z) => {
-    const o = { ...z, ...((theme && theme.zones && theme.zones[z.id]) || {}) };
+  pal = ZONES.map((z, zi) => {
+    const o = { ...z, ...(mapPal ? mapPal[zi] : {}), ...((theme && theme.zones && theme.zones[z.id]) || {}) };
     const r = {};
     for (const k of KEYS) { r[k] = hex(o[k]); if (tint) r[k] = lerp(r[k], tint, amt * 0.6); }
     return r;
@@ -80,11 +95,31 @@ function blendPal(z) {
 }
 
 // ------------------------------------------------------------------ assets
-const name = (layer, zi) => `w-${layer}-${ZONES[zi].plate}`;
+const name = (layer, zi) => (mapDef && mapDef.plates ? `m-${layer}-${mapDef.plates}` : `w-${layer}-${ZONES[zi].plate}`);
 /** First-load set: the meadow plates and the particle sheet. */
 export const WORLD_CRITICAL = ['w-sky-meadow', 'w-far-meadow', 'w-side-meadow', 'w-sprites-fx'];
 function ensureZone(zi) { for (const l of ['sky', 'far', 'side']) loadArt(name(l, zi)); }
-const img = (layer, zi) => art(name(layer, zi));
+const rawImg = (layer, zi) => art(name(layer, zi));
+// P8-MAPS: in a map, higher zones see the same plates washed toward the zone's
+// own colours (far -> mid, side -> deep), cached once per zone.
+const washed = new Map();
+function img(layer, zi) {
+  const im = rawImg(layer, zi);
+  if (!im || !mapDef || !mapDef.plates || layer === 'sky' || !WASH[zi] || typeof document === 'undefined') return im;
+  const key = `${layer}:${zi}:${themeRev}`;
+  let c = washed.get(key);
+  if (c && c.src === im) return c.cv;
+  const cv = document.createElement('canvas');
+  cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+  cv.naturalWidth = cv.width; cv.naturalHeight = cv.height;
+  const g = cv.getContext('2d');
+  g.drawImage(im, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  const P = resolve()[zi];
+  g.fillStyle = css(layer === 'far' ? lerp(P.mid, P.fog, 0.25) : P.deep, WASH[zi]); g.fillRect(0, 0, cv.width, cv.height);
+  washed.set(key, { src: im, cv });
+  return cv;
+}
 
 // fog-tinted copy of a zone's side plate for the L3 layer (built once per zone/theme)
 const tinted = new Map();
@@ -150,7 +185,8 @@ function clumpSprite(zi, s, side, k) {
   let sp = clumps.get(key);
   if (sp) return sp;
   if (typeof document === 'undefined') return null;
-  const P = resolve()[zi], id = ZONES[zi].id;
+  const P = resolve()[zi];
+  const id = mapDef && mapDef.clump ? ({ bough: 'snow', vine: 'sky' }[mapDef.clump] || mapDef.clump) : ZONES[zi].id;
   const w = Math.ceil(110 * k), h = Math.ceil(220 * k);
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const g = c.getContext('2d');
@@ -166,6 +202,27 @@ function clumpSprite(zi, s, side, k) {
     g.strokeStyle = css(P.deep); g.lineWidth = 3 * k; g.lineCap = 'round';
     g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(w * 0.5, h * 0.25, w * 0.1, h * 0.55, w * 0.45, h * 0.8); g.stroke();
     for (let i = 0; i < 5; i++) { const t = 0.2 + i * 0.14, x = w * (0.25 + 0.2 * Math.sin(t * 7)), y = h * t; g.beginPath(); g.ellipse(x, y, 9 * k, 4 * k, 0.6 + i, 0, TAU); g.fill(); }
+  } else if (id === 'bamboo' || id === 'fern') {
+    // P8-MAPS: a spray of slim leaves (bamboo) or a fern frond reaching in from the edge
+    g.strokeStyle = css(P.deep); g.lineCap = 'round';
+    g.lineWidth = (id === 'bamboo' ? 4 : 3) * k;
+    g.beginPath(); g.moveTo(0, h * 0.58); g.quadraticCurveTo(w * 0.45, h * 0.5, w * 0.92, h * 0.36); g.stroke();
+    const n = id === 'bamboo' ? 6 : 11;
+    for (let i = 0; i < n; i++) {
+      const t = 0.15 + (i / n) * 0.8, x = w * 0.92 * t, y = h * (0.58 - 0.22 * t * t);
+      const L = (id === 'bamboo' ? 34 - i * 2 : 22 - i) * k, sgn = i % 2 ? 1 : -1;
+      g.save(); g.translate(x, y); g.rotate(sgn * (id === 'bamboo' ? 0.7 : 1.2) + (id === 'bamboo' ? 0.5 : 0.2));
+      g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(L * 0.5, -L * 0.14, L, 0); g.quadraticCurveTo(L * 0.5, L * 0.14, 0, 0); g.fill(); g.restore();
+    }
+  } else if (id === 'bean') {
+    // P8-MAPS: a curling beanstalk tendril with heart-shaped leaves
+    g.strokeStyle = css(P.deep); g.lineCap = 'round'; g.lineWidth = 6 * k;
+    g.beginPath(); g.moveTo(0, h * 0.7); g.bezierCurveTo(w * 0.5, h * 0.62, w * 0.2, h * 0.4, w * 0.6, h * 0.32); g.stroke();
+    g.lineWidth = 2.2 * k; g.beginPath(); g.arc(w * 0.66, h * 0.27, 9 * k, 3.6, 3.6 + 4.8); g.stroke();
+    for (const [u, v, r, a] of [[0.25, 0.58, 20, 0.4], [0.42, 0.44, 16, -0.6], [0.12, 0.66, 14, 1.2]]) {
+      g.save(); g.translate(w * u, h * v); g.rotate(a); const R = r * k;
+      g.beginPath(); g.moveTo(0, R); g.bezierCurveTo(-R * 1.4, R * 0.1, -R * 0.7, -R * 1.1, 0, -R * 0.45); g.bezierCurveTo(R * 0.7, -R * 1.1, R * 1.4, R * 0.1, 0, R); g.fill(); g.restore();
+    }
   } else {
     // a scalloped leaf clump on a short branch
     g.strokeStyle = css(P.deep); g.lineWidth = 7 * k; g.lineCap = 'round';
@@ -193,12 +250,26 @@ const MAXP = 26;
 for (let i = 0; i < MAXP; i++) POOL.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, s: 1, r: 0, vr: 0, ph: 0, kind: '', a: 0 });
 // which particles each zone spawns, and how many at once
 const AMB = { meadow: [['glow', 10]], oak: [['leaf', 7], ['bird', 3]], snow: [['snow', 18]], storm: [['leaf', 9]], sky: [['glow', 12]] };
+const ambFor = (zi) => (mapDef && mapDef.amb ? mapDef.amb[zi] || [] : AMB[ZONES[zi].id]);
+// P8-MAPS: code-drawn particle kinds (no sprite needed), coloured by the map's pcol
+const CODE = new Set(['blade', 'petal', 'crumb', 'mote', 'morpho', 'feather', 'drop']);
 let lastT = 0, birdT = 0;
 function spawn(kind, cw, ch, fresh, P) {
   const p = POOL.find((q) => !q.on);
   if (!p) return;
   p.on = true; p.kind = kind; p.ph = Math.random() * TAU; p.r = Math.random() * TAU; p.a = 0;
   const edge = () => (Math.random() < 0.5 ? Math.random() * cw * 0.22 : cw - Math.random() * cw * 0.22);
+  if (CODE.has(kind)) {
+    const col = (mapDef && mapDef.pcol && mapDef.pcol[kind]) || '#fff4dc';
+    p.col = Array.isArray(col) ? col[(Math.random() * col.length) | 0] : col;
+  }
+  if (kind === 'drop') { p.s = 0.6 + Math.random() * 0.6; p.x = Math.random() * cw; p.y = fresh ? Math.random() * ch : -20; p.vx = -18; p.vy = 380 + Math.random() * 160; p.vr = 0; p.r = 0; return; }
+  if (kind === 'mote') { p.s = 0.6 + Math.random() * 1.2; p.x = Math.random() < 0.7 ? edge() : Math.random() * cw; p.y = Math.random() * ch; p.vx = (Math.random() - 0.5) * 6; p.vy = -3 - Math.random() * 5; p.vr = 0; return; }
+  if (kind === 'morpho') { const dir = Math.random() < 0.5 ? 1 : -1; p.s = 0.8 + Math.random() * 0.4; p.x = dir > 0 ? -20 : cw + 20; p.y = ch * (0.15 + Math.random() * 0.7); p.vx = dir * (22 + Math.random() * 16); p.vy = -4 + Math.random() * 8; p.vr = 0; return; }
+  if (kind === 'blade' || kind === 'petal' || kind === 'crumb' || kind === 'feather') {
+    p.s = kind === 'crumb' ? 0.7 + Math.random() * 0.6 : 0.8 + Math.random() * 0.5; p.x = edge(); p.y = fresh ? Math.random() * ch : -16;
+    p.vx = (Math.random() - 0.4) * (kind === 'feather' ? 14 : 24); p.vy = kind === 'feather' ? 14 + Math.random() * 10 : kind === 'crumb' ? 38 + Math.random() * 20 : 24 + Math.random() * 20; p.vr = (Math.random() - 0.5) * (kind === 'crumb' ? 1 : 2.6); return;
+  }
   if (kind === 'snow') { p.s = 0.12 + Math.random() * 0.16; p.x = Math.random() * cw; p.y = fresh ? Math.random() * ch : -10; p.vx = -6 + Math.random() * 12; p.vy = 18 + p.s * 120; p.vr = (Math.random() - 0.5) * 0.8; }
   else if (kind === 'leaf') { p.s = 0.22 + Math.random() * 0.12; p.x = edge(); p.y = fresh ? Math.random() * ch : -16; p.vx = (Math.random() - 0.3) * 30; p.vy = 26 + Math.random() * 22; p.vr = (Math.random() - 0.5) * 3; }
   else if (kind === 'glow') { p.s = 0.16 + Math.random() * 0.14; p.x = edge(); p.y = Math.random() * ch; p.vx = 0; p.vy = -4 - Math.random() * 6; p.vr = 0; }
@@ -206,7 +277,7 @@ function spawn(kind, cw, ch, fresh, P) {
 }
 function stepParticles(dt, cw, ch, z, calm) {
   const want = {};
-  for (const [zi, wt] of [[z.i, 1 - z.w], [z.j, z.w]]) if (wt > 0.3) for (const [k, n] of AMB[ZONES[zi].id]) want[k] = Math.max(want[k] || 0, n);
+  for (const [zi, wt] of [[z.i, 1 - z.w], [z.j, z.w]]) if (wt > 0.3) for (const [k, n] of ambFor(zi)) want[k] = Math.max(want[k] || 0, n);
   const have = {};
   for (const p of POOL) if (p.on) have[p.kind] = (have[p.kind] || 0) + 1;
   for (const k in want) {
@@ -217,9 +288,12 @@ function stepParticles(dt, cw, ch, z, calm) {
     if (!p.on) continue;
     if (!want[p.kind]) p.a -= dt * 1.5; else p.a = Math.min(1, p.a + dt * 1.2);
     if (calm) continue;
-    p.x += (p.vx + (p.kind === 'leaf' || p.kind === 'snow' ? Math.sin(p.ph + lastT * 1.3) * 14 : 0)) * dt;
+    const sway = p.kind === 'leaf' || p.kind === 'snow' || p.kind === 'blade' || p.kind === 'petal' || p.kind === 'feather';
+    p.x += (p.vx + (sway ? Math.sin(p.ph + lastT * 1.3) * 14 : 0) + (p.kind === 'morpho' ? Math.sin(lastT * 1.7 + p.ph) * 18 : 0)) * dt;
+    if (p.kind === 'mote') p.x += Math.sin(lastT * 0.6 + p.ph) * 5 * dt;
     p.y += p.vy * dt + (p.kind === 'bird' ? Math.sin(lastT * 2 + p.ph) * 0.3 : 0);
     if (p.kind === 'glow') p.x += Math.sin(lastT * 0.7 + p.ph) * 6 * dt;
+    if (p.kind === 'morpho') p.y += Math.sin(lastT * 2.3 + p.ph) * 12 * dt;
     p.r += p.vr * dt;
     if (p.y > ch + 30 || p.y < -40 || p.x < -60 || p.x > cw + 60 || p.a < 0) p.on = false;
   }
@@ -227,6 +301,7 @@ function stepParticles(dt, cw, ch, z, calm) {
 function drawParticles(ctx, sheet, t, calm) {
   for (const p of POOL) {
     if (!p.on || p.a <= 0) continue;
+    if (CODE.has(p.kind)) { drawCode(ctx, p, t, calm); continue; }
     const sz = 64 * p.s;
     let sx = 0;
     if (p.kind === 'bird') sx = FX.bird[calm ? 1 : Math.floor((t * 8 + p.ph) % 3)];
@@ -244,6 +319,33 @@ function drawParticles(ctx, sheet, t, calm) {
     ctx.globalCompositeOperation = 'source-over';
   }
   ctx.globalAlpha = 1;
+}
+
+function drawCode(ctx, p, t, calm) {
+  ctx.fillStyle = p.col || '#fff4dc';
+  const k = p.kind, s = p.s;
+  if (k === 'drop') { ctx.globalAlpha = p.a * 0.32; ctx.fillRect(p.x, p.y, 1.2, 12 * s); ctx.globalAlpha = 1; return; }
+  if (k === 'mote') {
+    ctx.globalAlpha = p.a * (0.35 + 0.25 * Math.sin((t || 0) * 1.4 + p.ph * 3)); ctx.beginPath(); ctx.arc(p.x, p.y, 1.4 * s, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; return;
+  }
+  ctx.save(); ctx.translate(p.x, p.y); ctx.globalAlpha = p.a * 0.85;
+  if (k === 'morpho') {
+    const flap = calm ? 0.7 : 0.25 + 0.75 * Math.abs(Math.sin((t || 0) * 9 + p.ph));
+    ctx.scale(s, s);
+    for (const sg of [-1, 1]) { ctx.save(); ctx.scale(sg * flap, 1); ctx.beginPath(); ctx.ellipse(4.5, -2.5, 5, 4, -0.5, 0, TAU); ctx.ellipse(3.5, 3, 3.4, 2.8, 0.4, 0, TAU); ctx.fill(); ctx.restore(); }
+    ctx.fillStyle = 'rgba(10,20,30,0.85)'; ctx.fillRect(-0.6, -4, 1.2, 8);
+  } else if (k === 'crumb') {
+    ctx.rotate(p.r); ctx.beginPath(); ctx.moveTo(-2.4 * s, -1.6 * s); ctx.lineTo(2.6 * s, -1.2 * s); ctx.lineTo(1.6 * s, 2 * s); ctx.lineTo(-2 * s, 1.6 * s); ctx.closePath(); ctx.fill();
+  } else if (k === 'feather') {
+    ctx.rotate(p.r * 0.4 + 0.6); ctx.beginPath(); ctx.ellipse(0, 0, 9 * s, 2.6 * s, 0, 0, TAU); ctx.fill();
+    ctx.globalAlpha *= 0.5; ctx.fillStyle = 'rgba(120,80,20,0.8)'; ctx.fillRect(-9 * s, -0.4, 18 * s, 0.8);
+  } else {
+    // blade (slim leaf) or petal
+    ctx.rotate(p.r);
+    const L = (k === 'blade' ? 10 : 5) * s, W = (k === 'blade' ? 1.6 : 3.2) * s;
+    ctx.beginPath(); ctx.moveTo(-L, 0); ctx.quadraticCurveTo(0, -W * 1.6, L, 0); ctx.quadraticCurveTo(0, W * 1.6, -L, 0); ctx.fill();
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
 }
 
 // ------------------------------------------------------------------ main draw
@@ -273,17 +375,18 @@ function draw(ctx, cw, ch, o) {
   const g0 = ctx.createLinearGradient(0, 0, 0, ch);
   g0.addColorStop(0, css(C.top)); g0.addColorStop(1, css(C.bot));
   ctx.fillStyle = g0; ctx.fillRect(0, 0, cw, ch);
-  for (const [zi, a] of pairs) { const s = img('sky', zi); if (s) skyCover(ctx, s, cw, ch, a); }
+  for (const [zi, a] of pairs) { const s = img('sky', zi); if (s) skyCover(ctx, s, cw, ch, a * (mapDef && mapDef.plates ? SKY_A[zi] : 1)); }
   const base = cw / 540;
   const night = pairs.reduce((s, [zi, a]) => s + (ZONES[zi].id === 'sky' ? a : 0), 0);
+  const moonClip = (zi) => ZONES[zi].id === 'sky' && !(mapDef && mapDef.plates); // P8-MAPS: only the classic stars plate has the moon
   // 2. L1: the far plate again, small and hazy, nearly fog (0.08)
   if (!DBG.far) {
     for (const [zi, a] of pairs) {
       const f = img('far', zi); if (!f) continue;
       const k = base * 0.72, dw = 540 * k;
       ctx.save();
-      if (ZONES[zi].id === 'sky') { const mp = moonPos(cw, ch); ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.arc(mp.x, mp.y, mp.r * 1.25, 0, TAU); ctx.clip('evenodd'); }
-      tileY(ctx, f, 0, 540, (cw - dw) / 2 - cw * 0.18, dw, k, cam * 0.08 + 140, ch, dens(a) * ZONES[zi].farA * 0.42);
+      if (moonClip(zi)) { const mp = moonPos(cw, ch); ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.arc(mp.x, mp.y, mp.r * 1.25, 0, TAU); ctx.clip('evenodd'); }
+      tileY(ctx, f, 0, 540, (cw - dw) / 2 - cw * 0.18, dw, k, cam * 0.08 + 140, ch, dens(a) * farA(zi) * 0.42);
       ctx.restore();
     }
   }
@@ -304,8 +407,8 @@ function draw(ctx, cw, ch, o) {
       const f = img('far', zi); if (!f) continue;
       const k = base * 1.08, dw = 540 * k;
       ctx.save();
-      if (ZONES[zi].id === 'sky') { const mp = moonPos(cw, ch); ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.arc(mp.x, mp.y, mp.r * 1.25, 0, TAU); ctx.clip('evenodd'); }
-      tileY(ctx, f, 0, 540, (cw - dw) / 2, dw, k, cam * 0.25, ch, dens(a) * ZONES[zi].farA);
+      if (moonClip(zi)) { const mp = moonPos(cw, ch); ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.arc(mp.x, mp.y, mp.r * 1.25, 0, TAU); ctx.clip('evenodd'); }
+      tileY(ctx, f, 0, 540, (cw - dw) / 2, dw, k, cam * 0.25, ch, dens(a) * farA(zi));
       ctx.restore();
     }
   }
@@ -395,7 +498,7 @@ function drawPost(ctx, cw, ch, m, o = {}) {
   for (const [zi, a] of [[z.i, 1 - z.w], [z.j, z.w]]) {
     if (a < 0.01) continue;
     // plain alpha wash: soft-light/multiply full-screen blends are too costly on phone GPUs
-    const [, col, al] = GRADE[zi];
+    const [, col, al] = mapDef && mapDef.plates ? [0, css(resolve()[zi].ray), [0.06, 0.08, 0.1, 0.08, 0.06][zi]] : GRADE[zi];
     ctx.globalAlpha = al * a * 0.55; ctx.fillStyle = col; ctx.fillRect(0, 0, cw, ch);
   }
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
@@ -450,7 +553,21 @@ function drawRecordFlag(ctx, x, y, s, label, t) {
 export const backdrop = {
   draw, drawPost, drawZoneBar, DBG, useSprites: true, drawRecordFlag, zoneAt, ZONES, WORLD_CRITICAL,
   /** Palette override for seasons/skins: { tint, amount, zones: { id: {key: '#hex'} } }; null resets. */
-  setTheme(o) { theme = o || null; pal = null; themeRev++; tinted.clear(); clumps.clear(); fogCache.key = ''; },
+  setTheme(o) { theme = o || null; pal = null; themeRev++; tinted.clear(); clumps.clear(); washed.clear(); fogCache.key = ''; },
   get theme() { return theme; },
+  /** P8-MAPS: switch the world to a map from src/maps.js (null / 'forkwood' = classic). */
+  setMap(m) {
+    const next = m && m.plates ? m : null;
+    if ((next && next.id) === (mapDef && mapDef.id)) return;
+    mapDef = next;
+    mapPal = next && next.day ? zonePal(next) : null;
+    ZONES.forEach((z, i) => { z.name = (next && next.zones && next.zones[i]) || ZONE_NAMES[i]; });
+    for (const p of POOL) p.on = false; lastT = 0;
+    pal = null; themeRev++; tinted.clear(); clumps.clear(); washed.clear(); fogCache.key = '';
+    if (next) ensureZone(0);
+  },
+  get map() { return mapDef; },
+  /** P8-MAPS: start fetching a map's plates (carousel preview). */
+  preloadMap(m) { if (m && m.plates) for (const l of ['sky', 'far', 'side']) loadArt(`m-${l}-${m.plates}`); },
 };
 export default backdrop;

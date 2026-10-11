@@ -133,8 +133,9 @@ try {
   await p.screenshot({ path: OUT + 'seasons-title-desktop.png' });
   // free play: modifiers on
   await p.evaluate(() => window.forkwood.startMode('classic'));
-  const free = await p.evaluate(() => ({ R: window.forkwood.sim.R, run: window.forkwood.seasons.run.map((s) => s.id) }));
-  ok(free.R.fireflies === 1 && free.R.slip === 0.45 && free.R.envelopes === 1 && Math.abs(free.R.score - 1.25) < 1e-9, 'free play gets modifiers: ' + JSON.stringify({ s: free.R.score, f: free.R.fireflies }));
+  const free = await p.evaluate(() => ({ R: window.forkwood.sim.R, run: window.forkwood.seasons.run.map((s) => s.id), gm: (window.forkwood.sim.econ && window.forkwood.sim.econ.mult) || 1, ink: !!(window.forkwood.sim.econ && (window.forkwood.sim.econ.boosts || []).includes('ink')) }));
+  // v1.0: the P8 grower multiplier (and a score booster) also scale R.score in free play
+  ok(free.R.fireflies === 1 && free.R.slip === 0.45 && free.R.envelopes === 1 && Math.abs(free.R.score / (free.gm > 1 ? free.gm : 1) / (free.ink ? 1.5 : 1) - 1.25) < 1e-9, 'free play gets modifiers: ' + JSON.stringify({ s: free.R.score, grower: free.gm, ink: free.ink, f: free.R.fireflies }));
   await p.evaluate(() => window.forkwood.advance(20, 'bot'));
   await p.screenshot({ path: OUT + 'seasons-play-desktop.png' });
   // daily: same for everyone

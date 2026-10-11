@@ -4,6 +4,8 @@
 // reward is earned by playing, and the league says plainly that its rivals are
 // simulated. Runs the same in the browser and in node tests.
 
+import { gainGems, GEM } from './economy.js'; // P8-ECON: gems for streaks, season tiers, promotions
+
 // ------------------------------------------------------------------ dates (UTC)
 export const dayKey = (d = new Date()) => d.toISOString().slice(0, 10);
 export const dayDiff = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 864e5);
@@ -107,7 +109,8 @@ export function resolveLeague(S, now = new Date()) {
     if (to > from && S.streak.freezes < 2) { S.streak.freezes++; freeze = true; }
     L.tier = to;
     L.best = Math.max(L.best, to);
-    res = { week: L.week, from, to, rank, xp: L.xp, acorns, freeze };
+    const gems = to > from ? gainGems(S, GEM.promote, 'league promotion') : 0; // P8-ECON
+    res = { week: L.week, from, to, rank, xp: L.xp, acorns, freeze, gems };
     L.history.unshift({ w: L.week, t: from, r: rank }); L.history.length = Math.min(L.history.length, 8);
   }
   L.week = cur; L.xp = 0;
@@ -152,6 +155,7 @@ export function streakMilestones(S) {
       S.ret.streakMs.push(m.d);
       S.acorns += m.acorns; S.earned += m.acorns;
       if (m.item) grantItem(S, m.item);
+      m.gems = gainGems(S, GEM.streak[m.d] || 0, `${m.d}-day streak`); // P8-ECON
       got.push(m);
     }
   }
@@ -298,7 +302,8 @@ export function afterRun(S, sum, out, claimGift, now = new Date()) {
     if (rw.item) res.items.push(rw.item);
     if (rw.freeze && S.streak.freezes < 2) S.streak.freezes++;
     S.acorns += acorns; S.earned += acorns;
-    res.tiers.push({ tier: t, acorns, item: rw.item || null, freeze: !!rw.freeze });
+    const gems = gainGems(S, GEM.season[t] || 0, `season tier ${t}`); // P8-ECON
+    res.tiers.push({ tier: t, acorns, item: rw.item || null, freeze: !!rw.freeze, gems });
   }
   Se.tier = after; Se.best = Math.max(Se.best || 0, after);
   S.ret.league.xp += rings.total;

@@ -1,6 +1,6 @@
 {
   "name": "forkwood",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Forkwood: fork your branch, merge for glory, grow from twig to treetop.",
@@ -14,7 +14,7 @@
     "extra": "node tests/extra.mjs",
     "meta": "node tests/meta.mjs",
     "meta-ui": "node tests/meta-ui.mjs",
-    "test": "node tests/fairness.mjs && node tests/chunks.mjs && node tests/traps.mjs && node tests/meta.mjs && node tests/retention.mjs && node tests/quest.mjs && node tests/stakes.mjs && node tests/stages.mjs && node tests/tutorial.mjs && node tests/smoke.mjs && node tests/extra.mjs && node tests/meta-ui.mjs && node tests/quest-ui.mjs && node tests/toasts.mjs && node tests/intro.mjs && node tests/seasons.mjs && node tests/race.mjs",
+    "test": "node tests/fairness.mjs && node tests/chunks.mjs && node tests/traps.mjs && node tests/trap-audit.mjs && node tests/economy.mjs && node tests/meta.mjs && node tests/retention.mjs && node tests/quest.mjs && node tests/stakes.mjs && node tests/stages.mjs && node tests/tutorial.mjs && node tests/smoke.mjs && node tests/extra.mjs && node tests/meta-ui.mjs && node tests/quest-ui.mjs && node tests/toasts.mjs && node tests/intro.mjs && node tests/seasons.mjs && node tests/race.mjs && node tests/econ-ui.mjs",
     "chunks": "node tests/chunks.mjs",
     "toasts": "node tests/toasts.mjs",
     "quest": "node tests/quest.mjs",
@@ -24,7 +24,10 @@
     "intro": "node tests/intro.mjs",
     "traps": "node tests/traps.mjs",
     "seasons": "node tests/seasons.mjs",
-    "race": "node tests/race.mjs"
+    "race": "node tests/race.mjs",
+    "economy": "node tests/economy.mjs",
+    "econ-ui": "node tests/econ-ui.mjs",
+    "trap-audit": "node tests/trap-audit.mjs"
   },
   "license": "MIT"
 }

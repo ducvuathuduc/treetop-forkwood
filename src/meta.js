@@ -8,6 +8,7 @@ import { CHARMS } from './sim.js';
 import { mulberry32 } from './rng.js';
 import { freshQuest, repairQuest, PRIZES } from './quest.js';
 import { freshRet, ensure as ensureRet, streakMilestones, itemUnlocked, unlockLabel } from './retention.js';
+import { freshEcon, ensureEcon, afterRunEcon } from './economy.js'; // P8-ECON
 
 export const SAVE_KEY = 'forkwood.save.v2';
 export const SAVE_VERSION = 2;
@@ -171,6 +172,7 @@ export function freshSave(today = dayKey()) {
     calm: null,
     quest: freshQuest(),
     ret: freshRet(),
+    econ: freshEcon(), // P8-ECON
   };
 }
 
@@ -223,6 +225,7 @@ export function repair(S, today = dayKey()) {
   else if (RETIRED[lvl]) S.goals = S.goals.map((g) => (RETIRED[lvl][g.k] && !LEVELS[lvl - 1].some((t) => t.k === g.k && t.n === g.n && t.run === g.run) ? (g.done ? { ...RETIRED[lvl][g.k], p: RETIRED[lvl][g.k].n, done: true } : { ...RETIRED[lvl][g.k], p: 0, done: false }) : g));
   repairQuest(S);
   ensureRet(S);
+  ensureEcon(S); // P8-ECON
   unlockEarned(S);
   rollover(S, new Date(today + 'T12:00:00Z'));
   return S;
@@ -373,6 +376,7 @@ export function finishRun(S, sum, ctx = {}) {
   for (const [list, sink] of [[S.daily.list, out.daily], [S.weekly.list, out.weekly]]) {
     for (const c of list) if (advance(c, sum, ctx) && !c.claimed) { c.claimed = true; gain(S, c.reward); sink.push({ text: describe(c), reward: c.reward }); }
   }
+  out.econ = afterRunEcon(S, sum, { today: dayKey(now), out }); // P8-ECON: gems, word hunt
   out.achs = checkAchievements(S, sum, ctx);
   out.unlocked = unlockEarned(S);
   out.total = S.acorns;

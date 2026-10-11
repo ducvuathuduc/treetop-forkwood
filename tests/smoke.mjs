@@ -67,7 +67,7 @@ await run('desktop-human', { viewport: { width: 1366, height: 768 } }, async (pa
   // real mouse input, no bot: click to start, steer, click to fork + merge, pause/resume
   await page.goto(base + '?seed=99');
   await sleep(600);
-  await page.mouse.click(683, 600);
+  await page.mouse.click(683, 420); // v1.0: clear of the Map chip under Grow
   await sleep(300);
   if ((await page.evaluate(() => window.forkwood.mode)) !== 'play') errors.push('[desktop-human] click did not start');
   for (let i = 0; i < 10; i++) { await page.mouse.move(600 + i * 15, 500); await sleep(40); }

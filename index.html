@@ -6,7 +6,7 @@
   <title>Forkwood: grow from twig to treetop</title>
   <meta name="description" content="A one-touch browser game. Grow a living branch from twig to treetop: fork it, merge it, don't get reverted." />
   <meta name="theme-color" content="#0f1a1c" />
-  <meta name="version" content="0.9.0" />
+  <meta name="version" content="1.0.0" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Forkwood: grow from twig to treetop" />
   <meta property="og:description" content="A one-touch browser game. Fork your branch, merge for combos, grow a living tree from twig to treetop." />
@@ -40,6 +40,7 @@
 
   <div id="metabar" class="metabar" hidden>
     <button id="btn-wallet" class="chip" aria-label="Acorns: open the shop"><span id="acorn-ico" class="ci"></span><span id="acorn-n" class="num">0</span></button>
+    <button id="btn-gems" class="chip gems" aria-label="Dew gems: how to earn them"><span id="gem-ico" class="ci"></span><span id="gem-n" class="num">0</span></button><!-- P8-ECON -->
     <button id="btn-lvl" class="chip" aria-label="Level and goals"><span class="lv">Lv <b id="lvl-n">1</b></span><span id="lvl-pips" class="pips"></span></button>
     <button id="btn-grove" class="chip grove" aria-label="Grove: streak, season, league, duels and profile"><span id="av-chip" class="avc"></span><span class="sk"><span class="fl"></span><b id="streak-n">0</b></span></button>
     <button id="btn-gift" class="chip gift" hidden><span id="gift-ico" class="ci"></span><span>Daily gift</span></button>
@@ -74,7 +75,7 @@
           <button id="btn-calm" class="switch" aria-pressed="false"><span class="knob" aria-hidden="true"></span><span class="lbl">Calm mode: off</span></button>
           <span class="sep kb" aria-hidden="true"></span>
           <p class="controls"><kbd>&larr;</kbd><kbd>&rarr;</kbd> steer <kbd>space</kbd> fork <kbd>P</kbd> pause</p>
-          <span id="app-version" class="app-version" aria-label="Version 0.9.0">v0.9.0</span>
+          <span id="app-version" class="app-version" aria-label="Version 1.0.0">v1.0.0</span>
         </div>
       </div>
     </div>
@@ -104,6 +105,17 @@
     </div>
   </section>
 
+  <!-- P8-ECON: second chance -->
+  <section id="revive" class="overlay revive" aria-label="Second chance" aria-hidden="true">
+    <div class="panel glass rv-panel">
+      <p class="kick">Out of sap</p>
+      <h2>Second chance?</h2>
+      <p class="muted"><span id="rv-have"></span> · <span id="rv-next"></span></p>
+      <div class="row"><button id="rv-yes" class="btn primary">Keep growing <b id="rv-cost" class="price gem"></b></button><button id="rv-no" class="btn secondary">No thanks</button></div>
+      <span class="rv-bar"><i></i></span>
+    </div>
+  </section>
+  <!-- /P8-ECON -->
   <section id="questmap" class="overlay" aria-label="Quest map and modes">
     <div class="panel glass meta-panel quest-panel">
       <header class="meta-head">

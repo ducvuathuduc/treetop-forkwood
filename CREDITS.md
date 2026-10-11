@@ -6,7 +6,18 @@ The tree, leaves, blossoms, skins, effects and interface icons are drawn in code
 
 ## Illustrations (v0.7, made for Forkwood)
 
-`assets/art/` holds images generated for Forkwood with an AI image model during the round, from our own prompts (woodblock-print style, palette matched to the game), then cropped, keyed and compressed to WebP by us: five stage backdrops (`bg-*.webp`), the side foliage, the meadow ground strip, the thorn vine, beetle and sun sprites, five story plates (`story*.webp`) and the eight critter portraits (`critters.webp`). They depict no existing characters, logos or brands, and are released with the game under its MIT licence.
+`assets/art/` holds images generated for Forkwood with an AI image model during the round, from our own prompts (woodblock-print style, palette matched to the game), then cropped, keyed and compressed to WebP by us: five stage backdrops (`bg-*.webp`), the side foliage, the meadow ground strip, the thorn vine, beetle and sun sprites and the eight critter portraits (`critters.webp`). They depict no existing characters, logos or brands, and are released with the game under its MIT licence.
+
+## Manga intro (v1.0, made for Forkwood)
+
+`assets/story/` holds the eight manga panels of the opening story (`tree`, `sky`, `dark`, `eyes`, `crow`, `hero`, `reach`, `resolve`). They were made for Forkwood with an AI image model from our own prompts (manga style), then cropped and compressed to WebP by us (about 245 KB together, loaded only when the story plays). The captions, speech bubbles, speed and focus lines, sound words and panel frames are drawn in code (`src/intro.js`, `style.css`). They depict no existing characters, logos or brands, and are released with the game under its MIT licence.
+
+## Trap effects (v1.0, made for Forkwood)
+
+`assets/art/fx-crow.webp` (25 KB atlas: six flight frames and five perched poses of the crow trap) was generated for Forkwood with an AI image model from our own prompt (flat dark silhouette with a coral rim, art-bible direction A), then keyed, cut, aligned and packed to WebP by us. It is loaded only once a crow trap spawns. Every other trap, pickup and boost effect is drawn in code (`src/render-traps-fx.js`). Released with the game under its MIT licence.
+## Maps (v1.0, made for Forkwood)
+
+The map plates `assets/art/m-{sky,far,side}-<map>.webp` (Phong Nha, Arashiyama, Redwoods, Black Forest, Amazon, Beanstalk) were generated the same way for Forkwood with an AI image model from our own prompts in the layered-silhouette style, then keyed, looped seamlessly, squashed to the outer edges and compressed to WebP by us. The map stamps, postmarks and particles are drawn in code (`src/stamps.js`, `src/backdrop.js`). The places are real forests and the tales (Hansel and Gretel, Jack and the Beanstalk) are public-domain folk tales; no third-party art, logos or brands are used, and no Kenney/OpenGameArt asset was needed for this pass. Released with the game under its MIT licence.
 
 ## Fonts (SIL Open Font License 1.1)
 

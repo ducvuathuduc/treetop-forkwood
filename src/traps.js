@@ -22,7 +22,7 @@ export const TRAPS = {
   lure:  { name: 'GOLDEN LURE',   hint: 'too-easy sunlight leads into a thorn pocket' },
   twins: { name: 'TWIN BEETLES',  hint: 'fork around them · or squeeze past one side' },
   tide:  { name: 'RISING THORNS', hint: 'keep climbing · they rise from below' },
-  crow:  { name: 'CROW',          hint: 'merge before it swoops or it steals your staged sunlight' },
+  crow:  { name: 'CROW',          hint: 'it marks your lane · swerve out (or fork round it) before it dives' }, // P8-ECON: the crow always dives now
 };
 
 // Timings (seconds). Fairness tests read these.
@@ -30,8 +30,15 @@ export const TWIG_SNAP = 0.6;
 export const PULSE = { out: 0.4, warn: 0.2, minPeriod: 4.0 };   // fractions of the period
 export const DOOR = { open: 0.45, warn: 0.25, period: 3.4 };      // warn 0.85 s
 export const GUST = { calm: 1.2, warn: 1.0, gust: 1.6 };
-export const CROW_WARN = 1.2;
+export const CROW_WARN = 1.1;
+// P8-ECON: the crow marks a dive lane centred on your tip; it tracks you for
+// CROW_TRACK s, then the lane locks and it dives when the warning runs out.
+export const CROW_TRACK = 0.25, CROW_LANE = 46, CROW_DMG = 16, CROW_SCORE = 0.05;
+// P8-ECON: every trap and hazard emits {type:'trapWarn'} once, ~WARN_LEAD s before
+// the tip can reach it, and {type:'trapHit'} when it lands (see TRAP-EVENTS.md).
+export const WARN_LEAD = 1.2;
 export const TIDE_K = 0.78;       // the tide rises at this fraction of your speed
+export const SAP_DRAIN = 26; // P8-ECON: 22 -> 26 sap per second inside a sap-drain zone
 // Mist (trap 8) was dropped: at 360x640 a clear radius that still gives 0.8 s of
 // sight at top speed (~240 world units) clears almost the whole 560-wide field,
 // so the mist either does nothing or hides hazards unfairly.
@@ -240,6 +247,40 @@ export const TRAP_CHUNKS = [
     A.addTwinTrail(s, y - 40, tx, 3);
     return 760;
   } },
+  // ---- P8-ECON: harder later-zone combos (Cloudline and up)
+  { id: 'crowpulse', trap: 'crow+pulse', needs: ['crow', 'pulse'], tier: 3, minM: 520, w: 1, gen(s, y, d, A) {
+    // the crow dives while you are lining up for a breathing thorn row
+    A.addTrail(s, y - 20, { n: 3, cx: W / 2, amp: 40 });
+    addCrow(s, y - 140, rnd(s) < 0.5 ? -1 : 1);
+    addPulse(s, y - 520, 4.4 - 0.3 * Math.min(1, d));
+    A.addTrail(s, y - 600, { n: 3 });
+    s.lastGate = null; return 760;
+  } },
+  { id: 'doubledoor', trap: 'door+door', needs: ['door'], tier: 3, minM: 560, w: 1, gen(s, y, d, A) {
+    // two trapdoors out of phase, squeeze gaps on opposite sides
+    const dc = clamp(reach(A, s, y - 200, 200 + rnd(s) * (W - 400)), 200, W - 200), sq1 = dc < W / 2 ? W - 70 : 70;
+    addDoor(s, y - 200, dc, 160, sq1, 2 * TIP_R + 66);
+    const dc2 = clamp(dc + (rnd(s) - 0.5) * 160, 200, W - 200), sq2 = W - sq1;
+    addDoor(s, y - 470, dc2, 160, sq2, 2 * TIP_R + 66);
+    const t2 = s.traps[s.traps.length - 1]; t2.clock = (s.traps[s.traps.length - 2].clock + DOOR.period * 0.5) % DOOR.period;
+    for (let i = 0; i < 2; i++) s.motes.push({ x: dc, y: y - 280 - i * 60, kind: 'sun', r: 11, ph: rnd(s) * 6.28, taken: false });
+    s.lastGate = null; return 640;
+  } },
+  { id: 'gusttwig', trap: 'gust+twig', needs: ['gust', 'twig'], tier: 3, minM: 600, w: 1, gen(s, y, d, A) {
+    // lean into the wind... onto cracked twigs: keep moving across them
+    const dir = rnd(s) < 0.5 ? -1 : 1;
+    addGust(s, y - 40, 520, dir, 110 + 25 * Math.min(1, d));
+    addTwig(s, dir > 0 ? 150 : W - 150, y - 160, 110, 260);
+    A.addTrail(s, y - 60, { n: 5, cx: W / 2, amp: 60 });
+    s.lastGate = null; return 640;
+  } },
+  { id: 'tidetwins', trap: 'tide+twins', needs: ['tide', 'twins'], tier: 3, minM: 650, w: 1, gen(s, y, d, A) {
+    // thorns rising behind you while twin beetles guard the way up
+    addTide(s, y - 40, 700);
+    const c = addTwins(s, A, y - 360, 170 + rnd(s) * (W - 340));
+    A.addTwinTrail(s, y - 80, c, 3);
+    return 760;
+  } },
 ];
 /** Combos fall back to the intro of a trap the player has not met yet. */
 export function trapChunkFor(s, c) {
@@ -266,10 +307,12 @@ export function trapsUpdate(s, dt, slow, A) {
   const tdt = dt * slow;
   for (const tr of s.traps) {
     if (tr.clock != null) tr.clock += tdt;
+    // P8-ECON: a gust about to blow on the band you are in (or about to enter)
+    if (tr.kind === 'gust') { const g = gustState(tr), near = s.cy < tr.y0 + 260 && s.cy > tr.y1; if (g.st === 'warn' && near && !tr.warned) { tr.warned = true; A.emit(s, 'trapWarn', { trap: 'gust', x: s.cx, y: s.cy, t: g.left, dir: tr.dir }); } if (g.st !== 'warn') tr.warned = false; }
     if (tr.kind === 'label' && !tr.shown && s.cy < tr.y + 760) {
       tr.shown = true; A.emit(s, 'trapintro', { id: tr.id, name: TRAPS[tr.id].name, hint: TRAPS[tr.id].hint, y: tr.y });
     } else if (tr.kind === 'tide') {
-      if (!tr.done && tr.top == null && s.cy < tr.y0 - 30) { tr.top = s.cy + 320; tr.v = TIDE_K * Math.max(150, s.speed); A.emit(s, 'tide', {}); }
+      if (!tr.done && tr.top == null && s.cy < tr.y0 - 30) { tr.top = s.cy + 320; tr.v = TIDE_K * Math.max(150, s.speed); A.emit(s, 'tide', {}); A.emit(s, 'trapWarn', { trap: 'tide', x: s.cx, y: tr.top, t: (tr.top - s.cy) / Math.max(1, Math.max(150, s.speed) - tr.v) }); }
       if (tr.top != null) {
         if (s.cy < tr.y1) tr.done = true;
         tr.top += tr.done ? 420 * dt : -tr.v * tdt;
@@ -277,24 +320,43 @@ export function trapsUpdate(s, dt, slow, A) {
         if (!tr.done) { const gap = tr.top - s.cy; if (gap < 70 && !tr.close) tr.close = true; if (gap > 140 && tr.close) { tr.close = false; A.nearMiss(s, s.cx, s.cy + 40); } }
       }
     } else if (tr.kind === 'crow') {
+      // P8-ECON: the crow always dives. It marks a lane on your tip, tracks you
+      // briefly, locks, and dives after CROW_WARN s. A tip inside the lane is
+      // pecked (sap, combo, staged sunlight and 5% of your points); a forked pair
+      // straddles the lane, and a single tip can swerve out of it.
       if (tr.st === 'perch' && s.cy < tr.y) {
-        const staged = s.tips.reduce((a, t) => a + (t.staged || 0), 0);
-        if (s.tips.length === 2 && staged > 0) { tr.st = 'warn'; tr.t = CROW_WARN; tr.x = s.cx; A.emit(s, 'crow', { x: s.cx, y: s.cy }); }
-        else { tr.st = 'gone'; tr.t = 0; }
+        tr.st = 'warn'; tr.t = CROW_WARN; tr.x = s.cx; tr.yy = s.cy; tr.lane = CROW_LANE;
+        A.emit(s, 'crow', { x: s.cx, y: s.cy, lane: CROW_LANE, t: CROW_WARN });
+        A.emit(s, 'trapWarn', { trap: 'crow', x: s.cx, y: s.cy, t: CROW_WARN, lane: CROW_LANE });
       } else if (tr.st === 'warn') {
-        tr.t -= tdt; tr.x = s.cx; tr.yy = s.cy;
-        if (s.tips.length === 1) {
-          tr.st = 'foiled'; const bonus = A.addScore(s, 30 * s.mult); A.emit(s, 'crowfoil', { x: s.cx, y: s.cy, bonus });
-        } else if (tr.t <= 0) {
-          let lost = 0; for (const t of s.tips) { lost += t.staged; t.staged = 0; }
-          s.commits -= lost; s.crowSteals = (s.crowSteals || 0) + 1;
-          tr.st = 'stole'; A.emit(s, 'crowsteal', { x: s.cx, y: s.cy, lost });
+        tr.t -= tdt; tr.yy = s.cy;
+        if (CROW_WARN - tr.t < CROW_TRACK) tr.x += clamp(s.cx - tr.x, -400 * dt, 400 * dt);
+        if (tr.t <= 0) {
+          const R = A.tipR(s);
+          let ti = -1;
+          for (let i = 0; i < s.tips.length; i++) if (Math.abs(s.tips[i].x - tr.x) < CROW_LANE + R - 3) ti = i;
+          if (ti >= 0 && !(s.invuln > 0) && !(s.pu.rush > 0)) {
+            let lost = 0; for (const t of s.tips) { lost += t.staged; t.staged = 0; }
+            s.commits -= lost; s.crowSteals = (s.crowSteals || 0) + 1;
+            const pts = Math.min(400, Math.floor(s.score * CROW_SCORE)); s.score -= pts;
+            const sap0 = s.sap;
+            A.hit(s, ti, CROW_DMG, 'crow');
+            tr.st = 'stole';
+            A.emit(s, 'crowsteal', { x: s.cx, y: s.cy, lost, pts, sap: Math.round(sap0 - s.sap) });
+          } else {
+            tr.st = 'foiled'; const bonus = A.addScore(s, 30 * s.mult); s.crowFoils = (s.crowFoils || 0) + 1;
+            A.emit(s, 'crowfoil', { x: s.cx, y: s.cy, bonus });
+          }
+          tr.t = 0;
         }
       } else if (tr.st !== 'perch') tr.t += dt;
     } else if (tr.kind === 'sap') {
-      tr.on = false;
+      const was = tr.on; tr.on = false;
       for (const t of s.tips) if (t.x > tr.x0 && t.x < tr.x1 && s.cy < tr.y0 && s.cy > tr.y1) tr.on = true;
-      if (tr.on && !s.demo && !(s.pu.rush > 0)) s.sap -= 22 * dt * (s.R.drain || 1);
+      if (tr.on && !s.demo && !(s.pu.rush > 0)) { const d = SAP_DRAIN * dt * (s.R.drain || 1); s.sap -= d; tr.drunk = (tr.drunk || 0) + d; }
+      // P8-ECON: entering the withered bark is a hit event of its own (drain, no knock-back)
+      if (tr.on && !was) A.emit(s, 'trapHit', { trap: 'sap', x: s.cx, y: s.cy, effect: 'drain', rate: SAP_DRAIN });
+      if (!tr.on && was) A.emit(s, 'trapClear', { trap: 'sap', x: s.cx, y: s.cy, drained: Math.round(tr.drunk || 0) });
     }
   }
 }
@@ -331,7 +393,7 @@ export function trapsCollide(s, dt, A) {
         for (let ti = s.tips.length - 1; ti >= 0; ti--) {
           if (ti >= s.tips.length) continue;
           const x = s.tips[ti].x;
-          for (const bx of xs) { const dx = bx - x, dy = tr.y - y, rr = tr.r + R - 3; if (dx * dx + dy * dy < rr * rr) { A.hit(s, ti, 24, 'beetle'); break; } }
+          for (const bx of xs) { const dx = bx - x, dy = tr.y - y, rr = tr.r + R - 3; if (dx * dx + dy * dy < rr * rr) { A.hit(s, ti, 24, 'twins'); break; } }
         }
       }
       if (!tr.passed && tr.y >= y && tr.y < py) {
@@ -345,6 +407,7 @@ export function trapsCollide(s, dt, A) {
       let inside = -1;
       for (let ti = 0; ti < s.tips.length; ti++) { const x = s.tips[ti].x; if (x > tr.x0 && x < tr.x1 && y < tr.y0 && y > tr.y1) inside = ti; }
       if (inside >= 0) {
+        if (!tr.was) A.emit(s, 'trapWarn', { trap: 'twig', x: s.tips[inside].x, y, t: TWIG_SNAP - tr.t, creak: true }); // P8-ECON
         tr.t += dt; tr.peak = Math.max(tr.peak, tr.t); tr.was = true;
         if (tr.t > TWIG_SNAP) { tr.snapped = true; tr.snapT = s.t; A.emit(s, 'snap', { x: s.tips[inside].x, y }); A.hit(s, inside, 18, 'twig'); }
       } else {
@@ -422,6 +485,14 @@ export function trapBot(bot, s, aim, sk, r) {
     if (tr.side > 0) out.aim = Math.min(out.aim, tr.x0 - TIP_R - 34 - sp); else out.aim = Math.max(out.aim, tr.x1 + TIP_R + 34 + sp);
   }
   // crow: merge before it swoops
-  for (const tr of s.traps) if (tr.kind === 'crow' && tr.st === 'warn' && forked && CROW_WARN - tr.t > 0.5 - sk * 0.4) out.merge = true;
+  // P8-ECON crow: get every tip out of the marked lane (weak bots notice late)
+  for (const tr of s.traps) {
+    if (tr.kind !== 'crow' || tr.st !== 'warn' || CROW_WARN - tr.t < 0.75 - sk * 0.6) continue;
+    const m = CROW_LANE + TIP_R + 18, xs = s.tips.map((t) => t.x);
+    if (xs.some((x) => Math.abs(x - tr.x) < m)) {
+      const off = forked ? (s.spread < FORK_SPREAD * 0.7 ? 0 : 0) : m + 8;
+      if (off) { const goR = tr.x < W / 2; out.aim = clamp(tr.x + (goR ? off : -off), 20, W - 20); }
+    }
+  }
   return out;
 }

@@ -5,7 +5,7 @@
 import { createSim, step, summary, heightM } from '../src/sim.js';
 import { createBot, botInput } from '../src/bot.js';
 import { LEVELS, LEVEL, WORLDS, levelRules, goalMet, MAX_STARS } from '../src/campaign.js';
-import { MODES, STAKES, rulesFor, weekKey, weekSeed, weekCode, parseWeek } from '../src/modes.js';
+import { MODES, STAKES, STAKE, rulesFor, weekKey, weekSeed, weekCode, parseWeek } from '../src/modes.js';
 import * as Q from '../src/quest.js';
 import * as M from '../src/meta.js';
 import { SKINS } from '../src/skins.js';
@@ -72,7 +72,7 @@ ok(MAX_STARS === 60, '60 stars on the map');
   ok(sr.sum.storms >= 2, `storm rush: ${sr.sum.storms} storms weathered by ${sr.sum.height} m`);
   // score multipliers stack: stake × mode
   ok(rulesFor({ mode: 'classic', stake: 'ancient' }).score === 2.2 && rulesFor({ mode: 'hardcore', stake: 'ancient' }).score === 2, 'stake multiplier on endless only; modes use their own');
-  ok(rulesFor({ mode: 'weekly' }).hazard === 0.25, 'weekly tree is always on Oak');
+  ok(rulesFor({ mode: 'weekly' }).hazard === STAKE.oak.rules.hazard && rulesFor({ mode: 'weekly' }).dmg === STAKE.oak.rules.dmg, 'weekly tree is always on Oak'); // P8-ECON: Oak rules changed
   // weekly codes
   const wk = weekKey(new Date(Date.UTC(2026, 9, 10)));
   ok(wk === '2026-W41' && weekCode(wk) === 'FW-2026W41' && parseWeek('FW-2026W41') === wk && parseWeek('nope') === null, `weekly code ${weekCode(wk)} round-trips`);

@@ -3,6 +3,7 @@
 // plates). Skins never touch the simulation: they only change how the tree,
 // the sky and the postcard are printed.
 import { SKY_STOPS, STAGES } from './sim.js';
+import { MAP_SKINS } from './skins-maps.js'; // v1.0: map-themed looks, sold in the shop
 
 export const SLOTS = [
   { id: 'bark', name: 'Bark', hint: 'the colour of your wood' },
@@ -69,6 +70,8 @@ export const SKINS = [
   { id: 'leaf.sakura', slot: 'leaf', name: 'Sakura', unlock: { season: 13 }, leaves: ['#f39ab8', '#ffd0de'], shape: 'leaf' },
   { id: 'blossom.lotus', slot: 'blossom', name: 'Lotus', unlock: { season: 16 }, petal: '#ffc2d6', alt: '#ffffff', center: '#f2b33d' },
   { id: 'bark.mossy', slot: 'bark', name: 'Mossy oak', unlock: { season: 21 }, wood: '#5a5434', light: '#9fb34a', fresh: ['#6f9a4a', '#8fb14a', '#b5d26a'] },
+  // v1.0: twenty looks themed to the six new maps (`map` names the map; shop filter)
+  ...MAP_SKINS,
 ];
 export const SKIN = Object.fromEntries(SKINS.map((s) => [s.id, s]));
 export const DEFAULT_LOADOUT = { bark: 'bark.walnut', leaf: 'leaf.seasons', blossom: 'blossom.plum', bud: 'bud.sprout', sky: 'sky.print', card: 'card.cream', trail: 'trail.none' };

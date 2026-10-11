@@ -5,6 +5,7 @@ import { createSim, step, heightM, W, TIP_R, FORK_SPREAD, PX_PER_M, spawnChunkAt
 import { createBot, botInput } from '../src/bot.js';
 import { TRAPS, TRAP_CHUNKS, WARN_MIN, PULSE, DOOR, GUST, CROW_WARN, TIDE_K, TWIG_SNAP, rowSolids, twinsXs } from '../src/traps.js';
 import * as Dir from '../src/director.js';
+import { rulesFor } from '../src/modes.js'; // P8-ECON
 
 let fails = 0;
 const ok = (c, msg) => { if (c) console.log('ok  ', msg); else { fails++; console.log('FAIL', msg); } };
@@ -48,15 +49,14 @@ const run = (s, sec, inp = {}) => { const ev = []; for (let i = 0; i < sec * 60;
   ok(minFree >= 2 * R + 60, `pulse thorns always leave an open lane (min ${Math.round(minFree)} units)`);
 }
 {
-  // crow: merging in time foils it, staying forked loses staged sunlight
-  const mk = () => { const s = fresh(); s.trapSeen.crow = true; spawnChunkAt(s, 'crow', s.cy - 40); return s; };
-  const a = mk(); const c = a.traps.find((t) => t.kind === 'crow');
-  let toggled = false;
-  const evA = run(a, 3.5, (s) => { const o = { targetX: s.cx }; if (!toggled && s.t > 0.05) { o.toggle = true; toggled = true; } else if (c.st === 'warn' && s.forked) o.toggle = true; const twin = s.motes.find((m) => m.y < s.cy && m.y > s.cy - 300); if (twin) o.targetX = Math.round((twin.x < s.cx ? twin.x + FORK_SPREAD : twin.x - FORK_SPREAD)); return o; });
-  ok(evA.some((e) => e.type === 'crow') && evA.some((e) => e.type === 'crowfoil'), 'merging before the crow swoops foils it');
-  const b = mk(); let tg = false;
-  const evB = run(b, 3.5, (s) => { const o = { targetX: s.cx }; if (!tg && s.t > 0.05) { o.toggle = true; tg = true; } const twin = s.motes.find((m) => m.y < s.cy && m.y > s.cy - 300); if (twin && s.forked) o.targetX = twin.x < s.cx ? twin.x + FORK_SPREAD : twin.x - FORK_SPREAD; return o; });
-  ok(evB.some((e) => e.type === 'crowsteal'), 'staying forked lets the crow steal staged sunlight');
+  // P8-ECON crow: it always dives on a marked lane; a forked pair straddles it, holding your line gets pecked
+  const mk = () => { const s = fresh(); s.trapSeen.crow = true; spawnChunkAt(s, 'crow', s.cy - 40); s.motes = []; return s; };
+  const a = mk(); let toggled = false;
+  const evA = run(a, 3.5, () => { const o = { targetX: W / 2 }; if (!toggled) { o.toggle = true; toggled = true; } return o; });
+  ok(evA.some((e) => e.type === 'crow') && evA.some((e) => e.type === 'crowfoil'), 'a forked pair straddles the crow\'s dive lane');
+  const b = mk();
+  const evB = run(b, 3.5, { targetX: W / 2 });
+  ok(evB.some((e) => e.type === 'crowsteal') && evB.some((e) => e.type === 'trapHit' && e.trap === 'crow'), 'holding your line under the crow gets you pecked');
 }
 {
   // tide: straight up escapes; a zig-zagging tip gets caught
@@ -198,13 +198,13 @@ ok(Object.keys(TRAPS).every((id) => kinds[id === 'lure' ? 'cap' : id] > 0), 'all
 
 // ---------------------------------------------------------------- bot survival targets (200+ seeds)
 const q = (a, f) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.floor(f * b.length))]; };
-const target = { weak: [0.3, 45, 55], average: [0.6, 60, 70], expert: [0.95, 80, 100] };
+const target = { weak: [0.3, 30, 40], average: [0.6, 49, 61], expert: [0.95, 77, 93] }; // P8-ECON: measured on the Oak stake (targets ~35 / ~55 / ~85 s)
 const kindHit = {}, kindPass = {};
 const report = {};
 for (const [name, [sk, lo, hi]] of Object.entries(target)) {
   const T = [];
   for (let i = 0; i < BOTN; i++) {
-    const s = createSim({ seed: 1000 + i, tutorial: true }); const bot = createBot(sk, i + 1);
+    const s = createSim({ seed: 1000 + i, tutorial: true, rules: rulesFor({ mode: 'classic', stake: 'oak' }) }); const bot = createBot(sk, i + 1); // P8-ECON: Oak
     while (!s.dead && s.t < 400) {
       step(s, 1 / 60, botInput(bot, s));
       if (sk === 0.95) for (const e of s.events) if ((e.type === 'hit' || e.type === 'revert') && ['twig', 'pulse', 'door', 'cap', 'wall', 'hedge', 'tide'].includes(e.src)) kindHit[e.src] = (kindHit[e.src] || 0) + 1;
