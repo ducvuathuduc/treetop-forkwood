@@ -108,7 +108,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const OUT = new URL('./out/', import.meta.url).pathname; mkdirSync(OUT, { recursive: true });
 const PORT = 8600 + Math.floor(Math.random() * 300); // random: parallel worktrees serve on fixed ports
 const server = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
-await new Promise((r) => setTimeout(r, 700));
+for (let i = 0; i < 40; i++) { try { await fetch(`http://localhost:${PORT}/`); break; } catch { await new Promise((r) => setTimeout(r, 150)); } } // P7-UI: wait for the server, not a fixed 800 ms
 const browser = await chromium.launch();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const errors = [];

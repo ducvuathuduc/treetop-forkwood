@@ -10,10 +10,10 @@ import fs from 'fs';
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PW || '/tmp/pw/node_modules/playwright');
 
-const PORT = 8151;
+const PORT = +process.env.PORT || 8151;
 const ROOT = new URL('..', import.meta.url).pathname;
 const server = process.env.URL ? null : spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
-await new Promise((r) => setTimeout(r, 800));
+for (let i = 0; i < 40; i++) { try { await fetch(`http://localhost:${PORT}/`); break; } catch { await new Promise((r) => setTimeout(r, 150)); } } // P7-UI: wait for the server, not a fixed 800 ms
 const base = process.env.URL || `http://localhost:${PORT}/`;
 const OUT = ROOT + 'tests/out/';
 fs.mkdirSync(OUT, { recursive: true });

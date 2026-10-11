@@ -12,7 +12,7 @@ const PORT = 8190 + Math.floor(Math.random() * 300);
 const OUT = new URL('./out/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const server = process.env.URL ? null : spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: new URL('..', import.meta.url).pathname, stdio: 'ignore' });
-await new Promise((r) => setTimeout(r, 800));
+for (let i = 0; i < 40; i++) { try { await fetch(`http://localhost:${PORT}/`); break; } catch { await new Promise((r) => setTimeout(r, 150)); } } // P7-UI: wait for the server, not a fixed 800 ms
 const base = process.env.URL || `http://localhost:${PORT}/`;
 let fails = 0;
 const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg); if (!c) fails++; };

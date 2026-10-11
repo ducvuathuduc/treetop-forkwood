@@ -1,7 +1,7 @@
-// Illustrated layers for the renderer. The plates (five painted backdrops, the
-// side foliage, three gameplay sprites) are woodblock-style images made for
-// Forkwood with an image model (our own output, see CREDITS.md), compressed to
-// WebP. Everything here is optional: until an image has loaded, the renderer's
+// Illustrated layers for the renderer. The world plates (assets/art/w-*.webp:
+// sky / far / side per zone + a particle sheet) are flat layered silhouettes made
+// for Forkwood with an image model (our own output, see CREDITS.md), compressed
+// to WebP. Legacy woodblock helpers below are kept for tools but not loaded. Everything here is optional: until an image has loaded, the renderer's
 // procedural sky and shapes stand in, so a slow network never blocks play.
 const BASE = 'assets/art/';
 const IMGS = Object.create(null);
@@ -34,8 +34,11 @@ export const PLATES = [
   { img: 'bg-night', m0: 600, m1: 1e9, span: 700, edge: 0.1 },
 ];
 const FADE = 26;
-// P6-ART: the bg-* plates and side foliage are no longer drawn in play (see backdrop.js), so they are not preloaded
-export const CRITICAL = ['ground', 'sun', 'bramble', 'beetle'];
+// P7-WORLD: first load = the meadow's layered plates + the particle sheet (~31 KB).
+// The other zones stream in from backdrop.js as you climb toward them. The old
+// woodblock bg-*/foliage/ground/sun/bramble/beetle images are no longer loaded:
+// gameplay sprites are code-drawn in render.js.
+export const CRITICAL = ['w-sky-meadow', 'w-far-meadow', 'w-side-meadow', 'w-sprites-fx'];
 /** Load the first plate and the sprites now. */
 export function preloadArt() {
   // the other plates load as you climb toward them (see drawPlates)

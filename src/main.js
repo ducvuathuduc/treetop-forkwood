@@ -325,7 +325,7 @@ function refreshSeasons() {
   if (!box) return;
   const now = seasonClock() || new Date();
   box.hidden = SEASON.list.length === 0;
-  box.innerHTML = SEASON.list.map((x) => `<div class="season-card sc-${x.id}" data-season="${x.id}"><span class="sc-ico" aria-hidden="true">${SEA.ICONS[x.id] || ''}</span><span class="sc-txt"><b>${x.name}</b><small>${x.effect}</small><em>${SEA.untilText(x.until, now)}</em></span></div>`).join('');
+  box.innerHTML = SEASON.list.map((x) => `<div class="season-card sc-${x.id}" data-season="${x.id}" title="${x.effect} · ${SEA.untilText(x.until, now)}"><span class="sc-ico" aria-hidden="true">${SEA.ICONS[x.id] || ''}</span><span class="sc-txt"><b>${x.name}</b><small>${x.effect}</small><em>${SEA.untilText(x.until, now)}</em></span></div>`).join(''); // P7-UI: chips show the name; effect and time left in the tooltip
   box.title = SEASON.list.length ? 'Open in free play. Daily, weekly, race and quest trees stay the same for everyone: looks only.' : '';
   $('title').classList.toggle('has-seasons', SEASON.list.length > 0);
   requestAnimationFrame(() => { box.classList.toggle('more', box.scrollWidth > box.clientWidth + 2); box.classList.toggle('end', box.scrollLeft + box.clientWidth >= box.scrollWidth - 2); });
@@ -918,7 +918,7 @@ $('btn-stake').addEventListener('click', (e) => {
   const i = open.findIndex((k) => k.id === S.quest.stake);
   S.quest.stake = open[(i + 1) % open.length].id; run.stake = S.quest.stake; persist(false); sound.page(); refreshTitle();
 });
-$('quest-ico').innerHTML = ICON.map;
+$('quest-ico').innerHTML = ICON.map; $('daily-ico').innerHTML = ICON.calendar; $('race-ico').innerHTML = ICON.live; // P7-UI
 $('btn-menu-p').addEventListener('click', toMenu);
 $('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); S.calm = !isCalm(); persist(false); sound.unlock(); sound.toggle(); refreshTitle(); });
 $('btn-challenge').addEventListener('click', async () => {
@@ -1047,7 +1047,7 @@ function frame(nowMs) {
 }
 
 // testing hooks (used by tests/smoke.mjs)
-export const VERSION = '0.8.0';
+export const VERSION = '0.9.0';
 window.forkwood = {
   version: VERSION,
   get mode() { return mode; },

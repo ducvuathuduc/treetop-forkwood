@@ -14,9 +14,31 @@ Self-hosted, subset to Latin and converted to WOFF2 (the OFL allows modified ver
 
 | Font | Used for | Source | Licence |
 |---|---|---|---|
-| Fraunces (Undercase Type) | logo, big numbers, banners | https://github.com/google/fonts/tree/main/ofl/fraunces | OFL 1.1, [assets/fonts/OFL-Fraunces.txt](assets/fonts/OFL-Fraunces.txt) |
+| Fraunces (Undercase Type) | logo, big numbers, banners (variable subset, weight 300-900, opsz 144, SOFT 100) | https://github.com/google/fonts/tree/main/ofl/fraunces | OFL 1.1, [assets/fonts/OFL-Fraunces.txt](assets/fonts/OFL-Fraunces.txt) |
 | Bricolage Grotesque (Mathieu Triay) | interface text | https://github.com/google/fonts/tree/main/ofl/bricolagegrotesque | OFL 1.1, [assets/fonts/OFL-BricolageGrotesque.txt](assets/fonts/OFL-BricolageGrotesque.txt) |
-| JetBrains Mono (JetBrains) | scores and commit hashes | https://github.com/google/fonts/tree/main/ofl/jetbrainsmono | OFL 1.1, [assets/fonts/OFL-JetBrainsMono.txt](assets/fonts/OFL-JetBrainsMono.txt) |
+| JetBrains Mono (JetBrains) | the share card's commit hash line (not used in menus) | https://github.com/google/fonts/tree/main/ofl/jetbrainsmono | OFL 1.1, [assets/fonts/OFL-JetBrainsMono.txt](assets/fonts/OFL-JetBrainsMono.txt) |
+
+## Interface icons (ISC)
+
+The menu icons in `src/icons.js` and `index.html` (pause, volume, map, calendar, radio, list-checks, shopping-bag, gem, award, gift, lock, check, flame, snowflake, sprout, star, package, layers, swords, share, download, house, rotate-ccw, arrow-right, book-open, moon, info, leaf, timer, shield, flip-horizontal, cloud-lightning, x) are from Lucide, https://lucide.dev (some originally from Feather, MIT). The acorn icon is our own in the same style.
+
+```
+ISC License
+
+Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT). All other copyright (c) for Lucide are held by Lucide Contributors 2022.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+```
 
 ## Sound effects (CC0 1.0, public domain)
 

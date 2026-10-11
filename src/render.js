@@ -4,7 +4,30 @@
 // The sky is posterised into stepped bands, and a paper grain sits on top.
 import { W, PX_PER_M, STAGES, SAP_MAX, CHARMS, PICKUPS, GRAFTS, heightM, stageIndexFor } from './sim.js';
 import { THEME, leafColor } from './skins.js';
-import { drawSunSprite, drawBeetleSprite, drawBrambleSprite, drawGroundSprite } from './art.js';
+// P7-WORLD: gameplay sprites are code-drawn in the art-bible language (no sprite loads)
+// global gameplay colours (art bible §2.2): mint vine, gold seeds, coral danger, violet beetles
+export const KEY = '#10201b';      // keyline
+const VINE = '#5fd99a', VINE_CORE = '#b8ffd6', SEED = '#ffc94d', SEED_HOT = '#fff3c4';
+const DANGER = '#f0785a', DANGER_BODY = '#1a1216', BEETLE_RIM = '#b39bff', BEETLE_BODY = '#1e1628';
+const CREAM = '#fff6e6';
+// cached soft-glow sprite (radial gradient), tinted per colour
+const glowCache = new Map();
+function glowSprite(col) {
+  let c = glowCache.get(col);
+  if (c) return c;
+  c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  const [r, gg, b] = rgb(col);
+  gr.addColorStop(0, `rgba(${r},${gg},${b},1)`); gr.addColorStop(0.35, `rgba(${r},${gg},${b},0.45)`); gr.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  glowCache.set(col, c);
+  return c;
+}
+function glow(ctx, col, x, y, r, a) {
+  ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a;
+  ctx.drawImage(glowSprite(col), x - r, y - r, r * 2, r * 2);
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+}
 import { backdrop } from './backdrop.js'; // P6-ART
 import { drawTraps } from './render-traps.js'; // P6-TRAPS
 
@@ -17,7 +40,7 @@ export const MOSS = '#6f9a4a';
 export const FONT = {
   display: '"Fraunces Display", "Iowan Old Style", Georgia, serif',
   ui: '"Bricolage", "Avenir Next", "Segoe UI", sans-serif',
-  mono: '"JB Mono", ui-monospace, "SF Mono", Menlo, monospace',
+  mono: '"Bricolage", "Avenir Next", "Segoe UI", sans-serif', // P7: no monospace in front of players
 };
 const f = (w, px, fam = 'ui') => `${w} ${Math.round(px)}px ${FONT[fam]}`;
 
@@ -104,6 +127,12 @@ export function drawBud(ctx, gold, scale = 1) {
     ctx.fillStyle = hi; ctx.beginPath(); ctx.ellipse(0, -2, 3.2, 7, 0, 0, TAU); ctx.fill();
     ctx.strokeStyle = INK; ctx.lineWidth = 1.3;
     for (const yy of [-8, -2, 4]) { ctx.beginPath(); ctx.moveTo(-7.4, yy); ctx.quadraticCurveTo(0, yy + 2, 7.4, yy); ctx.stroke(); }
+  } else if (!B.id || B.id === 'bud.sprout') {
+    // P7: the default tip is the light source: keyline, mint body, hot core
+    ctx.fillStyle = 'rgba(16,32,27,0.7)'; ctx.beginPath(); ctx.ellipse(0, -2, 8.5, 12, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = gold ? SEED : VINE; ctx.beginPath(); ctx.ellipse(0, -2, 6.5, 10, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = gold ? SEED_HOT : VINE_CORE; ctx.beginPath(); ctx.ellipse(-0.5, -4, 3.6, 6.2, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(-1, -6, 1.6, 2.8, 0, 0, TAU); ctx.fill();
   } else {
     ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, -2, 9.5, 13.5, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, -2, 7, 11, 0, 0, TAU); ctx.fill();
@@ -128,7 +157,7 @@ export function skinLeaf(ctx, x, y, len, ang, fill, lw) {
     ctx.lineTo(x + c * len * 0.45, y + sn * len * 0.45);
     ctx.closePath();
   } else leafPath(ctx, x, y, len, ang);
-  ctx.lineWidth = lw; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.lineWidth = lw; ctx.strokeStyle = KEY; ctx.stroke();
   ctx.fillStyle = fill; ctx.fill();
 }
 
@@ -178,14 +207,54 @@ function widthAt(p, pt, now) {
   return 2.6 + Math.min(24, 2.1 * Math.sqrt(age));
 }
 
+/**
+ * A hazard stem (thorn bramble 'h' or thorn column 'v'): dark body, sharp hooked
+ * thorns with a coral rim. `at(u)` gives the cross offset at position u. Danger never glows.
+ */
+export function hazardStem(ctx, u0, u1, at, dir, seed) {
+  const P = dir === 'h' ? (u, v) => [u, v] : (u, v) => [v, u];
+  // thorns: coral rim triangles under a dark body
+  const thorns = [];
+  for (let u = u0 + 8; u < u1 - 4; u += 15) {
+    const side = (Math.floor(u / 15) % 2) ? -1 : 1, v = at(u), L = 12 + hash(u * 0.37 + seed) * 4;
+    thorns.push([P(u - 5, v), P(u + side * 0 + 3, v + side * L), P(u + 5, v)]);
+  }
+  ctx.beginPath();
+  for (const [A, B, C] of thorns) { ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.lineTo(C[0], C[1]); ctx.closePath(); }
+  ctx.lineJoin = 'miter'; ctx.strokeStyle = DANGER; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = DANGER_BODY; ctx.fill();
+  // body: coral edge, dark core
+  ctx.beginPath();
+  for (let u = u0, i = 0; u <= u1 + 0.1; u += 10, i++) { const [x, y] = P(Math.min(u, u1), at(Math.min(u, u1))); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = DANGER; ctx.lineWidth = 12; ctx.stroke();
+  ctx.strokeStyle = DANGER_BODY; ctx.lineWidth = 8; ctx.stroke();
+}
+// popups stay high-contrast: warm creams/golds; anything dark or murky becomes cream
+function floaterCol(c) {
+  if (!c || c[0] !== '#') return CREAM;
+  const [r, g, b] = rgb(c.length === 4 ? '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c);
+  const l = 0.3 * r + 0.59 * g + 0.11 * b;
+  if (r > 200 && g < 150) return '#ffb39e'; // danger popups: light coral
+  return l > 170 ? c : CREAM;
+}
+let treeNight = 0; // 0 day .. 1 night: fades the vine keyline out by the starry sky
+export function setTreeNight(v) { treeNight = v; }
 /** Draws every path of the tree between world rows topY..botY. px = world units per screen pixel. */
 export function drawTree(ctx, s, now, topY, botY, px) {
   const step = Math.max(1, Math.floor(px * 1.6));
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   const order = s.paths.slice().sort((a, b) => (a.id === 0 ? 1 : 0) - (b.id === 0 ? 1 : 0));
-  // passes: ink outline, bark, shaded side, light edge
-  for (let pass = 0; pass < 4; pass++) {
+  // P7-WORLD passes: 0 keyline, 4 additive glow (live only), 1 body (mint -> old wood
+  // by age/width), 2 shaded side, 3 light core. No shadowBlur anywhere.
+  const night = treeNight;
+  const defBark = THEME.bark.id === 'bark.walnut' || !THEME.bark.id;
+  const oldWood = rgb(defBark ? '#2b5444' : THEME.bark.wood), mint = rgb(VINE);
+  const bodyCol = (w) => css(lerp3(mint, oldWood, Math.min(1, Math.max(0, (w - 4) / 12))));
+  const coreCol = defBark ? VINE_CORE : THEME.bark.light;
+  for (const pass of [0, 4, 1, 2, 3]) {
+    if (pass === 4) ctx.globalCompositeOperation = 'lighter';
     for (const p of order) {
       if (p.state === 'gone' || p.pts.length < 2) continue;
       const pts = p.pts;
@@ -193,27 +262,31 @@ export function drawTree(ctx, s, now, topY, botY, px) {
       const i1 = Math.min(pts.length - 1, findIndexBelow(pts, topY - 40) + 1);
       if (i1 <= i0) continue;
       const rev = p.state === 'reverting';
+      if (pass === 4 && (rev || p.state !== 'live')) continue;
       let bucket = -1;
       ctx.beginPath();
       for (let i = i0; i < i1; i += step) {
         const a = pts[i], b = pts[Math.min(i1, i + step)];
         let w = widthAt(p, a, now);
+        const w0 = w;
         if (pass === 0) w += 3.4 * Math.max(1, px * 0.8);
+        else if (pass === 4) w = Math.min(w0, 10) * 2.4 + 12 * Math.max(1, px * 0.8);
         else if (pass === 2) w *= 0.42;
-        else if (pass === 3) w *= 0.24;
+        else if (pass === 3) w *= w0 < 8 ? 0.38 : 0.2;
         const bk = Math.round(w * 2);
         if (bk !== bucket) {
           if (bucket >= 0) ctx.stroke();
           bucket = bk;
           ctx.beginPath();
           ctx.lineWidth = Math.max(px * 1.1, w);
-          ctx.strokeStyle = pass === 0 ? (rev ? '#5a1820' : INK) : pass === 1 ? (rev ? CORAL : THEME.bark.wood) : pass === 2 ? (rev ? 'rgba(90,24,32,0.35)' : 'rgba(30,20,14,0.28)') : (rev ? 'rgba(255,214,200,0.5)' : THEME.bark.light);
+          ctx.strokeStyle = pass === 0 ? (rev ? '#3a1018' : `rgba(16,32,27,${(0.78 - 0.4 * night).toFixed(3)})`) : pass === 4 ? `rgba(95,217,154,${w > 30 ? 0.12 : 0.2})` : pass === 1 ? (rev ? DANGER : bodyCol(w)) : pass === 2 ? (rev ? 'rgba(90,24,32,0.35)' : 'rgba(8,20,16,0.26)') : (rev ? 'rgba(255,214,200,0.5)' : coreCol);
           ctx.moveTo(a.x + (pass === 2 ? widthAt(p, a, now) * 0.24 : pass === 3 ? -widthAt(p, a, now) * 0.2 : 0), a.y);
         }
         ctx.lineTo(b.x + (pass === 2 ? widthAt(p, b, now) * 0.24 : pass === 3 ? -widthAt(p, b, now) * 0.2 : 0), b.y);
       }
       if (bucket >= 0) ctx.stroke();
     }
+    if (pass === 4) ctx.globalCompositeOperation = 'source-over';
   }
   // birch-style ink marks across the bark
   if (THEME.bark.mark && px < 2.5) {
@@ -240,8 +313,8 @@ export function drawTree(ctx, s, now, topY, botY, px) {
       const a = pts[i], b = pts[i + 1];
       const t = (i - k0) / (n - k0);
       const fr = THEME.bark.fresh;
-      ctx.strokeStyle = t < 0.33 ? fr[0] : t < 0.66 ? fr[1] : fr[2];
-      ctx.lineWidth = widthAt(p, a, now) * 0.86;
+      ctx.strokeStyle = defBark ? (t < 0.33 ? VINE : t < 0.66 ? '#8cebb8' : VINE_CORE) : (t < 0.33 ? fr[0] : t < 0.66 ? fr[1] : fr[2]);
+      ctx.lineWidth = widthAt(p, a, now) * (defBark ? 0.6 : 0.86);
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
   }
@@ -270,14 +343,14 @@ export function drawTree(ctx, s, now, topY, botY, px) {
       if (!rev && px < 3) drawLeaves(ctx, pt.x, pt.y, c.i, now, pop, st.leaf, c.kind, px);
       const r = (c.kind === 'merge' ? 7.5 : c.kind === 'fork' ? 5.5 : 4.2) * pop * Math.max(1, px * 0.7);
       ctx.beginPath(); ctx.arc(pt.x, pt.y, r + 2.2 * Math.max(1, px * 0.7), 0, TAU);
-      ctx.fillStyle = rev ? '#5a1820' : INK; ctx.fill();
+      ctx.fillStyle = rev ? '#3a1018' : KEY; ctx.fill();
       ctx.beginPath(); ctx.arc(pt.x, pt.y, r, 0, TAU);
-      ctx.fillStyle = rev ? '#ff9a86' : c.kind === 'merge' ? OCHRE : c.kind === 'fork' ? '#8fd0e6' : PAPER;
+      ctx.fillStyle = rev ? '#ff9a86' : c.kind === 'merge' ? SEED : c.kind === 'fork' ? VINE_CORE : CREAM;
       ctx.fill();
     }
   }
   // scars where a single tip got hit
-  ctx.strokeStyle = INK; ctx.lineWidth = 2.4;
+  ctx.strokeStyle = DANGER; ctx.lineWidth = 2.4;
   for (const sc of s.scars) {
     if (sc.y < topY - 20 || sc.y > botY + 20) continue;
     ctx.beginPath(); ctx.moveTo(sc.x - 5, sc.y - 4); ctx.lineTo(sc.x + 5, sc.y + 4); ctx.moveTo(sc.x + 5, sc.y - 4); ctx.lineTo(sc.x - 5, sc.y + 4); ctx.stroke();
@@ -360,14 +433,16 @@ export class Renderer {
     const night = Math.min(1, Math.max(0, (camM - 520) / 300));
     const gold = Math.min(1, (s.golden || 0) / 0.6) * (ui.reveal ? 0 : 1);
 
-    // ---- sky: stepped world-space bands (posterised print sky)
+    // ---- sky: stepped world-space bands (only when the backdrop is off)
     this._world(ctx);
+    if (ui.noArt) {
     const BAND = 180;
     const b0 = Math.floor(topY / BAND), b1 = Math.ceil(botY / BAND);
     for (let b = b0; b <= b1; b++) {
       const m = Math.max(0, -(b + 0.5) * BAND / PX_PER_M) + VO;
       ctx.fillStyle = css(skyAt(m));
       ctx.fillRect(leftX - 20, b * BAND, rightX - leftX + 40, BAND + 1);
+    }
     }
     // ---- painted backdrop plate for this height (falls back to the print sky until loaded)
     this._screen(ctx);
@@ -382,9 +457,8 @@ export class Renderer {
         ctx.globalCompositeOperation = 'color'; ctx.fillStyle = css(skyAt(camM), 0.55); ctx.fillRect(0, 0, cw, ch);
         ctx.globalCompositeOperation = 'source-over';
       }
-      // a thin paper wash so the inked play layer always reads first
-      ctx.fillStyle = 'rgba(244,236,216,0.08)'; ctx.fillRect(0, 0, cw, ch);
     }
+    setTreeNight(Math.min(1, Math.max(0, (camM - 1000) / 250)));
     // ---- screen-space atmosphere: the top leans toward the next stage, in steps
     if (!plated) {
     const nxt = STAGES[Math.min(STAGES.length - 1, sb.i + 1)];
@@ -438,7 +512,7 @@ export class Renderer {
     this.drawParticles(ctx, fx, px);
     // playfield edges: a hairline ink rule either side
     if (leftX < -2 - pad) {
-      ctx.fillStyle = this.plated ? 'rgba(30,26,22,0.16)' : 'rgba(30,26,22,0.35)';
+      ctx.fillStyle = this.plated ? 'rgba(255,246,230,0.10)' : 'rgba(30,26,22,0.35)';
       const ry1 = this.plated ? Math.min(botY, -90) : botY;
       if (ry1 > topY) { ctx.fillRect(-2 * px, topY, 2 * px, ry1 - topY); ctx.fillRect(W, topY, 2 * px, ry1 - topY); }
     }
@@ -471,10 +545,12 @@ export class Renderer {
         ctx.fillStyle = css(c, 1); ctx.fillRect(x - 7, -10, 7, ch + 20);
       }
     }
-    // paper grain over everything but the HUD
-    ctx.globalAlpha = 1; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch);
+    // post: colour grade, vignette and a whisper of grain, under the HUD
+    ctx.globalAlpha = 1;
+    if (plated) backdrop.drawPost(ctx, cw, ch, camM);
+    ctx.globalAlpha = 0.55; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch); ctx.globalAlpha = 1;
     if (ui.hud) this.drawHud(ctx, s, fx, ui, now);
-    if (ui.hud && !ui.finishM) backdrop.drawZoneBar(ctx, cw, camM, f(800, cw < 520 ? 9.5 : 10.5)); // P6-ART
+    if (ui.hud && !ui.finishM) backdrop.drawZoneBar(ctx, cw, camM, f(600, cw < 520 ? 12 : 13)); // P6-ART
     this.drawSparks(ctx, fx);
   }
 
@@ -575,7 +651,25 @@ export class Renderer {
 
   drawGround(ctx, leftX, rightX, botY) {
     if (botY < -300) return;
-    if (this.plated && drawGroundSprite(ctx, leftX, rightX, botY)) return;
+    if (this.plated) {
+      const hill = (x) => -70 - 34 * Math.sin(x * 0.006) - 18 * Math.sin(x * 0.017 + 1);
+      const near = (x) => -14 - 12 * Math.sin(x * 0.011 + 2);
+      ctx.fillStyle = 'rgba(78,116,100,0.85)';
+      ctx.beginPath(); ctx.moveTo(leftX - 20, 10);
+      for (let x = leftX - 20; x <= rightX + 20; x += 20) ctx.lineTo(x, hill(x));
+      ctx.lineTo(rightX + 20, 10); ctx.fill();
+      ctx.fillStyle = '#173029';
+      ctx.beginPath(); ctx.moveTo(leftX - 20, 10);
+      for (let x = leftX - 20; x <= rightX + 20; x += 20) ctx.lineTo(x, near(x));
+      ctx.lineTo(rightX + 20, 10); ctx.fill();
+      ctx.fillRect(leftX - 20, 0, rightX - leftX + 40, Math.max(0, botY) + 40);
+      // grass blades in silhouette
+      ctx.strokeStyle = '#173029'; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let x = Math.floor(leftX / 11) * 11; x < rightX; x += 11) { const h = 8 + hash(x) * 14, xx = x, y0 = near(x) + 2; ctx.moveTo(xx, y0); ctx.quadraticCurveTo(xx + 1, y0 - h * 0.6, xx + 4, y0 - h); }
+      ctx.stroke();
+      return;
+    }
     const hill = (x) => -60 - 40 * Math.sin(x * 0.006) - 22 * Math.sin(x * 0.017 + 1);
     const near = (x) => -18 - 16 * Math.sin(x * 0.011 + 2);
     ctx.fillStyle = '#a7bf7a';
@@ -626,8 +720,8 @@ export class Renderer {
       const x = W / 2 + k * 30;
       ctx.beginPath(); ctx.moveTo(x - dir * 7, y - 9); ctx.lineTo(x + dir * 7, y); ctx.lineTo(x - dir * 7, y + 9);
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = INK; ctx.lineWidth = 7; ctx.stroke();
-      ctx.strokeStyle = PAPER; ctx.lineWidth = 3.5; ctx.stroke();
+      ctx.strokeStyle = 'rgba(16,32,27,0.45)'; ctx.lineWidth = 6; ctx.stroke();
+      ctx.strokeStyle = CREAM; ctx.lineWidth = 3; ctx.stroke();
     }
   }
 
@@ -698,9 +792,9 @@ export class Renderer {
 
   /** A paper card with an ink border and a hard offset shadow. */
   card(ctx, x, y, w, h, r, fill = PAPER, shadow = 4) {
-    ctx.fillStyle = INK; roundRect(ctx, x + shadow, y + shadow, w, h, r); ctx.fill();
-    ctx.fillStyle = fill; roundRect(ctx, x, y, w, h, r); ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 2.5; roundRect(ctx, x, y, w, h, r); ctx.stroke();
+    // P7: soft card (no hard ink outline or offset shadow)
+    if (shadow) { ctx.fillStyle = 'rgba(8,11,28,0.22)'; roundRect(ctx, x, y + Math.min(4, shadow), w, h, r); ctx.fill(); }
+    ctx.fillStyle = fill === PAPER ? 'rgba(255,246,230,0.94)' : fill; roundRect(ctx, x, y, w, h, r); ctx.fill();
   }
 
   drawCoach(ctx, c, cw, y, now) {
@@ -709,19 +803,20 @@ export class Renderer {
     const pulse = c.urgent ? 1 + Math.sin(now * 9) * 0.025 : 1;
     ctx.save();
     ctx.translate(cw / 2, y + h / 2); ctx.scale(pulse, pulse); ctx.translate(-cw / 2, -(y + h / 2));
-    this.card(ctx, x, y, w, h, 14, c.good ? OCHRE : c.urgent ? '#fbe3a4' : PAPER);
+    ctx.fillStyle = 'rgba(10,16,22,0.5)'; roundRect(ctx, x, y, w, h, 20); ctx.fill();
+    ctx.strokeStyle = c.good ? 'rgba(255,201,77,0.7)' : c.urgent ? 'rgba(240,120,90,0.7)' : 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; roundRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 20); ctx.stroke();
     // step pips (1-3)
     for (let i = 1; i <= 3; i++) {
       const done = i < c.n || c.n > 3, cur = i === c.n;
       ctx.beginPath(); ctx.arc(x + 22, y + h / 2 + (i - 2) * 15, 5, 0, TAU);
-      ctx.fillStyle = done ? INK : cur ? CORAL : 'rgba(30,26,22,0.15)'; ctx.fill();
+      ctx.fillStyle = done ? VINE : cur ? CREAM : 'rgba(255,246,230,0.2)'; ctx.fill();
     }
     ctx.textAlign = 'left';
-    ctx.fillStyle = INK;
-    ctx.font = f(800, small ? 21 : 24, 'display');
+    ctx.fillStyle = c.good ? '#ffe08a' : CREAM;
+    ctx.font = f(400, small ? 20 : 23, 'display');
     ctx.fillText(c.title, x + 42, y + (small ? 30 : 33));
     ctx.font = f(600, small ? 13 : 15);
-    ctx.fillStyle = 'rgba(30,26,22,0.78)';
+    ctx.fillStyle = 'rgba(255,246,230,0.7)';
     ctx.fillText(c.sub, x + 42, y + (small ? 52 : 57), w - 54);
     ctx.restore();
   }
@@ -741,40 +836,31 @@ export class Renderer {
     };
     const Y = (fr) => y0 + (y1 - y0) * fr;
     const m = heightM(s), fr = pos(m);
+    // P7: a 2 px hairline at the right edge with one mint dot; stage ticks only on wide screens
     ctx.save();
     ctx.lineCap = 'round';
-    ctx.strokeStyle = INK; ctx.lineWidth = wide ? 10 : 8;
+    ctx.strokeStyle = 'rgba(255,246,230,0.28)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
-    ctx.strokeStyle = PAPER; ctx.lineWidth = wide ? 5 : 3.5;
-    ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
-    ctx.strokeStyle = MOSS; ctx.lineWidth = wide ? 5 : 3.5;
+    ctx.strokeStyle = 'rgba(95,217,154,0.7)';
     ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, Y(fr)); ctx.stroke();
-    ctx.font = f(700, 11); ctx.textAlign = 'right';
+    ctx.font = f(600, 11); ctx.textAlign = 'right';
     for (let i = 0; i <= n; i++) {
       const yy = Y(i / n), goal = STAGES[i].name === 'Treetop';
       const reached = s.stageIdx >= i;
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, yy, goal ? 6 : 4.5, 0, TAU); ctx.fill();
-      ctx.fillStyle = reached ? (goal ? OCHRE : PAPER) : '#b9ae96'; ctx.beginPath(); ctx.arc(x, yy, goal ? 4 : 2.6, 0, TAU); ctx.fill();
-      if (goal) {
-        flagPath(ctx, x + (wide ? 9 : -2), yy - 9, 6);
-        ctx.lineJoin = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.fillStyle = OCHRE; ctx.fill(); ctx.stroke();
-      }
+      ctx.fillStyle = goal ? SEED : reached ? 'rgba(255,246,230,0.7)' : 'rgba(255,246,230,0.3)';
+      ctx.beginPath(); ctx.arc(x, yy, goal ? 3 : 1.6, 0, TAU); ctx.fill();
       if (wide) {
-        const label = STAGES[i].name.toUpperCase();
-        ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(30,26,22,0.9)'; ctx.strokeText(label, x - 13, yy + 4);
-        ctx.fillStyle = goal ? OCHRE : reached ? PAPER : 'rgba(244,236,216,0.7)';
-        ctx.fillText(label, x - 13, yy + 4);
+        ctx.fillStyle = goal ? SEED : reached ? 'rgba(255,246,230,0.8)' : 'rgba(255,246,230,0.45)';
+        ctx.fillText(STAGES[i].name, x - 12, yy + 4);
       }
     }
     if (ui.bestM > 3) {
       const yb = Y(pos(ui.bestM));
-      ctx.strokeStyle = INK; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x - 9, yb); ctx.lineTo(x + 9, yb); ctx.stroke();
-      ctx.strokeStyle = OCHRE; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x - 8, yb); ctx.lineTo(x + 8, yb); ctx.stroke();
+      ctx.strokeStyle = SEED; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 5, yb); ctx.lineTo(x + 5, yb); ctx.stroke();
     }
-    // the bud marks where you are
     const yy = Y(fr);
-    ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(x, yy - 1, 6.5, 9, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#a9cf5a'; ctx.beginPath(); ctx.ellipse(x, yy - 1, 4, 6.5, 0, 0, TAU); ctx.fill();
+    glow(ctx, VINE, x, yy, 12, 0.7);
+    ctx.fillStyle = VINE_CORE; ctx.beginPath(); ctx.arc(x, yy, 3, 0, TAU); ctx.fill();
     ctx.restore();
   }
 
@@ -846,16 +932,16 @@ export class Renderer {
     ctx.setLineDash([12, 9]);
     ctx.lineDashOffset = -now * 30;
     ctx.globalAlpha = passed ? 0.4 : 1;
-    ctx.strokeStyle = INK; ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(16,32,27,0.45)'; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    ctx.strokeStyle = OCHRE; ctx.lineWidth = 2.5;
+    ctx.strokeStyle = SEED; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.font = f(800, 13);
-    const tw = ctx.measureText(label).width + 16;
-    this.card(ctx, W - tw - 8, y - 26, tw, 20, 6, OCHRE, 2);
-    ctx.fillStyle = INK; ctx.textAlign = 'center';
-    ctx.fillText(label, W - 8 - tw / 2, y - 11.5);
+    ctx.font = f(700, 13);
+    const tw = ctx.measureText(label).width + 18;
+    ctx.fillStyle = 'rgba(10,16,22,0.55)'; roundRect(ctx, W - tw - 8, y - 27, tw, 21, 10.5); ctx.fill();
+    ctx.fillStyle = SEED; ctx.textAlign = 'center';
+    ctx.fillText(label, W - 8 - tw / 2, y - 12);
     ctx.restore();
   }
 
@@ -893,39 +979,8 @@ export class Renderer {
     for (const [a, c] of b.solids) {
       if (c - a < 2) continue;
       const wy = (x) => b.y + Math.sin(x * 0.09 + b.seed) * 3;
-      // pale backing keeps the vine readable on night skies
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(244,236,216,0.32)'; ctx.lineWidth = 22;
-      ctx.beginPath(); ctx.moveTo(a, b.y); ctx.lineTo(c, b.y); ctx.stroke();
-      if (drawBrambleSprite(ctx, a, c, b.y, b.seed || 0)) {
-        // inked knots where a cut vine ends inside the playfield
-        for (const x of [a, c]) if (x > 1 && x < W - 1) {
-          ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, b.y, 8, 0, TAU); ctx.fill();
-          ctx.fillStyle = '#6b4a34'; ctx.beginPath(); ctx.arc(x, b.y, 5, 0, TAU); ctx.fill();
-          ctx.fillStyle = '#a07650'; ctx.beginPath(); ctx.arc(x - 1.2, b.y - 1.2, 2, 0, TAU); ctx.fill();
-        }
-        continue;
-      }
-      // thorns first (so the vine overlaps their base), inked
-      ctx.lineJoin = 'round';
-      for (let x = a + 8; x < c - 4; x += 15) {
-        const up = (Math.floor(x / 15) % 2) ? -1 : 1, y = wy(x);
-        ctx.beginPath(); ctx.moveTo(x - 4.5, y); ctx.lineTo(x + 1, y + up * 13); ctx.lineTo(x + 4.5, y); ctx.closePath();
-        ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke();
-        ctx.fillStyle = '#e8dcc0'; ctx.fill();
-      }
-      ctx.beginPath(); ctx.moveTo(a, wy(a));
-      for (let x = a; x <= c; x += 10) ctx.lineTo(x, wy(x));
-      ctx.lineTo(c, wy(c));
-      ctx.strokeStyle = INK; ctx.lineWidth = 13; ctx.stroke();
-      ctx.strokeStyle = '#5b4030'; ctx.lineWidth = 8; ctx.stroke();
-      ctx.strokeStyle = '#8a6448'; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(a, wy(a) - 2); for (let x = a; x <= c; x += 10) ctx.lineTo(x, wy(x) - 2); ctx.stroke();
-      // berries
-      for (let x = a + 20; x < c - 10; x += 47) {
-        ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, b.y - 7, 4.6, 0, TAU); ctx.fill();
-        ctx.fillStyle = CORAL; ctx.beginPath(); ctx.arc(x, b.y - 7, 3, 0, TAU); ctx.fill();
-      }
+      ctx.lineCap = 'round'; ctx.lineJoin = 'miter';
+      hazardStem(ctx, a, c, wy, 'h', b.seed || 0);
     }
   }
 
@@ -933,18 +988,12 @@ export class Renderer {
     const pulse = 1 + Math.sin(now * 5 + o.ph) * 0.07;
     const r = o.r * pulse;
     if (o.kind === 'sun') {
-      // a flat sun stamp: halo disc, inked rays, inked disc
-      ctx.fillStyle = gold > 0 ? 'rgba(255,214,110,0.45)' : 'rgba(255,236,170,0.32)';
-      ctx.beginPath(); ctx.arc(o.x, o.y, r * 2.1, 0, TAU); ctx.fill();
-      if (drawSunSprite(ctx, o.x, o.y, r, now * 0.9 + o.ph)) return;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      for (let i = 0; i < 8; i++) { const a = now * 0.9 + o.ph + i * TAU / 8; ctx.moveTo(o.x + Math.cos(a) * r * 1.2, o.y + Math.sin(a) * r * 1.2); ctx.lineTo(o.x + Math.cos(a) * r * 1.6, o.y + Math.sin(a) * r * 1.6); }
-      ctx.strokeStyle = INK; ctx.lineWidth = 4.5; ctx.stroke();
-      ctx.strokeStyle = OCHRE; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(o.x, o.y, r * 0.8 + 2.2, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#f6c445'; ctx.beginPath(); ctx.arc(o.x, o.y, r * 0.8, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#fff1c4'; ctx.beginPath(); ctx.arc(o.x - r * 0.18, o.y - r * 0.18, r * 0.42, 0, TAU); ctx.fill();
+      // a soft gold orb: additive halo, keyline, gold body, hot centre; gentle bob, no spikes
+      const y = o.y + Math.sin(now * 2.2 + o.ph) * 2, rr = r * 0.78;
+      glow(ctx, SEED, o.x, y, rr * (gold > 0 ? 3.4 : 2.8), gold > 0 ? 0.55 : 0.4);
+      ctx.fillStyle = `rgba(16,32,27,${(0.6 - 0.35 * treeNight).toFixed(3)})`; ctx.beginPath(); ctx.arc(o.x, y, rr + 2, 0, TAU); ctx.fill();
+      ctx.fillStyle = SEED; ctx.beginPath(); ctx.arc(o.x, y, rr, 0, TAU); ctx.fill();
+      ctx.fillStyle = SEED_HOT; ctx.beginPath(); ctx.arc(o.x - rr * 0.18, y - rr * 0.2, rr * 0.48, 0, TAU); ctx.fill();
     } else if (o.kind === 'dew') {
       ctx.fillStyle = 'rgba(160,214,240,0.35)'; ctx.beginPath(); ctx.arc(o.x, o.y, r * 1.9, 0, TAU); ctx.fill();
       ctx.beginPath(); ctx.moveTo(o.x, o.y - r * 1.4); ctx.quadraticCurveTo(o.x + r, o.y, o.x, o.y + r * 0.9); ctx.quadraticCurveTo(o.x - r, o.y, o.x, o.y - r * 1.4);
@@ -977,29 +1026,29 @@ export class Renderer {
         // warning: a dashed ochre rule and a stamped bolt glyph, long before it strikes
         const a = 0.55 + 0.35 * Math.sin(now * 8 + c.seed);
         ctx.lineCap = 'butt';
-        ctx.strokeStyle = `rgba(30,26,22,${(0.45 * a).toFixed(3)})`; ctx.lineWidth = c.hw * 2 + 6; ctx.setLineDash([14, 12]);
+        ctx.strokeStyle = `rgba(26,18,22,${(0.35 * a).toFixed(3)})`; ctx.lineWidth = c.hw * 2 + 6; ctx.setLineDash([14, 12]);
         ctx.beginPath(); ctx.moveTo(x, bot); ctx.lineTo(x, top); ctx.stroke();
-        ctx.strokeStyle = `rgba(242,179,61,${(0.5 * a).toFixed(3)})`; ctx.lineWidth = c.hw * 2 - 4;
+        ctx.strokeStyle = `rgba(240,120,90,${(0.42 * a).toFixed(3)})`; ctx.lineWidth = c.hw * 2 - 4;
         ctx.beginPath(); ctx.moveTo(x, bot); ctx.lineTo(x, top); ctx.stroke(); ctx.setLineDash([]);
         this.boltGlyph(ctx, x, bot + 26, 13);
         return;
       }
       // the bolt: a jagged ink-and-gold stroke that flickers
       const seg = 9, h = bot - top, k = calm ? 0 : Math.floor(now * 14);
-      ctx.fillStyle = 'rgba(255,246,200,0.18)'; ctx.fillRect(x - c.hw - 10, top, c.hw * 2 + 20, h);
+      ctx.fillStyle = 'rgba(240,120,90,0.12)'; ctx.fillRect(x - c.hw - 10, top, c.hw * 2 + 20, h);
       ctx.beginPath(); ctx.moveTo(x, top);
       for (let i = 1; i <= seg; i++) ctx.lineTo(x + (i === seg ? 0 : (hash(i * 3.1 + c.seed + k) - 0.5) * c.hw * 1.6), top + h * i / seg);
       ctx.lineJoin = 'miter'; ctx.lineCap = 'round';
-      ctx.strokeStyle = INK; ctx.lineWidth = 14; ctx.stroke();
-      ctx.strokeStyle = OCHRE; ctx.lineWidth = 8; ctx.stroke();
-      ctx.strokeStyle = '#fff6d0'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.strokeStyle = DANGER_BODY; ctx.lineWidth = 14; ctx.stroke();
+      ctx.strokeStyle = DANGER; ctx.lineWidth = 8; ctx.stroke();
+      ctx.strokeStyle = '#ffe9e0'; ctx.lineWidth = 3; ctx.stroke();
       return;
     }
-    // thorn column: an upright vine with thorns both sides
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(244,236,216,0.3)'; ctx.lineWidth = c.hw * 2 + 10;
-    ctx.beginPath(); ctx.moveTo(x, bot); ctx.lineTo(x, top); ctx.stroke();
+    // thorn column: dark stem, coral-rimmed thorns both sides (no capsule)
     const wx = (y) => x + Math.sin(y * 0.05 + c.seed) * 4;
+    hazardStem(ctx, top, bot, wx, 'v', c.seed || 0);
+    return;
+    // eslint-disable-next-line no-unreachable
     ctx.lineJoin = 'round';
     for (let y = top + 10; y < bot - 6; y += 16) {
       const side = (Math.floor(y / 16) % 2) ? -1 : 1, xx = wx(y);
@@ -1021,7 +1070,7 @@ export class Renderer {
   boltGlyph(ctx, x, y, r) {
     ctx.beginPath();
     ctx.moveTo(x + r * 0.2, y - r); ctx.lineTo(x - r * 0.55, y + r * 0.12); ctx.lineTo(x, y + r * 0.12); ctx.lineTo(x - r * 0.25, y + r); ctx.lineTo(x + r * 0.6, y - r * 0.2); ctx.lineTo(x + r * 0.05, y - r * 0.2); ctx.closePath();
-    ctx.lineJoin = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke(); ctx.fillStyle = OCHRE; ctx.fill();
+    ctx.lineJoin = 'round'; ctx.strokeStyle = DANGER_BODY; ctx.lineWidth = 4; ctx.stroke(); ctx.fillStyle = DANGER; ctx.fill();
   }
   drawPickup(ctx, kind, x, y, r, now) {
     ctx.save(); ctx.translate(x, y);
@@ -1038,26 +1087,25 @@ export class Renderer {
     const bob = Math.sin(now * 2.4 + g.x) * 3, r = g.r;
     ctx.save(); ctx.translate(g.x, g.y + bob);
     const owned = s.grafts.includes(g.id);
-    ctx.fillStyle = 'rgba(255,236,170,0.28)'; ctx.beginPath(); ctx.arc(0, 0, r * 2.1, 0, TAU); ctx.fill();
+    ctx.restore(); glow(ctx, '#fff1c4', g.x, g.y + bob, r * 2.6, 0.35); ctx.save(); ctx.translate(g.x, g.y + bob);
     ctx.rotate(Math.sin(now * 1.3 + g.x) * 0.08);
-    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(3, 3, r + 3, 0, TAU); ctx.fill();
-    ctx.fillStyle = owned ? '#e8dcc0' : OCHRE; ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, TAU); ctx.fill();
-    ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(0, 0, r - 2, 0, TAU); ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = 'rgba(16,32,27,0.7)'; ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, TAU); ctx.fill();
+    ctx.fillStyle = owned ? 'rgba(255,246,230,0.6)' : '#fff1c4'; ctx.beginPath(); ctx.arc(0, 0, r + 2, 0, TAU); ctx.fill();
+    ctx.fillStyle = CREAM; ctx.beginPath(); ctx.arc(0, 0, r - 2, 0, TAU); ctx.fill();
     drawGraftIcon(ctx, g.id, r * 1.25);
     ctx.restore();
     const name = GRAFTS[g.id].name + (owned ? ' +' : '');
-    ctx.font = f(800, 13); ctx.textAlign = 'center';
-    const tw = ctx.measureText(name).width + 14, ty = g.y + bob + r + 18;
-    this.card(ctx, g.x - tw / 2, ty - 13, tw, 19, 9, PAPER, 2);
-    ctx.fillStyle = INK; ctx.fillText(name, g.x, ty + 1);
+    ctx.font = f(600, 13); ctx.textAlign = 'center';
+    const tw = ctx.measureText(name).width + 16, ty = g.y + bob + r + 18;
+    ctx.fillStyle = 'rgba(10,16,22,0.55)'; roundRect(ctx, g.x - tw / 2, ty - 13, tw, 19, 9.5); ctx.fill();
+    ctx.fillStyle = CREAM; ctx.fillText(name, g.x, ty + 1);
     ctx.textAlign = 'left';
     if (g.x < W / 2) {
       // one caption for the pair, above them
-      ctx.font = f(800, 12); ctx.textAlign = 'center';
-      const cap = 'GRAFT · steer into one · fork for both';
-      ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.strokeText(cap, W / 2, g.y - r - 22);
-      ctx.fillStyle = PAPER; ctx.fillText(cap, W / 2, g.y - r - 22);
+      ctx.font = f(600, 13); ctx.textAlign = 'center';
+      const cap = 'Graft · steer into one · fork for both';
+      ctx.fillStyle = 'rgba(8,11,28,0.5)'; ctx.fillText(cap, W / 2, g.y - r - 20.5);
+      ctx.fillStyle = CREAM; ctx.fillText(cap, W / 2, g.y - r - 22);
       ctx.textAlign = 'left';
     }
   }
@@ -1134,12 +1182,36 @@ export class Renderer {
     });
   }
   drawBeetle(ctx, b, now) {
-    if (drawBeetleSprite(ctx, b, now)) return;
     const dir = b.vx >= 0 ? 1 : -1;
     ctx.save();
     ctx.translate(b.x, b.y);
-    ctx.scale(dir, 1);
+    ctx.scale(dir * 1.15, 1.15);
+    ctx.rotate(Math.sin(now * 16 + (b.ph || 0)) * 0.05);
     ctx.lineCap = 'round';
+    // legs: 2-frame scuttle, violet rim under dark
+    const fr2 = Math.floor(now * 10 + (b.ph || 0)) & 1;
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const lx = -6 + i * 6, sw = (fr2 ? 3 : -3) * (i & 1 ? -1 : 1);
+      ctx.moveTo(lx, -6); ctx.lineTo(lx + sw - 2, -15);
+      ctx.moveTo(lx, 6); ctx.lineTo(lx - sw - 2, 15);
+    }
+    ctx.strokeStyle = BEETLE_RIM; ctx.lineWidth = 4.2; ctx.stroke();
+    ctx.strokeStyle = BEETLE_BODY; ctx.lineWidth = 2.2; ctx.stroke();
+    ctx.fillStyle = BEETLE_RIM;
+    ctx.beginPath(); ctx.arc(12, 0, 8, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-2, 0, 16.5, 13.5, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = BEETLE_BODY;
+    ctx.beginPath(); ctx.arc(12, 0, 6, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-2, 0, 14.5, 11.5, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(179,155,255,0.75)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-15, 0); ctx.lineTo(9, 0); ctx.stroke();
+    ctx.fillStyle = 'rgba(179,155,255,0.45)'; ctx.beginPath(); ctx.ellipse(-5, -5, 7, 3, -0.2, 0, TAU); ctx.fill();
+    ctx.fillStyle = CREAM; ctx.beginPath(); ctx.arc(15, -2.6, 1.5, 0, TAU); ctx.arc(15, 2.6, 1.5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = BEETLE_RIM; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(17, -2); ctx.quadraticCurveTo(23, -6, 24, -10 + Math.sin(now * 8) * 1.5); ctx.moveTo(17, 2); ctx.quadraticCurveTo(23, 6, 24, 10 - Math.sin(now * 8) * 1.5); ctx.stroke();
+    ctx.restore();
+    return;
+    // eslint-disable-next-line no-unreachable
     ctx.strokeStyle = INK; ctx.lineWidth = 2.4;
     ctx.beginPath();
     for (let i = 0; i < 3; i++) {
@@ -1194,24 +1266,21 @@ export class Renderer {
     const blink = s.invuln > 0 && Math.floor(now * 14) % 2 === 0;
     if (s.tips.length === 2) {
       // an inked dashed arc shows the pair is one fork
-      ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(30,26,22,0.55)';
+      ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(184,255,214,0.55)';
       ctx.beginPath(); ctx.moveTo(s.tips[0].x, s.cy); ctx.quadraticCurveTo(s.cx, s.cy - 34, s.tips[1].x, s.cy); ctx.stroke();
       ctx.setLineDash([]);
       const staged = s.tips[0].staged + s.tips[1].staged;
       if (staged > 0) {
         const t = `+${staged}`;
-        ctx.font = f(800, 18, 'display'); ctx.textAlign = 'center';
-        ctx.lineJoin = 'round'; ctx.lineWidth = 5; ctx.strokeStyle = INK; ctx.strokeText(t, s.cx, s.cy - 36);
-        ctx.fillStyle = OCHRE; ctx.fillText(t, s.cx, s.cy - 36);
+        ctx.font = f(700, 18); ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(8,11,28,0.55)'; ctx.fillText(t, s.cx, s.cy - 34.5);
+        ctx.fillStyle = SEED_HOT; ctx.fillText(t, s.cx, s.cy - 36);
       }
     }
     const sq = fx.squash || 0;
     for (const tip of s.tips) {
       const x = tip.x, y = s.cy;
-      ctx.fillStyle = gold > 0 ? 'rgba(255,214,110,0.35)' : 'rgba(232,248,200,0.3)';
-      ctx.beginPath(); ctx.arc(x, y, 24 + Math.sin(now * 6) * 2, 0, TAU); ctx.fill();
-      ctx.fillStyle = gold > 0 ? 'rgba(255,214,110,0.3)' : 'rgba(232,248,200,0.25)';
-      ctx.beginPath(); ctx.arc(x, y, 15, 0, TAU); ctx.fill();
+      glow(ctx, gold > 0 ? SEED : VINE, x, y, 34 + Math.sin(now * 6) * 2, 0.55);
       if (blink) continue;
       const wob = Math.sin(now * 12) * 0.05;
       const sx = 1 + sq * 0.45 - wob, sy = 1 - sq * 0.3 + wob;
@@ -1267,13 +1336,13 @@ export class Renderer {
       if (p.kind === 'leaf') {
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = Math.min(1, a * 2);
         ctx.beginPath(); leafPath(ctx, -p.size, 0, p.size * 2, 0, 0.4);
-        ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = KEY; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.fillStyle = p.color; ctx.fill();
         ctx.restore();
       } else if (p.kind === 'ring') {
-        ctx.globalAlpha = a; ctx.strokeStyle = INK; ctx.lineWidth = (4 * a + 1.5) * Math.max(1, px);
+        ctx.globalAlpha = a * 0.6; ctx.strokeStyle = KEY; ctx.lineWidth = (3 * a + 1) * Math.max(1, px);
         const rr = p.size * easeOut(1 - a) + 6;
-        ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, TAU); ctx.stroke();
+        ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, TAU); ctx.stroke(); ctx.globalAlpha = a;
         ctx.strokeStyle = p.color; ctx.lineWidth = (2.4 * a + 0.8) * Math.max(1, px);
         ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, TAU); ctx.stroke();
       } else if (p.kind === 'spark') {
@@ -1299,9 +1368,10 @@ export class Renderer {
       const s = k < 0.18 ? easeBack(k / 0.18) : fl.life < 0.22 ? easeOut(fl.life / 0.22) : 1;
       if (s <= 0.02) continue;
       ctx.save(); ctx.translate(fl.x, fl.y); ctx.scale(s, s); ctx.rotate(fl.rot || 0);
-      ctx.font = f(800, fl.size, fl.size >= 22 ? 'display' : 'ui');
-      ctx.lineWidth = Math.max(4, fl.size * 0.24); ctx.strokeStyle = INK; ctx.strokeText(fl.text, 0, 0);
-      ctx.fillStyle = fl.color; ctx.fillText(fl.text, 0, 0);
+      ctx.font = f(700, Math.max(16, fl.size), fl.size >= 22 ? 'display' : 'ui');
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(8,11,28,0.55)'; ctx.strokeText(fl.text, 0, 1.5);
+      ctx.fillStyle = 'rgba(8,11,28,0.6)'; ctx.fillText(fl.text, 0, 1.5);
+      ctx.fillStyle = floaterCol(fl.color); ctx.fillText(fl.text, 0, 0);
       ctx.restore();
     }
     ctx.globalAlpha = 1;
@@ -1316,8 +1386,8 @@ export class Renderer {
       const u = 1 - e;
       const x = u * u * sp.sx + 2 * u * e * sp.cx + e * e * T.x, y = u * u * sp.sy + 2 * u * e * sp.cy + e * e * T.y;
       const r = 5.5 * (1 - k * 0.4);
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, y, r + 1.8, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#f6c445'; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+      glow(ctx, SEED, x, y, r * 3, 0.5);
+      ctx.fillStyle = SEED_HOT; ctx.beginPath(); ctx.arc(x, y, r * 0.7, 0, TAU); ctx.fill();
     }
   }
 
@@ -1328,78 +1398,83 @@ export class Renderer {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.lineJoin = 'round';
-    // height, set like a printed numeral
-    const hy = small ? 52 : 60;
-    ctx.font = f(800, small ? 38 : 46, 'display');
+    // P7 HUD: height (big), score (small), sap (thin) during play; everything else
+    // appears only when it changes and fades out after ~1.2 s.
+    const shadowText = (t, x, y, col) => {
+      ctx.fillStyle = 'rgba(8,11,28,0.45)'; ctx.fillText(t, x, y + 1.5);
+      ctx.fillStyle = col; ctx.fillText(t, x, y);
+    };
+    const hy = small ? 50 : 58;
+    ctx.font = f(400, small ? 40 : 48, 'display');
     const ht = `${m}`;
-    ctx.lineWidth = 7; ctx.strokeStyle = INK; ctx.strokeText(ht, 16, hy);
-    ctx.fillStyle = PAPER; ctx.fillText(ht, 16, hy);
+    shadowText(ht, 16, hy, CREAM);
     const hw = ctx.measureText(ht).width;
-    ctx.font = f(800, small ? 18 : 21, 'display');
-    ctx.lineWidth = 5; ctx.strokeText('m', 22 + hw, hy); ctx.fillText('m', 22 + hw, hy);
-    ctx.font = f(800, 12);
-    const label = (ui.modeLabel && ui.finishM ? ui.modeLabel : STAGES[s.stageIdx].name.toUpperCase() + (ui.daily ? '  ·  DAILY' : ui.modeLabel ? '  ·  ' + ui.modeLabel : '')) + (ui.mirror ? '  ·  MIRRORED' : '');
-    ctx.lineWidth = 3.5; ctx.strokeText(label, 18, hy + 19);
-    ctx.fillStyle = PAPER; ctx.fillText(label, 18, hy + 19);
-    // score + stamped multiplier badge
-    ctx.font = f(700, small ? 17 : 19, 'mono');
+    ctx.font = f(600, small ? 15 : 17);
+    shadowText('m', 21 + hw, hy, 'rgba(255,246,230,0.72)');
+    // mode tag (daily / quest / mirrored) stays, quietly; the stage name is the banner's job
+    const tag = (ui.modeLabel && ui.finishM ? ui.modeLabel : (ui.daily ? 'Daily' : ui.modeLabel || '')) + (ui.mirror ? (ui.daily || ui.modeLabel ? ' · ' : '') + 'Mirrored' : '');
+    // score + contextual combo
     const sc = Math.floor(fx.shownScore).toLocaleString('en-US');
-    const sy = hy + (small ? 42 : 46);
-    ctx.lineWidth = 4.5; ctx.strokeStyle = INK; ctx.strokeText(sc, 18, sy);
-    ctx.fillStyle = '#fbe3a4'; ctx.fillText(sc, 18, sy);
-    if (s.mult > 1) {
-      const bx = 18 + ctx.measureText(sc).width + 30;
-      const pulse = 1 + fx.multPulse * 0.6;
-      ctx.save(); ctx.translate(bx, sy - 6); ctx.rotate(-0.1 + fx.multPulse * 0.15); ctx.scale(pulse, pulse);
-      this.card(ctx, -21, -13, 42, 25, 7, s.golden > 0 ? '#ffe08a' : OCHRE, 2.5);
-      ctx.fillStyle = INK; ctx.font = f(800, 16, 'display'); ctx.textAlign = 'center';
-      ctx.fillText(`×${s.mult}`, 0, 6);
+    const sy = hy + (small ? 24 : 28);
+    ctx.font = f(600, small ? 15 : 16);
+    shadowText(sc, 18, sy, 'rgba(255,246,230,0.8)');
+    const scW = ctx.measureText(sc).width;
+    if (tag) { ctx.font = f(600, 12); shadowText(tag, 18, sy + 18, 'rgba(255,246,230,0.6)'); }
+    if (this._mult !== s.mult) { this._mult = s.mult; this._multT = now; }
+    const multAge = now - (this._multT || 0);
+    if (s.mult > 1 && (multAge < 1.6 || s.golden > 0 || fx.multPulse > 0)) {
+      const fade = s.golden > 0 ? 1 : Math.max(0, Math.min(1, (1.6 - multAge) / 0.4));
+      const pulse = 1 + fx.multPulse * 0.5;
+      ctx.save(); ctx.globalAlpha = fade; ctx.translate(18 + scW + 26, sy - 5); ctx.scale(pulse, pulse);
+      ctx.fillStyle = 'rgba(8,11,28,0.4)'; roundRect(ctx, -19, -11, 38, 22, 11); ctx.fill();
+      ctx.font = f(700, 14); ctx.textAlign = 'center';
+      ctx.fillStyle = s.golden > 0 ? '#ffe08a' : SEED; ctx.fillText(`×${s.mult}`, 0, 5);
       ctx.restore(); ctx.textAlign = 'left';
     }
-    // sap meter: inked pill with ticks; sunlight sparks fly into it
-    // phones: the meter sits right-aligned under the buttons, clear of the score + combo badge
-    const bw = Math.min(small ? 170 : 230, cw * 0.44), bh = 14, bx = small ? cw - bw - 18 : (cw - bw) / 2, by = small ? 88 : 22;
+    // sap: a thin bar under the score (phones) or top-centre (wide)
+    const bw = Math.min(small ? 132 : 200, cw * 0.36), bh = 4, bx = small ? 18 : (cw - bw) / 2, by = small ? sy + (tag ? 30 : 14) : 24;
     const bcx = bx + bw / 2;
     const fr = s.sap / SAP_MAX;
     const low = fr < 0.28;
     const pulse = fx.sapPulse || 0;
-    this.sapTarget.x = bx + Math.max(10, bw * fx.shownSap / SAP_MAX); this.sapTarget.y = by + bh / 2;
-    ctx.save();
-    ctx.translate(bcx, by + bh / 2); ctx.scale(1 + pulse * 0.06, 1 + pulse * 0.18); ctx.translate(-bcx, -(by + bh / 2));
-    this.card(ctx, bx - 3, by - 3, bw + 6, bh + 6, 10, PAPER, 3);
-    const wob = low ? (Math.sin(now * 16) > 0 ? 1 : 0.7) : 1;
+    this.sapTarget.x = bx + Math.max(6, bw * fx.shownSap / SAP_MAX); this.sapTarget.y = by + bh / 2;
+    ctx.fillStyle = 'rgba(8,11,28,0.35)'; roundRect(ctx, bx - 1, by - 1, bw + 2, bh + 2, 3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,246,230,0.16)'; roundRect(ctx, bx, by, bw, bh, 2); ctx.fill();
+    const wob = low ? (Math.sin(now * 10) > 0 ? 1 : 0.6) : 1;
+    const sapW = Math.max(0, bw * fx.shownSap / SAP_MAX);
     ctx.globalAlpha = wob;
-    ctx.fillStyle = s.golden > 0 ? OCHRE : low ? CORAL : MOSS;
-    roundRect(ctx, bx, by, Math.max(0, bw * fx.shownSap / SAP_MAX), bh, 7); ctx.fill();
+    ctx.fillStyle = s.golden > 0 ? SEED : low ? DANGER : VINE;
+    roundRect(ctx, bx, by, sapW, bh, 2); ctx.fill();
     ctx.globalAlpha = 1;
-    if (pulse > 0) { ctx.fillStyle = `rgba(255,250,230,${(pulse * 0.6).toFixed(3)})`; roundRect(ctx, bx, by, Math.max(0, bw * fx.shownSap / SAP_MAX), bh, 7); ctx.fill(); }
-    ctx.strokeStyle = 'rgba(30,26,22,0.45)'; ctx.lineWidth = 1.5;
-    for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(bx + bw * i / 4, by + 3); ctx.lineTo(bx + bw * i / 4, by + bh - 3); ctx.stroke(); }
-    ctx.restore();
-    // a little leaf glyph on the meter
-    ctx.beginPath(); leafPath(ctx, bx - 22, by + bh / 2 + 6, 17, -1.0, 0.45);
-    ctx.lineWidth = 2.2; ctx.strokeStyle = INK; ctx.stroke(); ctx.fillStyle = low ? CORAL : MOSS; ctx.fill();
-    ctx.font = f(800, 10.5); ctx.textAlign = 'center';
-    const st = s.golden > 0 ? `GOLDEN HOUR · ${Math.ceil(s.golden)}` : (s.pu && s.pu.rush > 0) ? 'SAP RUSH' : low ? 'SAP LOW · GRAB SUNLIGHT' : s.storm ? 'RAIN · SAP DRAINS SLOWER' : 'SAP';
-    ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(st, bcx, by + bh + 17);
-    ctx.fillStyle = s.golden > 0 ? '#ffe08a' : low ? '#ffc2b0' : PAPER; ctx.fillText(st, bcx, by + bh + 17);
-    ctx.textAlign = 'left';
-    if (ui.clock != null) this.drawClock(ctx, ui.clock, small ? cw - 18 - bw / 2 : bcx, by + bh + (small ? 44 : 50), now);
-    // acorns picked up this run
-    const showAc = s.acorns > 0 || ui.acornPulse > 0, ay = sy + (small ? 26 : 30);
+    if (sapW > 2) glow(ctx, s.golden > 0 ? SEED : low ? DANGER : VINE, bx + sapW, by + bh / 2, 9 + pulse * 10, 0.5 + pulse * 0.4);
+    // sap status only when it means something
+    const st = s.golden > 0 ? `Golden hour · ${Math.ceil(s.golden)}` : (s.pu && s.pu.rush > 0) ? 'Sap rush' : low ? 'Sap low · grab sunlight' : s.storm ? 'Rain · sap drains slower' : '';
+    if (st) {
+      ctx.font = f(600, 12); ctx.textAlign = small ? 'left' : 'center';
+      shadowText(st, small ? bx : bcx, by + bh + 16, s.golden > 0 ? '#ffe08a' : low ? '#ffb39e' : 'rgba(255,246,230,0.8)');
+      ctx.textAlign = 'left';
+    }
+    if (ui.clock != null) this.drawClock(ctx, ui.clock, small ? cw - 18 - 40 : bcx, small ? 112 : by + bh + 50, now);
+    // acorns: only when one is picked up
+    if (this._ac !== s.acorns) { this._ac = s.acorns; this._acT = now; }
+    const acAge = now - (this._acT || -9);
+    const showAc = s.acorns > 0 && (acAge < 1.6 || ui.acornPulse > 0), ay = by + bh + (st ? 38 : 24);
     let acW = 0;
     if (showAc) {
       const ap = 1 + (ui.acornPulse || 0) * 0.35;
-      ctx.save(); ctx.translate(30, ay - 6); ctx.scale(ap, ap); drawAcorn(ctx, 0.85); ctx.restore();
-      ctx.font = f(700, small ? 15 : 16, 'mono');
-      ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.strokeText(`${s.acorns}`, 46, ay);
-      ctx.fillStyle = '#f3cf8e'; ctx.fillText(`${s.acorns}`, 46, ay);
+      ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, (1.6 - acAge) / 0.4));
+      ctx.translate(30, ay - 6); ctx.scale(ap, ap); drawAcorn(ctx, 0.75); ctx.restore();
+      ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, (1.6 - acAge) / 0.4));
+      ctx.font = f(600, 14);
+      shadowText(`${s.acorns}`, 44, ay, 'rgba(255,246,230,0.85)');
       acW = ctx.measureText(`${s.acorns}`).width;
+      ctx.restore();
     }
     // on phones the first-run coach card owns the band under the HUD; grafts
     // share the acorn row so the left column stays three lines tall
     const band = !(small && ui.coach);
-    if (band && s.grafts && s.grafts.length) {
+    if (this._gr !== (s.grafts ? s.grafts.length : 0)) { this._gr = s.grafts ? s.grafts.length : 0; this._grT = now; }
+    if (band && s.grafts && s.grafts.length && now - (this._grT || -9) < 2.2) {
       if (small && showAc) this.drawGraftHud(ctx, s, 46 + acW + 26, ay - 6);
       else this.drawGraftHud(ctx, s, 30, ay + (showAc ? 26 : 0) - (small ? 0 : 0));
     }
@@ -1425,21 +1500,20 @@ export class Renderer {
       ctx.save();
       ctx.translate(cw / 2, y - outK * 30); ctx.scale(Math.max(0.01, pop), Math.max(0.01, pop)); ctx.rotate(b.gold ? -0.03 : 0);
       ctx.textAlign = 'center';
-      ctx.font = f(800, size, 'display');
-      ctx.lineWidth = Math.max(6, size * 0.16); ctx.strokeStyle = INK;
-      ctx.strokeText(b.text, 3, 4); ctx.fillStyle = INK; ctx.fillText(b.text, 3, 4);
-      ctx.strokeText(b.text, 0, 0);
-      ctx.fillStyle = b.gold ? OCHRE : PAPER; ctx.fillText(b.text, 0, 0);
+      ctx.font = f(400, size * 0.86, 'display');
+      if ('letterSpacing' in ctx) ctx.letterSpacing = `${Math.round(size * 0.04)}px`;
+      ctx.fillStyle = 'rgba(8,11,28,0.4)'; ctx.fillText(b.text, 0, 2);
+      ctx.fillStyle = b.gold ? '#ffe08a' : CREAM; ctx.fillText(b.text, 0, 0);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
       if (b.sub) {
-        ctx.font = f(700, 14);
-        const sw = ctx.measureText(b.sub).width + 24;
-        this.card(ctx, -sw / 2, 14, sw, 26, 13, b.gold ? OCHRE : PAPER, 3);
-        ctx.fillStyle = INK; ctx.fillText(b.sub, 0, 32);
+        ctx.font = f(600, 14);
+        ctx.fillStyle = 'rgba(8,11,28,0.45)'; ctx.fillText(b.sub, 0, 29.5);
+        ctx.fillStyle = 'rgba(255,246,230,0.86)'; ctx.fillText(b.sub, 0, 28);
       }
       if (b.sub2) {
-        ctx.font = f(800, 12.5);
-        ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.strokeText(b.sub2, 0, 58);
-        ctx.fillStyle = '#ffc2b0'; ctx.fillText(b.sub2, 0, 58);
+        ctx.font = f(600, 12.5);
+        ctx.fillStyle = 'rgba(8,11,28,0.45)'; ctx.fillText(b.sub2, 0, 51.5);
+        ctx.fillStyle = '#ffb39e'; ctx.fillText(b.sub2, 0, 50);
       }
       ctx.restore();
       ctx.textAlign = 'left';

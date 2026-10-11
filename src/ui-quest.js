@@ -112,15 +112,8 @@ export function createQuestUI({ getSave, persist, sound, onPlayLevel, onPlayMode
     body.querySelectorAll('[data-play-mode]').forEach((b) => b.addEventListener('click', () => { hide(); onPlayMode(b.dataset.playMode); }));
   }
 
-  function modeGlyph(id) {
-    const g = {
-      classic: ICON.level, zen: '<svg viewBox="0 0 40 40" class="ico"><circle cx="20" cy="20" r="14" fill="#cfe6ff" stroke="#1e1a16" stroke-width="2.6"/><path d="M12 22c3 3 13 3 16 0" fill="none" stroke="#1e1a16" stroke-width="2.6" stroke-linecap="round"/></svg>',
-      sprint: '<svg viewBox="0 0 40 40" class="ico"><circle cx="20" cy="22" r="13" fill="#f4ecd8" stroke="#1e1a16" stroke-width="2.6"/><path d="M20 22V13M16 5h8" stroke="#1e1a16" stroke-width="2.8" stroke-linecap="round"/><path d="M20 22l6 4" stroke="#e2603f" stroke-width="2.8" stroke-linecap="round"/></svg>',
-      hardcore: '<svg viewBox="0 0 40 40" class="ico"><path d="M20 4l13 5v10c0 9-6 15-13 17C13 34 7 28 7 19V9z" fill="#e2603f" stroke="#1e1a16" stroke-width="2.6" stroke-linejoin="round"/><path d="M20 12v10M20 27v1" stroke="#1e1a16" stroke-width="3.2" stroke-linecap="round"/></svg>',
-      mirror: '<svg viewBox="0 0 40 40" class="ico"><path d="M20 5v30" stroke="#1e1a16" stroke-width="2.6" stroke-dasharray="3 3"/><path d="M15 12l-8 8 8 8M25 12l8 8-8 8" fill="none" stroke="#5b7fc4" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      storm: '<svg viewBox="0 0 40 40" class="ico"><path d="M9 20a7 7 0 0 1 5-11 9 9 0 0 1 16 3 6 6 0 0 1 0 12H11a5 5 0 0 1-2-4z" fill="#b4a8d8" stroke="#1e1a16" stroke-width="2.6" stroke-linejoin="round"/><path d="M21 24l-4 7h5l-3 6" fill="none" stroke="#f2b33d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      weekly: ICON.map,
-    };
+  function modeGlyph(id) { // P7-UI: line icons
+    const g = { classic: ICON.level, zen: ICON.zen, sprint: ICON.sprint, hardcore: ICON.shield, mirror: ICON.mirror, storm: ICON.storm, weekly: ICON.map };
     return g[id] || ICON.level;
   }
 

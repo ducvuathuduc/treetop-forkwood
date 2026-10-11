@@ -28,7 +28,7 @@ const WHY = {
 export function createRaceUI(hooks) {
   const box = document.createElement('section');
   box.id = 'race'; box.className = 'overlay'; box.setAttribute('aria-label', 'Live race');
-  box.innerHTML = '<div class="panel paper race-panel"><div class="race-body" aria-live="polite"></div></div>';
+  box.innerHTML = '<div class="panel glass race-panel"><div class="race-body" aria-live="polite"></div></div>';
   document.body.appendChild(box);
   const body = box.querySelector('.race-body');
   const cd = document.createElement('div'); cd.id = 'race-count'; cd.setAttribute('aria-live', 'assertive'); document.body.appendChild(cd);
@@ -83,7 +83,7 @@ export function createRaceUI(hooks) {
     let h = '';
     if (s.state === 'connecting' || s.state === 'waiting') {
       const guest = s.role === 'guest';
-      h = `<p class="kicker">${ICON.modes} LIVE RACE${guest ? ` · ROOM ${roomCode(s.room)}` : ''}</p>
+      h = `<p class="kicker">${ICON.live} LIVE RACE${guest ? ` · ROOM ${roomCode(s.room)}` : ''}</p>
         <h2>${guest ? 'Joining your friend\u2026' : 'Race a friend, live'}</h2>
         ${guest ? `<p class="rc-status"><i class="spin"></i>Connecting (up to ${Math.round(CONNECT_TIMEOUT / 1000)} s)</p>` : `
         <p>Send this link. When your friend opens it you both see the lobby, then race the same tree for ${RACE_SECONDS} seconds, each with the other's branch climbing beside you.</p>
@@ -92,27 +92,27 @@ export function createRaceUI(hooks) {
         <p class="rc-status"><i class="spin"></i>${s.state === 'waiting' ? (s.why === 'left' ? 'Your friend left. Waiting for them to come back\u2026' : 'Room open. Waiting for your friend\u2026') : 'Opening the room\u2026'}</p>`}
         <div class="row"><button class="btn secondary" id="rc-cancel">Cancel</button>${!guest && navigator.share ? '<button class="btn secondary" id="rc-share">Share link</button>' : ''}</div>`;
     } else if (s.state === 'lobby') {
-      h = `<p class="kicker">${ICON.modes} LOBBY · ROOM ${roomCode(s.room)}</p>
+      h = `<p class="kicker">${ICON.live} LOBBY · ROOM ${roomCode(s.room)}</p>
         <div class="rc-vs">${card(me, me.name || 'You', me.ready ? 'ready' : 'you', me.ready ? 'ready' : '')}<span class="vs">vs</span>${card(o, o.name, o.ready ? 'ready' : 'getting ready', o.ready ? 'ready' : '')}</div>
         <p>Same course for both of you · ${RACE_SECONDS} seconds · the highest tree when the clock stops (or when you run out of sap) wins.</p>
         <div class="row"><button class="btn primary" id="rc-ready" ${me.ready ? 'disabled' : ''}>${me.ready ? `Waiting for ${esc(o.name)}\u2026` : 'Ready'}</button></div>
         <div class="row small"><button class="btn secondary" id="rc-cancel">Leave</button></div>`;
     } else if (s.state === 'ended') {
-      h = `<p class="kicker">${ICON.modes} YOUR TREE IS DONE</p>
+      h = `<p class="kicker">${ICON.live} YOUR TREE IS DONE</p>
         <h2>${fmt(s.mine.h)} m</h2>
         <p class="rc-status"><i class="spin"></i>${esc(o ? o.name : 'Friend')} is still growing: <b>${fmt(o ? o.m : 0)} m</b></p>`;
     } else if (s.state === 'done') {
       const res = s.result, lost = o && o.lost;
       const head = !s.mine ? 'Race called off' : res === 'win' ? 'You win!' : res === 'tie' ? 'A dead heat' : `${esc(o.name)} wins`;
       const oh = o && o.end ? o.end.h : o ? o.m : 0, osc = o && o.end ? o.end.sc : o ? o.sc || 0 : 0;
-      h = `<p class="kicker ${res === 'win' ? 'gold' : ''}">${ICON.modes} RACE ${s.round + 1} · ROOM ${roomCode(s.room)}</p>
+      h = `<p class="kicker ${res === 'win' ? 'gold' : ''}">${ICON.live} RACE ${s.round + 1} · ROOM ${roomCode(s.room)}</p>
         <h2 class="rc-result">${head}</h2>
         <div class="rc-vs result">${card(me, me.name || 'You', s.mine ? `${fmt(s.mine.h)} m · ${fmt(s.mine.sc)} pts` : '-', res === 'win' ? 'winner' : '')}<span class="vs">vs</span>${card(o || { p: 0, f: 0 }, o ? o.name : 'Friend', lost ? `${fmt(oh)} m · disconnected` : `${fmt(oh)} m · ${fmt(osc)} pts`, res === 'lose' ? 'winner' : '')}</div>
         ${lost ? `<p class="rc-status warn">${esc(o.name)} disconnected. You can send them a duel link for the same course instead.</p>` : ''}
         <div class="row">${lost ? '<button class="btn primary" id="rc-fallback">Duel link instead</button>' : `<button class="btn primary" id="rc-again" ${me.ready ? 'disabled' : ''}>${me.ready ? `Waiting for ${esc(o.name)}\u2026` : o && o.ready ? 'Accept rematch' : 'Rematch'}</button>`}</div>
         <div class="row small"><button class="btn secondary" id="rc-cancel">Menu</button></div>`;
     } else if (s.state === 'failed') {
-      h = `<p class="kicker">${ICON.modes} LIVE RACE</p>
+      h = `<p class="kicker">${ICON.live} LIVE RACE</p>
         <h2>Couldn\u2019t race live</h2>
         <p>${esc(WHY[s.why] || WHY.network)} You can still play the same course and send it as a duel: your friend races your rival tip whenever they open it.</p>
         <div class="row"><button class="btn primary" id="rc-fallback">Play it as a duel</button></div>

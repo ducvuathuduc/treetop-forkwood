@@ -4,9 +4,9 @@ import { spawn } from 'child_process';
 const require = createRequire(import.meta.url);
 const { chromium, devices } = require(process.env.PW || '/tmp/pw/node_modules/playwright');
 const ROOT = new URL('..', import.meta.url).pathname;
-const PORT = 8143;
+const PORT = +process.env.PORT || 8143;
 const server = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
-await new Promise((r) => setTimeout(r, 700));
+for (let i = 0; i < 40; i++) { try { await fetch(`http://localhost:${PORT}/`); break; } catch { await new Promise((r) => setTimeout(r, 150)); } } // P7-UI: wait for the server, not a fixed 800 ms
 const browser = await chromium.launch();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const res = [];

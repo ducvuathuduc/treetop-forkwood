@@ -4,10 +4,10 @@ import { spawn } from 'child_process';
 import { writeFileSync, mkdirSync } from 'fs';
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PW || '/tmp/pw/node_modules/playwright');
-const PORT = 8138, OUT = new URL('./out/', import.meta.url).pathname;
+const PORT = +process.env.PORT || 8138, OUT = new URL('./out/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const server = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: new URL('..', import.meta.url).pathname, stdio: 'ignore' });
-await new Promise((r) => setTimeout(r, 800));
+for (let i = 0; i < 40; i++) { try { await fetch(`http://localhost:${PORT}/`); break; } catch { await new Promise((r) => setTimeout(r, 150)); } } // P7-UI: wait for the server, not a fixed 800 ms
 const errors = [];
 const browser = await chromium.launch();
 const vp = process.env.VP === 'mobile' ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1280, height: 800 } };

@@ -9,7 +9,7 @@ import * as Q from './quest.js';
 
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = (n) => Math.floor(n).toLocaleString('en-US');
-const TABS = [['streak', 'Streak', ICON.flame], ['season', 'Season', ICON.level], ['league', 'League', ICON.badges], ['duels', 'Duels', ICON.modes], ['profile', 'Profile', ICON.profile]];
+const TABS = [['streak', 'Streak', ICON.flame], ['season', 'Season', ICON.level], ['league', 'League', ICON.badges], ['duels', 'Duels', ICON.duel], ['profile', 'Profile', ICON.profile]];
 const hrs = (ms) => { const h = Math.max(0, Math.floor(ms / 36e5)); return h >= 48 ? `${Math.floor(h / 24)} days` : `${h} h`; };
 
 export function itemName(id) {
@@ -22,7 +22,7 @@ export function itemName(id) {
 export function createGroveUI({ getSave, persist, sound, onOpen, onClose, onStory, onShop, onAvatar }) {
   const box = document.createElement('section');
   box.id = 'grove'; box.className = 'overlay'; box.setAttribute('aria-label', 'Grove: streak, season, league, duels and profile');
-  box.innerHTML = `<div class="panel paper meta-panel grove-panel">
+  box.innerHTML = `<div class="panel glass meta-panel grove-panel">
     <header class="meta-head"><div class="tabs" role="tablist">${TABS.map(([id, n, ic]) => `<button data-gtab="${id}" role="tab"><span class="ti">${ic}</span><span>${n}</span></button>`).join('')}</div>
     <button class="icon gclose" aria-label="Close" title="Close (Esc)">${ICON.close}</button></header>
     <div class="meta-body grove-body"></div></div>`;
@@ -116,7 +116,7 @@ export function createGroveUI({ getSave, persist, sound, onOpen, onClose, onStor
     const sent = D.sent.slice().reverse().map((d) => `<li><code>${esc(d.id)}</code><b>${fmt(d.h)} m</b><small>${esc(d.d)}</small><span class="st ${d.res || ''}">${d.res === 'win' ? 'you won' : d.res === 'lose' ? 'they won' : 'waiting for an answer'}</span></li>`).join('');
     const done = D.done.slice().reverse().map((d) => `<li class="${d.won ? 'win' : 'lose'}"><span class="st">${d.won ? 'won' : 'lost'}</span><span>${esc(d.as === 'racer' ? `vs ${d.from}` : `${d.from} answered`)}</span><b>${fmt(d.mine)} m</b><small>vs ${fmt(d.theirs)} m</small></li>`).join('');
     body.innerHTML = `
-      <section class="card"><header><span class="hico">${ICON.modes}</span><div><h3>Duel a friend</h3>
+      <section class="card"><header><span class="hico">${ICON.duel}</span><div><h3>Duel a friend</h3>
         <p>After any endless or daily run, tap <b>Duel</b> on the result card. The link carries your course, height and pace: your friend grows the exact same tree while your <b>rival tip</b> climbs beside them. When they send their answer back, both of you get acorns (+${R.DUEL_WIN} for the winner, +${R.DUEL_PLAY} for taking part), on each device.</p></div></header></section>
       <section class="card"><header><div><h3>Duels you sent</h3><p>${D.sent.length ? 'Settled when you open your friend\u2019s answer link' : 'None yet'}</p></div></header>${sent ? `<ul class="duels">${sent}</ul>` : ''}</section>
       <section class="card"><header><div><h3>Results</h3><p>${D.done.length ? '' : 'Race a friend\u2019s link to see it here'}</p></div></header>${done ? `<ul class="duels res">${done}</ul>` : ''}</section>`;
