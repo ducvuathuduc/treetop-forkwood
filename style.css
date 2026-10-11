@@ -111,7 +111,7 @@ body.state-title #btn-pause, body.state-over #btn-pause { visibility: hidden; }
 body:has(#dock:not([hidden])) #title { padding-bottom: max(96px, calc(env(safe-area-inset-bottom) + 92px)); }
 #title::before { /* soft legibility veil: dark at the top and bottom, clear in the middle where the vine idles */
   content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1;
-  background: linear-gradient(180deg, rgba(8,11,20,.42) 0%, rgba(8,11,20,0) 34%, rgba(8,11,20,0) 50%, rgba(8,11,20,.62) 100%);
+  background: linear-gradient(180deg, rgba(8,11,20,.5) 0%, rgba(8,11,20,.14) 32%, rgba(8,11,20,.08) 50%, rgba(8,11,20,.5) 72%, rgba(8,11,20,.72) 100%); /* v1.0.1: firmer scrim behind title text + menu */
 }
 .title-card { width: min(420px, 100%); min-width: 0; height: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: center; gap: var(--s4); min-height: 0; }
 .title-card > * { animation: rise var(--t-slow) var(--ease) both; }
@@ -682,3 +682,7 @@ body.calm *, body.calm *::before, body.calm *::after { animation: none !importan
   .chip { padding: 0 6px 0 5px; font-size: 12.5px; }
   .chip.grove .avc .avatar { --s: 26px !important; }
 }
+/* v1.0.1 PERF: solid glass (no backdrop blur) for Auto on iOS / slow tiers / Smooth mode.
+   Every glass element over the live canvas re-blurs it each frame; Safari 26 draws CSS blur on the CPU. */
+html.q-noblur { --blur: none; --glass: rgba(12,18,24,.74); }
+html.q-noblur .map-badge { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(12,18,24,.78); }

@@ -29,6 +29,7 @@ function glow(ctx, col, x, y, r, a) {
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 }
 import { backdrop } from './backdrop.js'; // P6-ART
+import quality from './quality.js'; // v1.0.1 PERF
 import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud } from './render-traps.js'; // P6-TRAPS / P8-FX
 
 const TAU = Math.PI * 2;
@@ -382,14 +383,15 @@ export class Renderer {
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.dpr = 1;
     this.cw = 0; this.ch = 0;
-    this.grain = makeGrain(this.ctx);
+    this.grainCv = makeGrain(); // v1.0.1 PERF: tile canvas; baked into the post overlay
+    this.grain = this.ctx.createPattern(this.grainCv, 'repeat');
     this.layout = { coach: null, banner: null };
     this.sapTarget = { x: 0, y: 0 };
     this.resize();
   }
 
   resize() {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(quality.T.dpr, window.devicePixelRatio || 1); // v1.0.1 PERF: tiered backing resolution
     const cw = window.innerWidth, ch = window.innerHeight;
     this.dpr = dpr; this.cw = cw; this.ch = ch;
     this.canvas.width = Math.round(cw * dpr);
@@ -449,7 +451,7 @@ export class Renderer {
     // P6-ART begin: calm procedural woodblock band (painted plates retired)
     const plated = !ui.noArt;
     this.plated = plated;
-    if (plated) backdrop.draw(ctx, cw, ch, { m: camM, camPx: -cam.y * sc, playL: this.ox, playR: this.ox + W * sc, t: performance.now() / 1000, calm: ui.calm });
+    if (plated) backdrop.draw(ctx, cw, ch, { dpr: this.dpr, m: camM, camPx: -cam.y * sc, playL: this.ox, playR: this.ox + W * sc, t: performance.now() / 1000, calm: ui.calm });
     // P6-ART end
     if (plated) {
       if (THEME.sky.id !== 'sky.print') {
@@ -549,13 +551,16 @@ export class Renderer {
     }
     // post: colour grade, vignette and a whisper of grain, under the HUD
     ctx.globalAlpha = 1;
-    if (plated) backdrop.drawPost(ctx, cw, ch, camM);
-    ctx.globalAlpha = 0.55; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch); ctx.globalAlpha = 1;
+    if (plated) backdrop.drawPost(ctx, cw, ch, camM, { grain: this.grainCv, grainA: 0.55 });
+    else { ctx.globalAlpha = 0.55; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch); ctx.globalAlpha = 1; }
     if (ui.hud) this.drawHud(ctx, s, fx, ui, now);
     drawTrapFxHud(this, ctx, ui); // P8-FX: sap streaks into the meter
     if (ui.hud && !ui.finishM) backdrop.drawZoneBar(ctx, cw, camM, f(600, cw < 520 ? 12 : 13)); // P6-ART
     this.drawSparks(ctx, fx);
   }
+
+  /** v1.0.1: dim the finished frame (frozen world behind a modal). */
+  veil(a) { const ctx = this.ctx; this._screen(ctx); ctx.globalAlpha = 1; ctx.fillStyle = `rgba(8,11,20,${a})`; ctx.fillRect(0, 0, this.cw, this.ch); }
 
   drawSun(ctx, cw, ch, camM, night, now) {
     // flat sun that sinks as you climb; a crescent moon replaces it at night
@@ -1547,7 +1552,7 @@ export class Renderer {
   }
 }
 
-function makeGrain(ctx) {
+function makeGrain() {
   // paper grain tile: sparse light and dark specks, drawn once
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -1562,7 +1567,7 @@ function makeGrain(ctx) {
     img.data[i + 3] = Math.floor(rnd() * rnd() * 34);
   }
   g.putImageData(img, 0, 0);
-  return ctx.createPattern(c, 'repeat');
+  return c;
 }
 
 export function roundRect(ctx, x, y, w, h, r) {

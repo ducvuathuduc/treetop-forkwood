@@ -1,6 +1,6 @@
 {
   "name": "forkwood",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "Forkwood: fork your branch, merge for glory, grow from twig to treetop.",

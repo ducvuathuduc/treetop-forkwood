@@ -712,19 +712,29 @@ function drawTwins(R, ctx, s, tr, now, calm) {
 
 function drawTide(ctx, s, tr, now, botY, calm) {
   if (tr.top == null) return;
+  // v1.0.1 fix: the tide body is a world-space band (-200..W+200); after death the camera pulls
+  // back to 0.42x and it showed as a black column under the game-over card. Fade it out on death.
+  const fade = s.dead ? Math.max(0, 1 - (s.deathT || 0) * 2.5) : 1;
+  if (fade <= 0) return;
+  ctx.save(); ctx.globalAlpha *= fade;
+  drawTideBody(ctx, s, tr, now, botY, calm);
+  ctx.restore();
+}
+function drawTideBody(ctx, s, tr, now, botY, calm) {
+  const TX = 3000; // span the whole screen on wide displays, not just the playfield
   const top = tr.top, gap = top - s.cy, close = !tr.done && gap < 140;
   const k = tr.done ? 0 : clamp01(1 - (gap - 40) / 140);
   // body: a wall of thorns rising from below, its crest of hooked teeth undulating (idle)
   ctx.fillStyle = `rgba(${(26 + 34 * k) | 0},18,${(22 + 4 * k) | 0},0.86)`;
-  ctx.beginPath(); ctx.moveTo(-200, botY + 200); ctx.lineTo(-200, top + 10);
-  for (let x = -200; x <= W + 200; x += 24) ctx.lineTo(x + 12, top - 18 - 6 * Math.sin(now * (6 + 6 * k) + x) - 6 * k), ctx.lineTo(x + 24, top + 6);
-  ctx.lineTo(W + 200, botY + 200); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-TX, botY + 200); ctx.lineTo(-TX, top + 10);
+  for (let x = -TX; x <= W + TX; x += 24) ctx.lineTo(x + 12, top - 18 - 6 * Math.sin(now * (6 + 6 * k) + x) - 6 * k), ctx.lineTo(x + 24, top + 6);
+  ctx.lineTo(W + TX, botY + 200); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = k > 0.6 && !calm && Math.sin(now * 20) > 0 ? CORAL_HOT : RIM; ctx.lineWidth = 3; ctx.stroke();
   // inner depth: a second, darker row of teeth a little lower
   ctx.fillStyle = 'rgba(10,6,8,0.55)';
-  ctx.beginPath(); ctx.moveTo(-200, top + 60);
-  for (let x = -200; x <= W + 200; x += 36) ctx.lineTo(x + 18, top + 30 - 5 * Math.sin(now * 4 + x * 0.7)), ctx.lineTo(x + 36, top + 60);
-  ctx.lineTo(W + 200, botY + 200); ctx.lineTo(-200, botY + 200); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-TX, top + 60);
+  for (let x = -TX; x <= W + TX; x += 36) ctx.lineTo(x + 18, top + 30 - 5 * Math.sin(now * 4 + x * 0.7)), ctx.lineTo(x + 36, top + 60);
+  ctx.lineTo(W + TX, botY + 200); ctx.lineTo(-TX, botY + 200); ctx.closePath(); ctx.fill();
   if (close) {
     // telegraph: rising chevrons over the crest + the glyph right under the tip
     for (let i = 0; i < 3; i++) {

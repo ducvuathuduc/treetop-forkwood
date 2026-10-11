@@ -46,8 +46,14 @@ export class Sound {
     this.buf = null;
     this.zz = {};
     this.menu = false;
-    // fetch the sprite early so it is ready by the first tap (decoded on unlock)
-    this._bytes = typeof fetch === 'function' ? fetch('assets/audio/sfx.mp3').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : Promise.resolve(null);
+    // v1.0.1 PERF: fetch the sprite when the page is idle (or on the first tap), off the first paint
+    this._bytes = null;
+    if (typeof window !== 'undefined') setTimeout(() => (window.requestIdleCallback ? requestIdleCallback(() => this._sfx(), { timeout: 1500 }) : this._sfx()), 3000);
+  }
+
+  _sfx() {
+    if (!this._bytes) this._bytes = typeof fetch === 'function' ? fetch('assets/audio/sfx.mp3').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : Promise.resolve(null);
+    return this._bytes;
   }
 
   /** Must be called from a user gesture (tap, click, key). Safe to call often. */
@@ -88,7 +94,7 @@ export class Sound {
           try { const data = ZZFX.buildSamples(...p); const b = c.createBuffer(1, data.length, c.sampleRate); b.getChannelData(0).set(data); this.zz[k] = b; } catch { /* synth fallback */ }
         }
       }).catch(() => {});
-      this._bytes.then((ab) => {
+      this._sfx().then((ab) => {
         if (!ab) return;
         const done = (b) => { this.buf = b; };
         try { const p = c.decodeAudioData(ab, done, () => {}); if (p && p.then) p.then(done).catch(() => {}); } catch { /* keep synth only */ }

@@ -14,14 +14,17 @@ export function loadArt(name) {
   im.src = BASE + name + '.webp';
   IMGS[name] = im;
   // decode off the main thread before first use, so crossing into a new biome never hitches
-  if (im.decode) im.decode().then(() => { im.ready = true; }, () => { im.ready = im.naturalWidth > 0; });
+  // v1.0.1 PERF: then hand the canvas a GPU-friendly ImageBitmap (Safari otherwise may re-decode
+  // a plate it evicted under memory pressure, mid-run)
+  const toBmp = () => (typeof createImageBitmap === 'function' ? createImageBitmap(im).then((b) => { b.naturalWidth = b.width; b.naturalHeight = b.height; im.bmp = b; }, () => {}) : Promise.resolve());
+  if (im.decode) im.decode().then(() => toBmp().then(() => { im.ready = true; }), () => { im.ready = im.naturalWidth > 0; });
   else im.onload = () => { im.ready = true; };
   return im;
 }
 /** The image if it is decoded and ready to draw, else null. */
 export function art(name) {
   const im = IMGS[name];
-  return im && im.ready && im.naturalWidth > 0 ? im : null;
+  return im && im.ready && im.naturalWidth > 0 ? (im.bmp || im) : null;
 }
 export function artReady(name) { return !!art(name); }
 

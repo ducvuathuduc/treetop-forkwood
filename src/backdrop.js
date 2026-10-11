@@ -19,6 +19,7 @@
 // classic per-zone plates. The API above is unchanged; themes stack on top.
 import { loadArt, art } from './art.js';
 import { zonePalettes as zonePal } from './maps.js';
+import quality from './quality.js'; // v1.0.1 PERF
 
 const TAU = Math.PI * 2;
 const FADE = 46; // metres of cross-fade around each zone boundary
@@ -147,6 +148,13 @@ function tileY(ctx, im, sx, sw, dx, dw, scale, off, ch, alpha) {
   ctx.globalAlpha = Math.min(1, alpha);
   for (let y = ((off % th) + th) % th - th; y < ch; y += th) ctx.drawImage(im, sx, 0, sw, sh, dx, Math.floor(y), dw, Math.ceil(th) + 1);
   ctx.globalAlpha = 1;
+}
+/** Tile a far plate down and, on wide screens, across (centre copy at x0, width dw). */
+function tileXY(ctx, im, x0, dw, cw, scale, off, ch, alpha) {
+  tileY(ctx, im, 0, 540, x0, dw, scale, off, ch, alpha);
+  if (dw >= cw * 0.98) return;
+  for (let x = x0 - dw; x > -dw; x -= dw) tileY(ctx, im, 0, 540, x, dw, scale, off + dw * 0.37, ch, alpha);
+  for (let x = x0 + dw; x < cw; x += dw) tileY(ctx, im, 0, 540, x, dw, scale, off + dw * 0.61, ch, alpha);
 }
 function skyCover(ctx, im, cw, ch, a) {
   const iw = im.naturalWidth, ih = im.naturalHeight, k = Math.max(cw / iw, ch / ih);
@@ -282,7 +290,8 @@ function stepParticles(dt, cw, ch, z, calm) {
   for (const p of POOL) if (p.on) have[p.kind] = (have[p.kind] || 0) + 1;
   for (const k in want) {
     if (k === 'bird') { birdT -= dt; if (birdT <= 0 && (have.bird || 0) === 0) { birdT = 6 + Math.random() * 6; for (let i = 0; i < 2 + (Math.random() * 2 | 0); i++) spawn('bird', cw, ch, false); } continue; }
-    for (let n = have[k] || 0; n < want[k]; n++) spawn(k, cw, ch, lastT === 0);
+    const cap = Math.ceil(want[k] * quality.T.amb); // v1.0.1 PERF: fewer motes on low tiers
+    for (let n = have[k] || 0; n < cap; n++) spawn(k, cw, ch, lastT === 0);
   }
   for (const p of POOL) {
     if (!p.on) continue;
@@ -356,7 +365,11 @@ function drawCode(ctx, p, t, calm) {
  */
 const DBG = {}; // perf toggles for QA scripts only
 let lagCam = null, lagT = 0;
-let fogCache = { key: '', g1: null, g2: null };
+let fogCache = { key: '', g0: null, g1: null, g2: null };
+// v1.0.1 PERF: the soft back layers (sky, haze, far plates, fog, stars, L3, rays) render into
+// one low-resolution buffer that is blitted once; their sources are <= ~1.3 px per CSS px
+// anyway, so this costs no visible detail but saves ~8 full-screen passes at device DPR.
+let backCv = null, backCtx = null, backN = 0;
 function draw(ctx, cw, ch, o) {
   const z = zoneAt(o.m), C = blendPal(z);
   const calm = !!o.calm, t = calm ? 0 : o.t;
@@ -371,22 +384,39 @@ function draw(ctx, cw, ch, o) {
   const pairs = z.j === z.i || z.w < 0.002 ? [[z.i, 1]] : z.w > 0.998 ? [[z.j, 1]] : [[z.i, 1 - z.w], [z.j, z.w]];
   const dens = (a) => Math.min(1, a * 2); // transparent layers: no density dip mid-fade
 
+  const T = quality.T, main = ctx;
+  // v1.0.1: plates are 540 px wide; on wide screens cap the upscale (was cw/540 = 3.5x on a
+  // 1920 desktop, very blurry) and tile the far plates across instead of stretching them
+  const base = Math.min(cw / 540, Math.max(1.25, ch / 700));
+  const bd = Math.min(T.back, o.dpr || 1);
+  const bw = Math.max(1, Math.round(cw * bd)), bh = Math.max(1, Math.round(ch * bd));
+  if (DBG.noBack) { backCv = null; backCtx = null; }
+  else if (!backCv && typeof document !== 'undefined') { backCv = document.createElement('canvas'); backCtx = backCv.getContext('2d', { alpha: false }); }
+  if (backCv && (backCv.width !== bw || backCv.height !== bh)) { backCv.width = bw; backCv.height = bh; backN = 0; }
+  backN++;
+  // low tiers refresh the slow parallax layers every other frame
+  if (!backCv || backN === 1 || T.backEvery <= 1 || backN % T.backEvery === 1) {
+  const ctx = backCv ? backCtx : main;
+  if (backCv) ctx.setTransform(bw / cw, 0, 0, bh / ch, 0, 0);
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   // 1. sky
-  const g0 = ctx.createLinearGradient(0, 0, 0, ch);
-  g0.addColorStop(0, css(C.top)); g0.addColorStop(1, css(C.bot));
-  ctx.fillStyle = g0; ctx.fillRect(0, 0, cw, ch);
+  const skyFull = pairs.length === 1 && img('sky', pairs[0][0]) && (mapDef && mapDef.plates ? SKY_A[pairs[0][0]] : 1) >= 1;
+  if (!skyFull) { // an opaque sky plate covers the gradient completely
+    const gk = `${ch}:${C.top}:${C.bot}`;
+    if (fogCache.gk !== gk) { fogCache.gk = gk; const g0 = ctx.createLinearGradient(0, 0, 0, ch); g0.addColorStop(0, css(C.top)); g0.addColorStop(1, css(C.bot)); fogCache.g0 = g0; }
+    ctx.fillStyle = fogCache.g0; ctx.fillRect(0, 0, cw, ch);
+  }
   for (const [zi, a] of pairs) { const s = img('sky', zi); if (s) skyCover(ctx, s, cw, ch, a * (mapDef && mapDef.plates ? SKY_A[zi] : 1)); }
-  const base = cw / 540;
   const night = pairs.reduce((s, [zi, a]) => s + (ZONES[zi].id === 'sky' ? a : 0), 0);
   const moonClip = (zi) => ZONES[zi].id === 'sky' && !(mapDef && mapDef.plates); // P8-MAPS: only the classic stars plate has the moon
   // 2. L1: the far plate again, small and hazy, nearly fog (0.08)
-  if (!DBG.far) {
+  if (!DBG.far && T.far1) {
     for (const [zi, a] of pairs) {
       const f = img('far', zi); if (!f) continue;
       const k = base * 0.72, dw = 540 * k;
       ctx.save();
       if (moonClip(zi)) { const mp = moonPos(cw, ch); ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.arc(mp.x, mp.y, mp.r * 1.25, 0, TAU); ctx.clip('evenodd'); }
-      tileY(ctx, f, 0, 540, (cw - dw) / 2 - cw * 0.18, dw, k, cam * 0.08 + 140, ch, dens(a) * farA(zi) * 0.42);
+      tileXY(ctx, f, (cw - dw) / 2 - cw * 0.18, dw, cw, k, cam * 0.08 + 140, ch, dens(a) * farA(zi) * 0.42);
       ctx.restore();
     }
   }
@@ -408,7 +438,7 @@ function draw(ctx, cw, ch, o) {
       const k = base * 1.08, dw = 540 * k;
       ctx.save();
       if (moonClip(zi)) { const mp = moonPos(cw, ch); ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.arc(mp.x, mp.y, mp.r * 1.25, 0, TAU); ctx.clip('evenodd'); }
-      tileY(ctx, f, 0, 540, (cw - dw) / 2, dw, k, cam * 0.25, ch, dens(a) * farA(zi));
+      tileXY(ctx, f, (cw - dw) / 2, dw, cw, k, cam * 0.25, ch, dens(a) * farA(zi));
       ctx.restore();
     }
   }
@@ -426,7 +456,7 @@ function draw(ctx, cw, ch, o) {
   }
   // 5. god rays (additive, breathing; day zones only)
   const rayA = pairs.reduce((s, [zi, a]) => s + ZONES[zi].rays * a, 0);
-  if (rayA > 0.01 && !DBG.rays) {
+  if (rayA > 0.01 && !DBG.rays && T.rays) {
     const rc = rays();
     if (rc) {
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -441,6 +471,8 @@ function draw(ctx, cw, ch, o) {
       ctx.restore();
     }
   }
+  }
+  if (backCv) { main.globalAlpha = 1; main.drawImage(backCv, 0, 0, cw, ch); }
   // 6. ambient particles (behind the frames, never over the vine's lane centre)
   const sheet = art('w-sprites-fx');
   if (sheet && !DBG.fx) {
@@ -493,15 +525,10 @@ function drawStars(ctx, cw, ch, cam, C, a, t) {
 
 // ------------------------------------------------------------------ post (grade + vignette)
 let vig = null, vigKey = '';
-function drawPost(ctx, cw, ch, m, o = {}) {
-  const z = zoneAt(m);
-  for (const [zi, a] of [[z.i, 1 - z.w], [z.j, z.w]]) {
-    if (a < 0.01) continue;
-    // plain alpha wash: soft-light/multiply full-screen blends are too costly on phone GPUs
-    const [, col, al] = mapDef && mapDef.plates ? [0, css(resolve()[zi].ray), [0.06, 0.08, 0.1, 0.08, 0.06][zi]] : GRADE[zi];
-    ctx.globalAlpha = al * a * 0.55; ctx.fillStyle = col; ctx.fillRect(0, 0, cw, ch);
-  }
-  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+// v1.0.1 PERF: washes + vignette + paper grain are baked into one overlay (source-over is
+// associative, so one blit equals the three passes) and rebuilt only when the zone mix moves.
+let postCv = null, postKey = '', grainPat = null;
+function vignette(cw, ch) {
   const key = cw + 'x' + ch;
   if (typeof document !== 'undefined' && vigKey !== key) {
     vigKey = key; vig = document.createElement('canvas');
@@ -511,7 +538,38 @@ function drawPost(ctx, cw, ch, m, o = {}) {
     gr.addColorStop(0, 'rgba(8,11,28,0)'); gr.addColorStop(1, 'rgba(8,11,28,0.38)');
     g.fillStyle = gr; g.fillRect(0, 0, vig.width, vig.height);
   }
-  if (vig) ctx.drawImage(vig, 0, 0, cw, ch);
+  return vig;
+}
+function washes(ctx, cw, ch, z) {
+  for (const [zi, a] of [[z.i, 1 - z.w], [z.j, z.w]]) {
+    if (a < 0.01) continue;
+    // plain alpha wash: soft-light/multiply full-screen blends are too costly on phone GPUs
+    const [, col, al] = mapDef && mapDef.plates ? [0, css(resolve()[zi].ray), [0.06, 0.08, 0.1, 0.08, 0.06][zi]] : GRADE[zi];
+    ctx.globalAlpha = al * a * 0.55; ctx.fillStyle = col; ctx.fillRect(0, 0, cw, ch);
+  }
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+}
+function drawPost(ctx, cw, ch, m, o = {}) {
+  const z = zoneAt(m);
+  if (o.grain && !DBG.noBake && typeof document !== 'undefined' && !o.hit) {
+    const key = `${cw}x${ch}:${z.i}:${z.j}:${Math.round(z.w * 40)}:${mapDef ? mapDef.id : ''}:${themeRev}:${o.grainA}`;
+    if (!postCv) postCv = document.createElement('canvas');
+    if (postKey !== key) {
+      postKey = key;
+      if (postCv.width !== cw || postCv.height !== ch) { postCv.width = cw; postCv.height = ch; }
+      const g = postCv.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cw, ch);
+      washes(g, cw, ch, { i: z.i, j: z.j, w: Math.round(z.w * 40) / 40 });
+      const v = vignette(cw, ch); if (v) g.drawImage(v, 0, 0, cw, ch);
+      if (o.grainA > 0) { g.globalAlpha = o.grainA; g.fillStyle = g.createPattern(o.grain, 'repeat'); g.fillRect(0, 0, cw, ch); g.globalAlpha = 1; }
+    }
+    ctx.globalAlpha = 1; ctx.drawImage(postCv, 0, 0, cw, ch);
+    return;
+  }
+  washes(ctx, cw, ch, z);
+  const v = vignette(cw, ch);
+  if (v) ctx.drawImage(v, 0, 0, cw, ch);
+  if (o.grain && o.grainA > 0) { ctx.globalAlpha = o.grainA; ctx.fillStyle = grainPat || (grainPat = ctx.createPattern(o.grain, 'repeat')); ctx.fillRect(0, 0, cw, ch); ctx.globalAlpha = 1; }
   if (o.hit > 0) { ctx.fillStyle = `rgba(240,120,90,${(o.hit * 0.25).toFixed(3)})`; ctx.fillRect(0, 0, cw, ch); }
 }
 

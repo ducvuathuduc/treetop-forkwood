@@ -8,7 +8,8 @@ export function loadTrapFx() {
   asked = true;
   import('./render-traps-fx.js').then((m) => { M = m; }, () => { asked = false; });
 }
-if (typeof window !== 'undefined') setTimeout(loadTrapFx, 6000);
+// v1.0.1 PERF: fetch + parse when the main thread is idle, not mid-frame
+if (typeof window !== 'undefined') setTimeout(() => (window.requestIdleCallback ? requestIdleCallback(loadTrapFx, { timeout: 2000 }) : loadTrapFx()), 6000);
 export function drawTraps(R, ctx, s, now, topY, botY, calm, fx, cam, ui) {
   if (M) return M.drawTraps(R, ctx, s, now, topY, botY, calm, fx, cam, ui);
   if ((ui && ui.hud) || (s.traps && s.traps.length)) loadTrapFx();

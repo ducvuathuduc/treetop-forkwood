@@ -382,7 +382,8 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
     plates.forEach((p, j) => {
       if (!p.classList.contains('on')) return;
       const cv = p.querySelector('.mg-fx');
-      if (cv) drawFx(cv, BEATS[j], now);
+      // v1.0.1 PERF: the line work boils at ~11 fps; 30 Hz redraws keep the motion and halve the cost
+      if (cv && now - (cv._t || 0) >= 32) { cv._t = now; drawFx(cv, BEATS[j], now); }
     });
   }
 

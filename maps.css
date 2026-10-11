@@ -1,5 +1,5 @@
 /* Forkwood map carousel (v1.0: split from style.css, loaded with src/ui-maps-panel.js) */
-#maps { display: flex; justify-content: center; align-items: center; z-index: 14; background: linear-gradient(180deg, rgba(8,11,20,.55), rgba(8,11,20,.18) 40%, rgba(8,11,20,.62)); padding: max(16px, env(safe-area-inset-top)) 0 max(16px, env(safe-area-inset-bottom)); }
+#maps { display: flex; justify-content: center; align-items: center; z-index: 14; background: linear-gradient(180deg, rgba(8,11,20,.62), rgba(8,11,20,.42) 40%, rgba(8,11,20,.7)); /* v1.0.1: the world behind is frozen + dimmed (main.js) */ padding: max(16px, env(safe-area-inset-top)) 0 max(16px, env(safe-area-inset-bottom)); }
 body.maps-open #title { opacity: 0; pointer-events: none; }
 .maps-panel { width: min(460px, 100%); min-width: 0; max-height: 100%; display: flex; flex-direction: column; gap: var(--s3); animation: rise var(--t-slow) var(--ease) both; }
 .maps-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 0 var(--s5); }
@@ -9,7 +9,10 @@ body.maps-open #title { opacity: 0; pointer-events: none; }
 .maps-panel .icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .maps-track { width: 100%; min-width: 0; display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 13% 8px; scrollbar-width: none; outline: none; -webkit-overflow-scrolling: touch; }
 .maps-track::-webkit-scrollbar { display: none; }
-.map-card { position: relative; flex: 0 0 74%; scroll-snap-align: center; border-radius: var(--r-l); overflow: hidden; background: var(--glass-hi); border: 1px solid var(--line); box-shadow: var(--shadow); transform: scale(.94); opacity: .62; transition: transform var(--t) var(--ease), opacity var(--t) var(--ease), border-color var(--t) var(--ease); cursor: pointer; }
+.map-card { position: relative; flex: 0 0 74%; scroll-snap-align: center; border-radius: var(--r-l); overflow: hidden; background: #121a20; border: 1px solid var(--line); box-shadow: var(--shadow); transform: scale(.94); transition: transform var(--t) var(--ease), border-color var(--t) var(--ease); cursor: pointer; }
+/* v1.0.1: cards are opaque (nothing from the game shows through); side cards dim their own content */
+.map-card > * { transition: opacity var(--t) var(--ease); }
+.map-card:not(.on) > * { opacity: .55; }
 .map-card.on { transform: none; opacity: 1; border-color: var(--line-2); }
 .map-card.sel { box-shadow: var(--shadow), 0 0 0 2px var(--accent); }
 .map-art { height: clamp(170px, 30vh, 260px); background-color: var(--sw0); background-image: linear-gradient(170deg, var(--sw0), var(--sw1)); background-size: 120% auto, 110% auto, cover; background-position: center top, center 30%, center; background-repeat: repeat-y, repeat-y, no-repeat; position: relative; }

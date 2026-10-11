@@ -6,7 +6,7 @@ import { createBot, botInput } from './bot.js';
 // v1.0: the postcard renderer loads after boot (first-load budget); it is ready long before a run ends
 let SHARE = null;
 const loadShare = () => (SHARE ? Promise.resolve(SHARE) : import('./share.js').then((m) => (SHARE = m)));
-setTimeout(() => loadShare().catch(() => {}), 2000);
+setTimeout(() => { const go = () => loadShare().catch(() => {}); if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2000 }); else go(); }, 2000); // v1.0.1 PERF: idle prefetch
 import { dailySeed, dailyLabel } from './rng.js';
 import * as M from './meta.js';
 import { applyLoadout, SKIN } from './skins.js';
@@ -16,6 +16,7 @@ import { LEVEL, LEVELS, levelRules, goalText, goalMet, nextLevel, worldOf } from
 import * as Q from './quest.js';
 import { ICON } from './icons.js';
 import { preloadArt } from './art.js';
+import quality from './quality.js'; // v1.0.1 PERF
 import * as R from './retention.js';
 import * as Dir from './director.js'; // P6-TRAPS
 import * as SEA from './seasons.js'; // P6-SEASONS
@@ -57,7 +58,9 @@ const RACE_RT = ['local', 'dead'].includes(params.get('rt')) ? params.get('rt') 
 let raceUI = null, raceLoading = null, raceSeed = null, raceRules = null;
 // P6-RACE end
 const canvas = $('game');
+quality.init(); // v1.0.1 PERF: tier before the first resize
 const renderer = new Renderer(canvas);
+quality.onChange(() => { renderer.resize(); frozen = false; });
 preloadArt();
 const sound = new Sound();
 
@@ -301,6 +304,7 @@ function refreshTitle() {
   $('btn-calm').querySelector('.lbl').textContent = `Calm mode: ${isCalm() ? 'on' : 'off'}`;
   document.body.classList.toggle('calm', isCalm());
   $('btn-calm').setAttribute('aria-pressed', String(isCalm()));
+  { const qb = $('btn-quality'); if (qb) { qb.querySelector('.lbl').textContent = `Quality: ${quality.label()}`; qb.title = 'Auto adapts to your device. Smooth trades a little sharpness for frame rate.'; } }
   if (CHALLENGE) {
     $('challenge').hidden = false;
     if (CHALLENGE.duel) {
@@ -948,6 +952,7 @@ $('btn-stake').addEventListener('click', (e) => {
 });
 $('quest-ico').innerHTML = ICON.map; $('daily-ico').innerHTML = ICON.calendar; $('race-ico').innerHTML = ICON.live; // P7-UI
 $('btn-menu-p').addEventListener('click', toMenu);
+$('btn-quality').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); quality.cycle(); refreshTitle(); ui.toast(quality.mode === 'low' ? 'Smooth mode: lighter effects, steadier frame rate' : quality.mode === 'high' ? 'High quality: full resolution and glass' : 'Auto quality: adapts to your device', 'badge'); }); // v1.0.1 PERF
 $('btn-calm').addEventListener('click', (e) => { e.stopPropagation(); S.calm = !isCalm(); persist(false); sound.unlock(); sound.toggle(); refreshTitle(); });
 $('btn-challenge').addEventListener('click', async () => {
   if (!lastSum) return;
@@ -982,7 +987,7 @@ $('title').addEventListener('pointerdown', (e) => {
   playMain();
 });
 
-window.addEventListener('resize', () => { renderer.resize(); });
+window.addEventListener('resize', () => { renderer.resize(); frozen = false; });
 // iOS only unlocks WebAudio inside touchend/click, so listen there as well
 for (const ev of ['touchend', 'click']) window.addEventListener(ev, () => sound.unlock(), { capture: true, passive: true });
 // a soft click on every menu button
@@ -1004,8 +1009,11 @@ function playTick(dt, inp) {
 let last = performance.now();
 let fpsAcc = 0, fpsN = 0, fpsVal = 60, frameMs = 0;
 
+let introUp = false, frozen = false; // v1.0.1 PERF: the story covers the screen; don't paint the world under it
 function frame(nowMs) {
   const t0 = performance.now();
+  // feed the quality governor real frame intervals while the world is what's on screen
+  if (!introUp && !paused && (mode === 'play' || mode === 'title') && document.visibilityState === 'visible') quality.sample(nowMs - last);
   let dt = (nowMs - last) / 1000;
   last = nowMs;
   if (!(dt > 0)) dt = 0;
@@ -1014,6 +1022,16 @@ function frame(nowMs) {
   if (fpsAcc > 1) { fpsVal = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; }
 
   const base = renderer.baseScale();
+  // v1.0.1: a modal over the title (maps, shop/goals, quests, grove) freezes the demo world:
+  // one clean frame (no traps, coins or banners), dimmed, then no redraws until it closes
+  const modal = mode === 'title' && !introUp && !!document.querySelector('#maps.show, #meta.show, #questmap.show, #grove.show');
+  if (modal) {
+    if (!frozen) { frozen = true; renderer.draw(sim, cam, fx, { hud: false, hints: false, coach: null, bestM: 0, reveal: true, calm: true, mirror: mirrored(), finishM: 0, clock: null }); renderer.veil(0.45); }
+    frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
+    requestAnimationFrame(frame);
+    return;
+  }
+  frozen = false;
   if (mode === 'title') {
     const inp = botInput(bot, sim);
     step(sim, dt, inp);
@@ -1056,7 +1074,8 @@ function frame(nowMs) {
     cam.anchor += (0.32 - cam.anchor) * Math.min(1, dt * 2);
   }
   if (!paused) updateFx(dt);
-  renderer.draw(sim, cam, fx, {
+  introUp = document.body.classList.contains('intro-hold');
+  if (!introUp) renderer.draw(sim, cam, fx, {
     hud: mode === 'play',
     hints: false,
     coach: coachView(sim),
@@ -1067,20 +1086,20 @@ function frame(nowMs) {
     finishM: sim.finishM || 0,
     clock: sim.R && sim.R.timeLimit ? Math.max(0, sim.R.timeLimit - sim.t) : null,
     mirror: mirrored(),
-    reveal: false,
+    reveal: mode === 'title', // v1.0.1: the title demo shows only the world + vine (no thorns, coins, beetles under the menu)
     calm: isCalm(),
     acornPulse: fx.acornPulse || 0,
     touch: input.kind === 'touch',
     raceDraw: raceUI && raceUI.racing && run.mode === 'race' ? raceUI.draw : null, // P6-RACE
     ghostM: mode === 'play' && CHALLENGE && CHALLENGE.duel && isChallengeRun() ? R.ghostHeight(CHALLENGE.duel, sim.t) : null,
   });
-  SEA.drawOverlay(renderer, sim, SEASON.theme, paused ? 0 : dt, isCalm()); // P6-SEASONS
+  if (!introUp) SEA.drawOverlay(renderer, sim, SEASON.theme, paused ? 0 : dt, isCalm()); // P6-SEASONS
   frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
   requestAnimationFrame(frame);
 }
 
 // testing hooks (used by tests/smoke.mjs)
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';
 window.forkwood = {
   version: VERSION,
   get mode() { return mode; },
@@ -1088,6 +1107,8 @@ window.forkwood = {
   get sim() { return sim; },
   get fps() { return fpsVal; },
   get frameMs() { return frameMs; },
+  get quality() { return { mode: quality.mode, tier: quality.tier, dpr: renderer.dpr, blur: quality.blur, frozen, log: quality.log }; },
+  setQuality: (m) => { quality.setMode(m); refreshTitle(); return quality.mode; },
   get coach() { return coach.step; },
   get timeScale() { return timeScale; },
   get banner() { return fx.banner; },
