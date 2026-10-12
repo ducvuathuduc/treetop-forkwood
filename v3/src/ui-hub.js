@@ -36,7 +36,7 @@ export function gates(S, now = new Date()) {
     tabs: runs >= 1, grove: runs >= 1, daily: runs >= 1, quests: runs >= 1,
     shop: runs >= 3, gift: runs >= 3,
     pass: runs >= 5 || (runs >= 1 && SS.isDayTwo(S, now)),
-    league: lvl >= 5, race: lvl >= 8 || runs >= 12,
+    league: lvl >= 5, race: true,
     offers: runs >= 3 || SS.isDayTwo(S, now),
   };
 }
