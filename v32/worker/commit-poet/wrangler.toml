@@ -1,0 +1,21 @@
+# Forkwood commit poet: a tiny proxy that turns a run's numbers into one git-log line.
+# The OpenAI key lives ONLY here, as a Worker secret:   npx wrangler secret put OPENAI_API_KEY
+# Deploy:                                                npx wrangler deploy
+name = "forkwood-commit-poet"
+main = "index.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+ALLOW_ORIGIN = "https://ducvuathuduc.github.io"
+MODEL = "gpt-5-mini"
+MAX_OUTPUT_TOKENS = "60"
+# requests per IP per minute when the rate-limit binding below is unavailable (per-isolate fallback)
+PER_MINUTE = "6"
+
+# Workers Rate Limiting binding (per IP key). period must be 10 or 60 seconds.
+[[ratelimits]]
+name = "POET_LIMIT"
+namespace_id = "4207"
+  [ratelimits.simple]
+  limit = 6
+  period = 60

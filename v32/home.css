@@ -1,0 +1,259 @@
+/* Forkwood v3 HOME: the live demo run plays full screen behind a light, tree-and-paper menu.
+   No museum wall, frames, velvet rope or wall labels on Home. Crisp CSS/SVG only: no blur filters,
+   no backdrop-filter (iOS budget). Layout variants: #title[data-home="a|b|c"] (src/ui-home.js). */
+
+/* default pairing (4: Grandstander + Nunito) declared statically so the first paint already has it; src/fonts.js re-declares
+   the chosen pairing later in the document (last declaration wins) */
+@font-face{font-family:"FW Display";src:url("assets/fonts/v3/grandstander-latin-600.woff2") format("woff2");font-weight:100 699;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"FW Display";src:url("assets/fonts/v3/grandstander-latin-800.woff2") format("woff2");font-weight:700 1000;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"FW Display";src:url("assets/fonts/v3/grandstander-vi-600.woff2") format("woff2");font-weight:100 699;font-display:swap;unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:"FW Display";src:url("assets/fonts/v3/grandstander-vi-800.woff2") format("woff2");font-weight:700 1000;font-display:swap;unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
+/* V3.2: the Home logo face (Sansita Swashed 900, OFL): swash terminals read as tendrils */
+@font-face{font-family:"FW Logo";src:url("assets/fonts/v3/sansita-latin-900.woff2") format("woff2");font-weight:100 1000;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"FW Logo";src:url("assets/fonts/v3/sansita-vi-900.woff2") format("woff2");font-weight:100 1000;font-display:swap;unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:"FW UI";src:url("assets/fonts/v3/nunito-latin-700.woff2") format("woff2");font-weight:100 799;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"FW UI";src:url("assets/fonts/v3/nunito-vi-700.woff2") format("woff2");font-weight:100 799;font-display:swap;unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
+@font-face{font-family:"FW UI";src:url("assets/fonts/v3/nunito-latin-900.woff2") format("woff2");font-weight:800 1000;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"FW UI";src:url("assets/fonts/v3/nunito-vi-900.woff2") format("woff2");font-weight:800 1000;font-display:swap;unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
+
+:root {
+  --cream: #FFF6E6; --cream-2: #F4E6C8; --ink-v: #1E2A1C; --ink-u: #2A1A12; --gold-r: #FFC94A;
+  --leaf-1: #8fd774; --leaf-2: #55ad4c; --leaf-3: #2f7a37; --bark: #5b3f26; --bark-d: #3a2818;
+  --shade: rgba(12,18,13,.62);
+  --txt-sh: 0 2px 0 rgba(20,28,18,.55), 0 0 14px rgba(8,12,8,.45);
+  --logo: "FW Logo", var(--display);
+}
+
+/* ---------------------------------------------------------------- the stage: transparent over the demo */
+#title.hub { background: none !important; }
+#title.hub::after, #title.hub::before { display: none !important; content: none; }
+.home-veil { position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: linear-gradient(180deg, rgba(10,14,10,.50) 0, rgba(10,14,10,.18) 15%, rgba(10,14,10,0) 30%, rgba(10,14,10,0) 54%, rgba(10,14,10,.30) 76%, rgba(10,14,10,.62) 100%); }
+#title.hub .title-card { z-index: 1; grid-template-columns: minmax(0, 1fr); }
+
+/* ---------------------------------------------------------------- logo + world name */
+.hub-sign { flex-direction: column; gap: 4px; margin-bottom: 8px !important; min-height: 0 !important; }
+.logo { margin: 0; font: 800 46px/0.95 var(--display); color: var(--cream); letter-spacing: .005em; text-shadow: 0 3px 0 var(--ink-v), 0 0 22px rgba(8,12,8,.45); }
+body:not(.hub-first) .logo { font-size: 40px; }
+.logo-word { display: inline-flex; align-items: flex-end; }
+.logo-sprout { overflow: visible; }
+.world-name { margin: 0; display: inline-flex; gap: 8px; align-items: baseline; padding: 4px 12px 5px; border-radius: 999px; background: var(--shade); color: var(--cream); box-shadow: inset 0 0 0 1px rgba(255,246,230,.18); }
+.world-name b { font: 800 14px/1.1 var(--ui); }
+.world-name span { font: 700 13px/1.1 var(--ui); opacity: .78; }
+#title[data-home="a"] .world-name { display: none; }
+.hub-sign #btn-settings { position: absolute; left: 0; top: 2px; transform: none; }
+.mz-icon#btn-settings { background: var(--shade); color: var(--cream); box-shadow: inset 0 0 0 1.5px rgba(255,246,230,.28); }
+
+/* vine-written title (all layouts; V3.2: Sansita Swashed with a twining vine, leaves and a bud) */
+.logo-write { width: min(66vw, 300px); height: auto; overflow: visible; display: block; }
+.logo-write text { font: 900 112px var(--logo); letter-spacing: -.01em; fill: var(--cream); stroke: var(--ink-v); stroke-width: 7px; paint-order: stroke fill; stroke-linejoin: round;
+  filter: drop-shadow(0 4px 0 rgba(20,28,18,.55)) drop-shadow(0 0 16px rgba(8,12,8,.35)); }
+.logo-tendril { fill: none; stroke: var(--leaf-2); stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 2px 0 rgba(20,28,18,.6)); }
+.logo-leaf { fill: var(--leaf-1); stroke: var(--ink-v); stroke-width: 2; stroke-linejoin: round; transform-box: fill-box; transform-origin: 0 100%; }
+.logo-bud { fill: #ffb3c7; stroke: var(--ink-v); stroke-width: 2; }
+#title.fresh .logo-write text { stroke-dasharray: 1100; animation: fw-draw 1.7s cubic-bezier(.45,.1,.3,1) .1s both, fw-unfill .6s ease 1.35s both; }
+#title.fresh .logo-tendril { stroke-dasharray: 900; stroke-dashoffset: 900; animation: fw-write 1.5s ease-out .2s forwards; }
+#title.fresh .logo-leaf, #title.fresh .logo-bud { animation: fw-leaf .5s cubic-bezier(.3,1.6,.5,1) both; }
+#title.fresh .logo-leaf:nth-of-type(1) { animation-delay: .7s } #title.fresh .logo-leaf:nth-of-type(2) { animation-delay: .9s }
+#title.fresh .logo-leaf:nth-of-type(3) { animation-delay: 1.1s } #title.fresh .logo-leaf:nth-of-type(4) { animation-delay: 1.3s } #title.fresh .logo-bud { animation-delay: 1.55s }
+@keyframes fw-leaf { from { transform: scale(0); opacity: 0; } }
+@keyframes fw-write { to { stroke-dashoffset: 0; } }
+@keyframes fw-unfill { from { fill-opacity: 0; } }
+@keyframes fw-draw { from { stroke-dashoffset: 1100; } to { stroke-dashoffset: 0; } }
+
+/* ---------------------------------------------------------------- rails: paper leaf badges (≤3 a side) */
+.rail-btn { width: 60px; min-height: 60px; border-radius: 20px 20px 20px 7px; color: var(--ink-u); font-family: var(--ui);
+  background: linear-gradient(180deg, #fffaf0, var(--cream-2)); box-shadow: inset 0 0 0 2px var(--ink-u), inset 0 0 0 4px rgba(255,255,255,.65), 0 4px 0 rgba(20,28,18,.45), 0 8px 18px rgba(0,0,0,.28); }
+.rail-r .rail-btn { border-radius: 20px 20px 7px 20px; }
+.rail-btn .bi { color: var(--leaf-3); }
+.rail-btn .lbl { font: 800 11px/1.1 var(--ui); }
+.rail-btn .rb-sub { font: 700 10px/1.1 var(--ui); color: #6a5a44; }
+.rail-btn.timed .rb-sub { background: var(--leaf-3); color: var(--cream); }
+.rail-btn.offer { background: linear-gradient(180deg, #fff3c9, #f6cf6a); }
+.dot::after, .rail-btn.dot::after { background: #FF5A2A; box-shadow: 0 0 0 2px var(--cream), 0 2px 3px rgba(0,0,0,.4); }
+
+/* ---------------------------------------------------------------- GROW */
+.play-xl { font: 800 34px/1 var(--display); letter-spacing: .05em; color: var(--cream); text-shadow: 0 2px 0 rgba(16,48,20,.7);
+  background: linear-gradient(180deg, var(--leaf-1) 0%, var(--leaf-2) 46%, var(--leaf-3) 100%);
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.38), inset 0 -5px 0 rgba(16,48,20,.35), 0 0 0 3px var(--cream), 0 0 0 5.5px var(--ink-v), 0 8px 0 rgba(16,24,14,.5), 0 14px 26px rgba(0,0,0,.35); }
+#title.hub .play-xl svg { filter: none; width: 1.05em; height: 1.05em; margin: 0 -.2em 0 -.3em; flex: none; }
+#title.hub .best { font: 700 12px var(--ui); color: var(--cream); text-shadow: var(--txt-sh); opacity: .9; }
+#title.hub .stake-chip { background: var(--shade); color: var(--cream); border: 1px solid rgba(255,246,230,.3); font-family: var(--ui); }
+#title.hub .season-card { background: linear-gradient(90deg, #2f6b33, #4f9a45 50%, #2f6b33) !important; color: var(--cream) !important; border-radius: 999px !important; box-shadow: inset 0 0 0 1.5px rgba(255,246,230,.55), 0 4px 10px rgba(0,0,0,.3) !important; font-family: var(--ui); }
+#title.hub .challenge { background: var(--cream); color: var(--ink-u); border-radius: 14px; font-family: var(--ui); box-shadow: 0 0 0 2px var(--ink-u); }
+
+/* ---------------------------------------------------------------- top bar + tab bar: leafy, light */
+body.state-title .metabar .chip, body.hub-room .metabar .chip { background: var(--shade) !important; border: 1px solid rgba(255,246,230,.26) !important; color: var(--cream) !important; }
+.metabar .chip .plus { background: linear-gradient(180deg, var(--leaf-1), var(--leaf-3)); box-shadow: 0 0 0 1.5px var(--cream); }
+.metabar .chip .num { font-family: var(--ui); font-weight: 900; }
+.tabbar { background: linear-gradient(180deg, rgba(14,22,15,0) 0%, rgba(14,22,15,.78) 30%, rgba(12,19,13,.94) 100%) !important; box-shadow: none !important; }
+.tabbar::before { content: ""; position: absolute; left: 6%; right: 6%; top: 14px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(143,215,116,0), rgba(143,215,116,.55) 20%, rgba(143,215,116,.55) 80%, rgba(143,215,116,0)); pointer-events: none; }
+.tabbar button { color: rgba(255,246,230,.82); }
+.tabbar .tl { font: 800 10.5px/1 var(--ui); letter-spacing: .07em; }
+.tabbar button.on { color: var(--ink-u); background: linear-gradient(180deg, #fffaf0, var(--cream-2)); box-shadow: inset 0 0 0 2px var(--ink-u); }
+.tabbar button.locked { color: rgba(255,246,230,.36); }
+.tabbar .tab-play .ti { background: linear-gradient(180deg, var(--leaf-1), var(--leaf-3)); box-shadow: 0 0 0 2.5px var(--cream), 0 0 0 4.5px var(--ink-v), 0 6px 12px rgba(0,0,0,.4); }
+.tabbar .tab-play.on { color: var(--cream); }
+
+/* ---------------------------------------------------------------- layout a: classic-plus */
+.home-pick:empty { display: none; }
+.ws-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.ws-nav { width: 40px; height: 40px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; color: var(--cream); background: var(--shade); box-shadow: inset 0 0 0 1.5px rgba(255,246,230,.3); }
+.ws-nav .mi { width: 20px; height: 20px; }
+.ws-name { border: 0; cursor: pointer; background: none; color: var(--cream); display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 190px; text-shadow: var(--txt-sh); }
+.ws-name b { font: 800 22px/1.05 var(--display); }
+.ws-name span { font: 700 13px/1.15 var(--ui); opacity: .9; }
+.ws-dots { display: flex; gap: 7px; justify-content: center; margin-top: 8px; }
+.ws-dot { width: 26px; height: 26px; border: 0; padding: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.ws-dot::before { content: ""; width: 10px; height: 10px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: rgba(255,246,230,.55); box-shadow: 0 0 0 1.5px rgba(20,28,18,.55); transition: transform .25s, background .25s; }
+.ws-dot.on::before { background: var(--gold-r); transform: rotate(-45deg) scale(1.45); }
+.ws-dot.locked::before { background: rgba(255,246,230,.18); }
+#title[data-home="a"] .hub-main { align-items: center; }
+
+/* ---------------------------------------------------------------- layout b: seed picker */
+#title[data-home="b"] .title-actions > * { order: 3; }
+#title[data-home="b"] #title-best { order: 1; }
+#title[data-home="b"] #btn-stake { order: 2; }
+#title[data-home="b"] #btn-play { order: 3; margin-bottom: 26px; }
+#title[data-home="b"] .home-pick { order: 4; width: 100vw; max-width: 100vw; margin: -8px calc(50% - 50vw) 0; }
+#title[data-home="b"] #btn-play::after { content: ""; position: absolute; left: 50%; top: calc(100% + 5px); width: 7px; height: 30px; margin-left: -3.5px; border-radius: 4px; background: linear-gradient(90deg, var(--bark-d), var(--bark) 50%, var(--bark-d)); box-shadow: 0 0 0 1.5px var(--ink-v); transform-origin: 50% 100%; }
+#title[data-home="b"] #btn-play::before { content: ""; position: absolute; left: calc(50% + 2px); top: calc(100% + 12px); width: 22px; height: 12px; border-radius: 0 100% 0 100%; background: var(--leaf-2); box-shadow: inset 0 0 0 1.5px var(--ink-v); }
+.branch { position: relative; height: 112px; }
+.branch-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.br-shadow { fill: none; stroke: var(--ink-v); stroke-width: 13; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.br-wood { fill: none; stroke: var(--bark); stroke-width: 8; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.br-leaf { fill: var(--leaf-2); stroke: var(--ink-v); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.seeds { position: absolute; inset: 0; }
+.seed { position: absolute; left: var(--x); top: var(--y); width: 44px; height: 44px; padding: 0; border: 0; cursor: pointer; transform: translate(-50%, -50%); border-radius: 50% 50% 50% 14%;
+  box-shadow: 0 0 0 3px var(--cream), 0 0 0 5px var(--ink-v), 0 6px 10px rgba(0,0,0,.35); overflow: visible; transition: transform .3s cubic-bezier(.3,1.6,.5,1); }
+.seed-pic { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
+.seed-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.seed.on { transform: translate(-50%, -50%) scale(1.24); box-shadow: 0 0 0 3px var(--gold-r), 0 0 0 5.5px var(--ink-v), 0 0 0 9px rgba(255,201,74,.35), 0 8px 14px rgba(0,0,0,.4); z-index: 2; }
+.seed.locked .seed-pic::after { content: ""; position: absolute; inset: 0; background: rgba(18,22,16,.55); }
+.seed-lock { position: absolute; right: -6px; bottom: -6px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); color: var(--ink-u); box-shadow: 0 0 0 1.5px var(--ink-u); z-index: 1; }
+.seed-lock .mi { width: 13px; height: 13px; }
+.seed-cap { display: none; }
+#title.fresh[data-home="b"] .br-wood, #title.fresh[data-home="b"] .br-shadow { stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: fw-write 1.2s ease-out forwards; }
+#title.fresh[data-home="b"] .seed { animation: fw-pop .45s cubic-bezier(.3,1.6,.5,1) both; }
+#title.fresh[data-home="b"] .seed:nth-child(2) { animation-delay: .12s } #title.fresh[data-home="b"] .seed:nth-child(3) { animation-delay: .24s } #title.fresh[data-home="b"] .seed:nth-child(4) { animation-delay: .36s }
+#title.fresh[data-home="b"] .seed:nth-child(5) { animation-delay: .48s } #title.fresh[data-home="b"] .seed:nth-child(6) { animation-delay: .6s } #title.fresh[data-home="b"] .seed:nth-child(7) { animation-delay: .72s }
+#title.fresh[data-home="b"] #btn-play { animation: fw-sprout .7s cubic-bezier(.3,1.5,.5,1) .5s both; }
+@keyframes fw-pop { from { opacity: 0; transform: translate(-50%, -50%) scale(.2); } }
+@keyframes fw-sprout { from { opacity: 0; transform: translateY(40px) scale(.4); } }
+
+/* ---------------------------------------------------------------- layout c: world branch (V3.2)
+   The middle of the screen belongs to the demo run. The worlds hang on a branch in one low dock
+   together with GROW; the title shrinks to a compact vine-written logo. */
+#title[data-home="c"] .home-veil { background:
+  linear-gradient(180deg, rgba(10,14,10,.55) 0, rgba(10,14,10,.12) 17%, rgba(10,14,10,0) 28%, rgba(10,14,10,0) 58%, rgba(10,14,10,.35) 74%, rgba(10,14,10,.7) 100%),
+  radial-gradient(ellipse 70% 55% at 50% 46%, rgba(10,14,10,0) 55%, rgba(10,14,10,.28) 100%); }
+#title[data-home="c"] .hub-sign { margin-bottom: 0 !important; }
+#title[data-home="c"] .world-name { display: none; }
+#title[data-home="c"] .hub-main { grid-template-areas: "l . r"; align-items: start; }
+#title[data-home="c"] .rail-l { grid-area: l; } #title[data-home="c"] .rail-r { grid-area: r; }
+#title[data-home="c"] .hub-art { display: none; }
+#title[data-home] .rail { position: relative; z-index: 3; }
+/* the dock: branch + caption + GROW on one translucent leaf-green card (no backdrop blur: iOS budget) */
+#title[data-home="c"] .title-actions { position: relative; width: min(100%, 560px); margin: 0 auto; gap: 8px; padding: 10px 12px 14px; border-radius: 30px;
+  background: linear-gradient(180deg, rgba(20,34,22,.30) 0%, rgba(14,24,16,.62) 46%, rgba(12,20,14,.78) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,246,230,.16), inset 0 0 0 1px rgba(143,215,116,.16), 0 12px 32px rgba(0,0,0,.32); }
+#title[data-home="c"] .title-actions > * { order: 5; }
+#title[data-home="c"] #season-cards { order: 1; } #title[data-home="c"] #challenge { order: 2; }
+#title[data-home="c"] .home-pick { order: 3; width: 100%; } #title[data-home="c"] #btn-play { order: 4; margin-top: 2px; width: 100%; }
+#title.hub .play-xl { font-size: 30px; } /* style.css #btn-play sets 18px by id */
+body.hub-first #title[data-home="c"] .title-actions { margin-bottom: 4px; }
+.wb-cap { margin: 0 0 2px; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: 8px; row-gap: 0; color: var(--cream); text-shadow: var(--txt-sh); line-height: 1.2; }
+.wb-cap b { font: 800 19px/1.2 var(--display); letter-spacing: .005em; }
+.wb-cap span { font: 700 13.5px/1.3 var(--ui); opacity: .82; }
+.wbranch { position: relative; container-type: inline-size; aspect-ratio: 1000 / 200; margin: 2px -4px 0; }
+.wb-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.wb-shadow { fill: none; stroke: rgba(20,14,8,.85); stroke-width: 12; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.wb-wood { fill: none; stroke: var(--bark); stroke-width: 7.5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.wb-hi { fill: none; stroke: #8a6440; stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; transform: translateY(-1.5px); opacity: .8; }
+.wb-leaf { fill: var(--leaf-2); stroke: var(--ink-v); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.fruit { position: absolute; left: var(--x); top: var(--y); width: clamp(34px, 9.4cqw, 70px); aspect-ratio: 1; padding: 0; border: 0; cursor: pointer; border-radius: 50%; transform: translate(-50%, -50%);
+  box-shadow: 0 6px 12px rgba(0,0,0,.45), inset 0 0 0 2px rgba(42,26,10,.6); transition: transform .35s cubic-bezier(.3,1.6,.5,1), filter .3s; }
+.fruit::after { content: ""; position: absolute; inset: -14%; background: url(assets/v3/home/wframe.webp) center / contain no-repeat; pointer-events: none; transition: filter .3s; }
+.fruit::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 3px; height: 30%; margin-left: -1.5px; background: var(--bark-d); border-radius: 2px; }
+.fruit.on { transform: translate(-50%, -50%) scale(1.16); box-shadow: 0 0 18px 6px rgba(255,214,120,.55), 0 8px 16px rgba(0,0,0,.45); z-index: 2; }
+.fruit.on::after { filter: brightness(1.18) saturate(1.15) drop-shadow(0 0 6px rgba(255,220,130,.8)); }
+.fruit:hover:not(.on) { transform: translate(-50%, -50%) scale(1.08); }
+.fruit.locked::after { filter: saturate(.5) brightness(.8); }
+.fruit-pic { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
+.fruit-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fruit.locked .fruit-pic::after { content: ""; position: absolute; inset: 0; background: rgba(18,22,16,.55); }
+.fruit .seed-lock { right: -7px; bottom: -7px; width: 20px; height: 20px; z-index: 1; }
+.fruit .seed-lock .mi { width: 12px; height: 12px; }
+.fruit-price { position: absolute; left: 50%; top: 74%; transform: translateX(-50%); white-space: nowrap; padding: 1px 7px 2px 5px; border-radius: 999px; background: var(--cream); color: var(--ink-u); font: 900 11px/1.3 var(--ui); box-shadow: 0 0 0 1.5px var(--ink-u), 0 3px 6px rgba(0,0,0,.35); display: inline-flex; align-items: center; gap: 2px; z-index: 3; }
+.fruit-price .mi { width: 11px; height: 11px; color: #9a5f1f; }
+.fruit-price > .mi { color: var(--ink-u); margin-right: 1px; }
+#title.fresh[data-home="c"] .wb-wood, #title.fresh[data-home="c"] .wb-shadow, #title.fresh[data-home="c"] .wb-hi { stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: fw-write 1.1s ease-out forwards; }
+#title.fresh[data-home="c"] .fruit { animation: fw-pop .5s cubic-bezier(.3,1.6,.5,1) calc(.45s + var(--i) * .07s) both; }
+#title.fresh[data-home="c"] .fruit.on { animation-name: fw-pop-on; }
+@keyframes fw-pop-on { from { opacity: 0; transform: translate(-50%, -50%) scale(.2); } to { transform: translate(-50%, -50%) scale(1.16); } }
+
+/* ---------------------------------------------------------------- tab bar: collapse hidden tabs (contest mode hides Shop/Pass/League) */
+.tabbar { grid-template-columns: none !important; grid-auto-flow: column; grid-auto-columns: minmax(0, 112px); justify-content: center; }
+.tabbar > button[hidden], .tabbar > button[style*="display: none"] { display: none !important; }
+@media (min-width: 900px) and (min-aspect-ratio: 11/10) { .tabbar { grid-template-rows: none !important; grid-auto-flow: row; grid-auto-rows: 84px; } .tabbar::before { display: none; } }
+
+/* ---------------------------------------------------------------- dev settings (home + font) */
+.dev-set { width: 100%; margin: 6px 0 4px; padding-top: 10px; border-top: 1px dashed rgba(107,74,24,.35); text-align: left; }
+.dev-h { margin: 0 0 6px; font: 800 11px/1 var(--ui); letter-spacing: .1em; text-transform: uppercase; opacity: .7; }
+.dev-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.dev-row > span { width: 40px; font: 800 12px var(--ui); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg button { border: 0; border-radius: 999px; padding: 6px 10px; cursor: pointer; font: 800 11.5px/1 var(--ui); background: rgba(42,26,18,.08); color: var(--ink-u); }
+.seg button.on { background: var(--leaf-3); color: var(--cream); }
+
+/* ---------------------------------------------------------------- rooms: light paper + leaf instead of the museum wall */
+body.hub-room #room, #room.room { background: linear-gradient(180deg, #24362a 0%, #1a281f 60%, #142019 100%) !important; }
+#room .room-head .room-title { font-family: var(--display) !important; letter-spacing: 0 !important; text-transform: none !important; }
+
+/* ---------------------------------------------------------------- small phones */
+@media (max-width: 380px) { .seed { width: 38px; height: 38px; } }
+@media (max-width: 899px), (max-aspect-ratio: 11/10) { .seed { width: 42px; height: 42px; } }
+@media (max-height: 700px) and (orientation: portrait) {
+  .logo { font-size: 34px !important; } .logo-write { width: min(64vw, 236px); }
+  .seed { width: 40px; height: 40px; } .branch { height: 92px; }
+  .wb-cap b { font-size: 17px; } .wb-cap span { font-size: 12.5px; }
+  #title[data-home="c"] .title-actions { padding: 8px 10px 12px; gap: 6px; }
+}
+
+/* ---------------------------------------------------------------- landscape / desktop: one centred column over the full-screen world */
+@media (min-width: 900px) and (min-aspect-ratio: 11/10) {
+  #title.hub .title-card { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; padding: calc(max(14px, env(safe-area-inset-top)) + 56px) 3vw 4vh calc(var(--tab-w) + 3vw); column-gap: 0; }
+  body.hub-first #title.hub .title-card { padding-left: 3vw; }
+  .hub-sign { grid-column: 1; }
+  .hub-main { grid-row: 2; grid-column: 1; width: min(100%, 1240px); margin: 0 auto; grid-template-columns: 96px minmax(0, 1fr) 96px; }
+  #title.hub .title-actions { grid-row: 3; grid-column: 1; padding: 8px 0 0; gap: 10px; align-items: center; }
+  #title.hub .play-xl { width: min(440px, 34vw); height: 88px; font-size: 38px; }
+  #title.hub #season-cards { width: min(440px, 34vw); }
+  .logo { font-size: 64px !important; } .logo-write { width: min(30vw, 400px); }
+  .rail-btn { width: 80px; min-height: 80px; } .rail-btn .lbl { font-size: 12.5px; }
+  .world-name b { font-size: 17px; } .world-name span { font-size: 15px; }
+  .ws-name b { font-size: 28px; } .ws-name span { font-size: 15px; }
+  #title[data-home="b"] .home-pick { width: calc(100vw - var(--tab-w)); max-width: none; margin: -8px 0 0; align-self: center; }
+  body.hub-first #title[data-home="b"] .home-pick { width: 100vw; }
+  .branch { height: 140px; } .seed { width: 72px; height: 72px; }
+  #title[data-home="c"] .title-actions { width: min(100%, 560px, 42vw); padding: 10px 20px 16px; gap: 6px; border-radius: 32px; }
+  #title.hub[data-home="c"] .play-xl { width: 100%; height: clamp(64px, 8vh, 88px); font-size: clamp(30px, 3.6vh, 40px); }
+  .wb-cap b { font-size: 24px; } .wb-cap span { font-size: 16px; }
+  .fruit-price { font-size: 12.5px; }
+}
+@media (min-width: 1700px) and (min-aspect-ratio: 11/10) {
+  .logo { font-size: 84px !important; } .logo-write { width: 480px; }
+  #title[data-home="c"] .title-actions { width: min(100%, 700px, 36vw); }
+  .wb-cap b { font-size: 28px; } .wb-cap span { font-size: 18px; }
+  .rail-btn { width: 96px; min-height: 96px; }
+  #title.hub .play-xl { height: 100px; font-size: 44px; }
+  .branch { height: 170px; } .seed { width: 88px; height: 88px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #title.fresh * { animation: none !important; }
+  .fruit { animation: none !important; }
+  #title.fresh .logo-write text { fill-opacity: 1; stroke-dashoffset: 0; }
+}
+/* v3 INT: museum-rooms.css (which hides closed sheets) loads lazily; over the see-through home the closed
+   settings sheet (calm switch, preview options) was painting on the title until it loaded */
+.sheet:not(.show) { display: none; }
