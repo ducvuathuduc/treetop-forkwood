@@ -494,7 +494,7 @@ function handleEvents(s, quiet) {
         if (!quiet) coachEvent('collect', e, s);
         burst(e.x, e.y, 6, '#ffe08a', 170, 7, 0.45, 'spark');
         if (sim && sim.feelS) { fx.chainPts = fx.chainPts || []; fx.chainPts.push({ x: e.x, y: e.y, age: 0 }); if (fx.chainPts.length > 10) fx.chainPts.shift(); } // V3-FEEL sparkle chain
-        if (!quiet) { sound.collect(e.chain, e.forked); spark(e.x, e.y); floater(e.x + (e.chain % 2 ? 26 : -26), e.y - 10, `+${e.pts}`, '#fbe3a4', 15 + Math.min(7, e.chain), 0.6); }
+        if (!quiet) { sound.collect(e.chain, e.forked, s.tips.length === 2 ? Math.sign(e.x - s.cx) : 0); spark(e.x, e.y); floater(e.x + (e.chain % 2 ? 26 : -26), e.y - 10, `+${e.pts}`, '#fbe3a4', 15 + Math.min(7, e.chain), 0.6); }
         break;
       case 'fork':
         for (const t of s.tips) { ring(t.x, s.cy, '#8fd0e6', 50); burst(t.x, s.cy, 5, '#a9cf5a', 130, 6, 0.6, 'leaf'); }
@@ -1041,7 +1041,7 @@ canvas.addEventListener('pointerdown', (e) => {
   input.pointerId = e.pointerId; input.downT = performance.now(); input.downX = e.clientX; input.downY = e.clientY; input.moved = 0;
   if (e.pointerType === 'mouse') input.targetX = mirrorX(worldX(e.clientX));
   else input.anchor = input.targetX ?? (sim ? sim.cx : W / 2);
-  if (e.pointerType === 'mouse' && mode === 'play' && e.button === 0) toggleFork();
+  input.btn = e.button; // P0-FTUE: mouse forks on a click RELEASE without a drag (like touch), so click-and-drag steering never forks by accident
 });
 window.addEventListener('pointermove', (e) => {
   if (e.pointerType === 'mouse') {
@@ -1049,6 +1049,7 @@ window.addEventListener('pointermove', (e) => {
     if (input.kind === 'key' && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) < 3) return;
     input.kind = 'mouse';
     input.targetX = mirrorX(worldX(e.clientX));
+    if (e.pointerId === input.pointerId) input.moved = Math.max(input.moved, Math.hypot(e.clientX - input.downX, e.clientY - input.downY));
   } else if (e.pointerId === input.pointerId) {
     input.targetX = Math.max(0, Math.min(W, input.anchor + ((e.clientX - input.downX) / cam.scale) * TOUCH_GAIN * (mirrored() ? -1 : 1)));
     input.moved = Math.max(input.moved, Math.hypot(e.clientX - input.downX, e.clientY - input.downY));
@@ -1057,6 +1058,7 @@ window.addEventListener('pointermove', (e) => {
 window.addEventListener('pointerup', (e) => {
   if (e.pointerId !== input.pointerId) return;
   if (e.pointerType !== 'mouse' && mode === 'play' && performance.now() - input.downT < 260 && input.moved < 16) toggleFork();
+  if (e.pointerType === 'mouse' && mode === 'play' && input.btn === 0 && performance.now() - input.downT < 350 && input.moved < 14) toggleFork();
   input.pointerId = null;
 });
 window.addEventListener('pointercancel', () => { input.pointerId = null; });
