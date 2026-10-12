@@ -333,8 +333,11 @@ const scoreK = (s) => scoreTierK(s) /* V3-FEEL combo tier */ * (s.pu.ink > 0 ? 2
 export const sapMax = (s) => s.sapMaxV || SAP_MAX;
 function addScore(s, pts) { const v = Math.round(pts * scoreK(s)); s.score += v; return v; }
 
+const GIT_LOG = new Set(['fork', 'merge', 'emptymerge', 'revert', 'golden']);
 function emit(s, type, data = {}) {
   s.events.push({ type, ...data });
+  // P2-GIT: a tiny commit history of the run (fork / merge / revert / golden by height) for the postcard's git graph
+  if (GIT_LOG.has(type)) { const L = s.gitLog || (s.gitLog = []); if (L.length < 240) L.push({ type, m: Math.max(0, Math.round(-s.cy / PX_PER_M)), mult: data.mult || 0 }); }
 }
 
 // ---------------------------------------------------------------- spawning primitives
