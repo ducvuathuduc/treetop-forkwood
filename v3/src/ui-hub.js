@@ -37,7 +37,7 @@ export function gates(S, now = new Date()) {
     shop: runs >= 3, gift: runs >= 3,
     pass: runs >= 5 || (runs >= 1 && SS.isDayTwo(S, now)),
     league: lvl >= 5, race: lvl >= 8 || runs >= 12,
-    offers: runs >= 3 || SS.isDayTwo(S, now),
+    offers: runs >= 10 || (runs >= 3 && SS.isDayTwo(S, now)), // P0-FTUE: no paid offer in the first session
   };
 }
 const GATE_TEXT = { shop: 'The gift shop opens after your 3rd climb.', grove: 'The Grove opens after your first climb.', pass: 'The Season Pass opens tomorrow (or after 5 climbs).', league: 'Leagues open at level 5.' };

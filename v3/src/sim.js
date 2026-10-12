@@ -159,6 +159,7 @@ export function createSim(opts = {}) {
     seed,
     rng: mulberry32(seed),
     tutorial: !!opts.tutorial,
+    mercy: !!opts.mercy, // P0-FTUE: the very first run (set by main.js only) forgives the sap meter while it teaches
     demo: !!opts.demo,
     pure: !!opts.pure,
     R: makeRules(opts.rules),
@@ -332,8 +333,11 @@ const scoreK = (s) => scoreTierK(s) /* V3-FEEL combo tier */ * (s.pu.ink > 0 ? 2
 export const sapMax = (s) => s.sapMaxV || SAP_MAX;
 function addScore(s, pts) { const v = Math.round(pts * scoreK(s)); s.score += v; return v; }
 
+const GIT_LOG = new Set(['fork', 'merge', 'emptymerge', 'revert', 'golden']);
 function emit(s, type, data = {}) {
   s.events.push({ type, ...data });
+  // P2-GIT: a tiny commit history of the run (fork / merge / revert / golden by height) for the postcard's git graph
+  if (GIT_LOG.has(type)) { const L = s.gitLog || (s.gitLog = []); if (L.length < 240) L.push({ type, m: Math.max(0, Math.round(-s.cy / PX_PER_M)), mult: data.mult || 0 }); }
 }
 
 // ---------------------------------------------------------------- spawning primitives
@@ -1057,6 +1061,7 @@ export function step(s, dt, input = {}) {
   drain *= (hasGraft(s, 'taproot') ? 0.85 : 1) * (s.storm ? 0.7 : 1) * s.R.drain;
   drain *= (RM ? RM.drain : 1) * (s.pu.amber > 0 ? 0.7 : 1) * (s.knots.includes('thirst') ? 1.12 : 1); // V2-MECH
   if (s.feelS) drain *= s.feelS.drainK; // V3-FEEL balance knob
+  if (s.mercy) drain *= s.merges < 1 && m < 200 ? 0 : m < 150 ? 0.5 : 1; // P0-FTUE: no drain until the first merge, half drain to 150 m
   if (s.webT > 0) drain += 6;
   if (!s.demo && !rush) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : s.still > 0 ? 0.6 : 1);
 
@@ -1181,7 +1186,7 @@ function merge(s) {
   if (staged > 0 && s.forkTime > 0.9) {
     const jit = feelCoyote(s, hazardAhead(s, 190 * ringJitK(s))); // V3-FEEL: coyote time after a row // V2-MECH: Quick Merge widens the window
     let bonus = addScore(s, (50 + 20 * staged * s.mult) * (jit ? ringJitMult(s) : 1));
-    s.mult = Math.min(MAX_MULT, s.mult + 1);
+    s.mult = Math.min(MAX_MULT, s.mult + (s.mercy && s.goldens < 1 ? 2 : 1)); // P0-FTUE: the first run reaches golden hour in ~4 merges, not 7
     s.maxMult = Math.max(s.maxMult, s.mult);
     const goldenNow = s.mult >= ringGolden(s) && s.golden <= 0; // V2-MECH: Sunwise
     skillMergeCut(s); // V2-MECH: merges charge the critter skill

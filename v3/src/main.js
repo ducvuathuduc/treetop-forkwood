@@ -300,7 +300,7 @@ function startRun(isDaily = daily) {
   const world = pure || isRace ? worldForSeed(seed) : (trialWorld || selectedWorld());
   trialWorld = null;
   const mech = BOT_MODE || autoplay ? null : EC.mechOptions(S, { pure, race: isRace, level: !!lv, tutorial });
-  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director, econ, world, ...(mech || {}), feel: FEEL });
+  sim = createSim({ seed, tutorial, mercy: tutorial && !daily && !BOT_MODE && !autoplay, bestM, pure, charm: pure ? null : S.charm, rules, director, econ, world, ...(mech || {}), feel: FEEL });
   replay.n = 0; replay.at = 0; // V3-FEEL: last-moment frames
   showWorld(world);
   // /P8-ECON
@@ -455,7 +455,7 @@ function coachView(s) {
   const tap = input.kind === 'touch' ? 'TAP' : input.kind === 'key' ? 'SPACE' : 'CLICK';
   const steer = input.kind === 'touch' ? 'Drag anywhere to steer' : input.kind === 'key' ? '← → to steer' : 'Move the mouse to steer';
   switch (coach.step) {
-    case 'steer': return { title: steer, sub: 'Catch sunlight to refill your sap', n: 1 };
+    case 'steer': return { title: steer, sub: coach.collects ? `Sunlight = sap · ${coach.collects} of 3` : 'Sunlight is your sap: steer into it', n: 1 };
     case 'fork': return { title: `${tap} to fork`, sub: coach.retry === 'emptymerge' ? 'Grab sunlight on both branches before merging' : coach.retry === 'revert' ? 'A hit reverts a branch. Fork again!' : 'Split into two branches: one per gap', n: 2, urgent: coach.slow, cue: coach.slow };
     case 'merge': {
       const staged = s.tips.length === 2 ? s.tips[0].staged + s.tips[1].staged : 0;
@@ -473,7 +473,10 @@ function updateCoach(s, dt) {
   if (!coach.step || s.dead) return 1;
   coach.t += dt;
   const y = s.cy;
-  if (coach.step === 'steer' && s.brambles.some((b) => b.kind === 'split' && b.y < y && b.y > y - 520)) { coach.step = 'fork'; coach.t = 0; }
+  // P0-FTUE: the steer lesson gets its own beat: slow-mo until the first sunlight is caught (max 4 s), and it
+  // only hands over to the fork lesson once at least one sunlight was caught or the split is really close
+  if (coach.step === 'steer' && coach.collects === 0 && coach.t < 4) coach.slow = true;
+  if (coach.step === 'steer' && s.brambles.some((b) => b.kind === 'split' && b.y < y && b.y > y - (coach.collects ? 520 : 360))) { coach.step = 'fork'; coach.t = 0; }
   if (coach.step === 'fork' && !s.forked && s.brambles.some((b) => b.kind === 'split' && b.y < y && b.y > y - 300)) coach.slow = true;
   if (coach.step === 'merge' && s.forked && s.brambles.some((b) => b.kind === 'gate' && b.y < y && b.y > y - 340)) coach.slow = true;
   if (coach.step === 'praise' && coach.t > 3.4) {
@@ -491,7 +494,7 @@ function handleEvents(s, quiet) {
         if (!quiet) coachEvent('collect', e, s);
         burst(e.x, e.y, 6, '#ffe08a', 170, 7, 0.45, 'spark');
         if (sim && sim.feelS) { fx.chainPts = fx.chainPts || []; fx.chainPts.push({ x: e.x, y: e.y, age: 0 }); if (fx.chainPts.length > 10) fx.chainPts.shift(); } // V3-FEEL sparkle chain
-        if (!quiet) { sound.collect(e.chain, e.forked); spark(e.x, e.y); floater(e.x + (e.chain % 2 ? 26 : -26), e.y - 10, `+${e.pts}`, '#fbe3a4', 15 + Math.min(7, e.chain), 0.6); }
+        if (!quiet) { sound.collect(e.chain, e.forked, s.tips.length === 2 ? Math.sign(e.x - s.cx) : 0); spark(e.x, e.y); floater(e.x + (e.chain % 2 ? 26 : -26), e.y - 10, `+${e.pts}`, '#fbe3a4', 15 + Math.min(7, e.chain), 0.6); }
         break;
       case 'fork':
         for (const t of s.tips) { ring(t.x, s.cy, '#8fd0e6', 50); burst(t.x, s.cy, 5, '#a9cf5a', 130, 6, 0.6, 'leaf'); }
@@ -927,6 +930,7 @@ function showGameOver() {
     : `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(run.mode === 'classic' && run.stake === 'sapling' || daily ? S.best.score : ((run.mode === 'classic' ? 0 : (S.quest.modeBest[run.mode] || {}).s) || 0), sum.score).toLocaleString('en-US')}`;
   $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}${sum.grafts ? ` · grafts: ${sum.graftIds.map((g) => (GRAFTS[g] || { name: g }).name).join(', ')}` : ''}`;
   $('share-msg').textContent = '';
+  $('over').classList.toggle('lite', (S.stats.runs | 0) <= 3 && !lv && !daily && !challengeRun); // P0-FTUE: first 3 climbs get a short results card
   setMode('over'); showReplay(); // V3-FEEL
   ui.showRewards(rewards, { before });
   if (hub && rewards) { hub.afterRun({ lost: !newBest }); hub.offerDouble({ gained: S.acorns - before, fair: !!lv || daily || challengeRun || run.mode === 'weekly' }); } // META-V2
@@ -1037,7 +1041,7 @@ canvas.addEventListener('pointerdown', (e) => {
   input.pointerId = e.pointerId; input.downT = performance.now(); input.downX = e.clientX; input.downY = e.clientY; input.moved = 0;
   if (e.pointerType === 'mouse') input.targetX = mirrorX(worldX(e.clientX));
   else input.anchor = input.targetX ?? (sim ? sim.cx : W / 2);
-  if (e.pointerType === 'mouse' && mode === 'play' && e.button === 0) toggleFork();
+  input.btn = e.button; // P0-FTUE: mouse forks on a click RELEASE without a drag (like touch), so click-and-drag steering never forks by accident
 });
 window.addEventListener('pointermove', (e) => {
   if (e.pointerType === 'mouse') {
@@ -1045,6 +1049,7 @@ window.addEventListener('pointermove', (e) => {
     if (input.kind === 'key' && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) < 3) return;
     input.kind = 'mouse';
     input.targetX = mirrorX(worldX(e.clientX));
+    if (e.pointerId === input.pointerId) input.moved = Math.max(input.moved, Math.hypot(e.clientX - input.downX, e.clientY - input.downY));
   } else if (e.pointerId === input.pointerId) {
     input.targetX = Math.max(0, Math.min(W, input.anchor + ((e.clientX - input.downX) / cam.scale) * TOUCH_GAIN * (mirrored() ? -1 : 1)));
     input.moved = Math.max(input.moved, Math.hypot(e.clientX - input.downX, e.clientY - input.downY));
@@ -1053,6 +1058,7 @@ window.addEventListener('pointermove', (e) => {
 window.addEventListener('pointerup', (e) => {
   if (e.pointerId !== input.pointerId) return;
   if (e.pointerType !== 'mouse' && mode === 'play' && performance.now() - input.downT < 260 && input.moved < 16) toggleFork();
+  if (e.pointerType === 'mouse' && mode === 'play' && input.btn === 0 && performance.now() - input.downT < 350 && input.moved < 14) toggleFork();
   input.pointerId = null;
 });
 window.addEventListener('pointercancel', () => { input.pointerId = null; });

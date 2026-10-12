@@ -686,3 +686,9 @@ body.calm *, body.calm *::before, body.calm *::after { animation: none !importan
    Every glass element over the live canvas re-blurs it each frame; Safari 26 draws CSS blur on the CPU. */
 html.q-noblur { --blur: none; --glass: rgba(12,18,24,.74); }
 html.q-noblur .map-badge { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(12,18,24,.78); }
+
+/* P0-FTUE: the first 3 climbs get a short results card: height, best, one goal, a big Grow again */
+#over.lite .over-left, #over.lite #over-hash, #over.lite #rw-stamps,
+#over.lite #btn-share, #over.lite #btn-challenge, #over.lite #btn-save { display: none !important; }
+#over.lite #over-tip { font-size: 1.15em; font-weight: 700; }
+#over.lite #btn-again { font-size: 1.2em; padding-block: 0.9em; min-width: 60%; }

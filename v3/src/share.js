@@ -237,6 +237,47 @@ export function worldCard(worldId) {
     stamp: { motif: 'painting', ink: t3, bg: [t0, t1], accent: t1, word: w.nameVi.toUpperCase(), postmark: `${w.name.toUpperCase()} · FORKWOOD` } };
 }
 
+/** P2-GIT: a horizontal commit graph of the run (s.gitLog from the sim). Main branch on the lower lane,
+ *  each fork opens the upper lane, a merge joins it back with a dot sized by the combo, a revert is a cross,
+ *  golden hour is a gold ring. Nothing is drawn for a run with no history. */
+function drawGitGraph(ctx, s, sum, R, CI, inkA) {
+  const L = (s && s.gitLog) || [];
+  const H = Math.max(1, sum.height);
+  if (!L.length || H < 10) return;
+  const X = (m) => R.x + Math.max(0, Math.min(1, m / H)) * R.w;
+  const yMain = R.y + R.h, yFork = R.y;
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = inkA(0.55); ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(R.x, yMain); ctx.lineTo(R.x + R.w, yMain); ctx.stroke();
+  let open = null;
+  const branch = (m0, m1, color) => {
+    const x0 = X(m0), x1 = X(m1), k = Math.min(14, (x1 - x0) / 3);
+    ctx.strokeStyle = color; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0, yMain); ctx.quadraticCurveTo(x0 + k, yFork, x0 + 2 * k, yFork); ctx.lineTo(Math.max(x0 + 2 * k, x1 - 2 * k), yFork); ctx.quadraticCurveTo(x1 - k, yFork, x1, yMain); ctx.stroke();
+  };
+  const dots = [];
+  for (const e of L) {
+    if (e.type === 'fork') { open = e.m; dots.push({ x: X(e.m), y: yMain, r: 4, c: '#8fd0e6' }); }
+    else if (e.type === 'merge' || e.type === 'emptymerge' || e.type === 'revert') {
+      if (open != null) branch(open, e.m, e.type === 'revert' ? 'rgba(214,92,72,0.85)' : 'rgba(110,190,120,0.95)');
+      open = null;
+      if (e.type === 'merge') dots.push({ x: X(e.m), y: yMain, r: 4 + Math.min(5, e.mult * 0.7), c: '#ffc94d' });
+      else if (e.type === 'revert') dots.push({ x: X(e.m), y: yMain, r: 5, c: 'x' });
+      else dots.push({ x: X(e.m), y: yMain, r: 3, c: inkA(0.5) });
+    } else if (e.type === 'golden') dots.push({ x: X(e.m), y: yMain, r: 9, c: 'ring' });
+  }
+  if (open != null) branch(open, H, 'rgba(110,190,120,0.6)');
+  for (const d of dots) {
+    if (d.c === 'ring') { ctx.strokeStyle = '#ffc94d'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.stroke(); continue; }
+    if (d.c === 'x') { ctx.strokeStyle = 'rgba(214,92,72,0.95)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(d.x - 5, d.y - 5); ctx.lineTo(d.x + 5, d.y + 5); ctx.moveTo(d.x + 5, d.y - 5); ctx.lineTo(d.x - 5, d.y + 5); ctx.stroke(); continue; }
+    ctx.fillStyle = d.c; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = CI; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  // HEAD: where the tree stopped
+  ctx.fillStyle = CI; ctx.beginPath(); ctx.arc(R.x + R.w, yMain, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
 export function renderCard(s, sum, meta) {
   const Wc = 1080, Hc = 1350;
   const c = document.createElement('canvas');
@@ -324,6 +365,8 @@ export function renderCard(s, sum, meta) {
     ctx.fillStyle = '#2a1e08'; ctx.textAlign = 'center'; ctx.font = f(800, 24); ctx.fillText('NEW BEST', 0, 6);
     ctx.restore();
   }
+  // P2-GIT: the run as `git log --graph`, read left to right by height: main line, fork lane, merges back
+  drawGitGraph(ctx, s, sum, { x: 62, y: 1204, w: 588, h: 22 }, CI, inkA);
   // footer: git-flavoured summary (left), stamp + postmark (right)
   ctx.textAlign = 'left';
   ctx.font = f(700, 27, 'mono');

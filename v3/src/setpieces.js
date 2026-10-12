@@ -27,7 +27,11 @@ export const BOSSES = {
 };
 
 /** n-th set piece slot: {type, m, loop}. */
-export function spSlot(i) {
+// P0-FTUE: the very first run (s.mercy) shows its spectacle early: a calm set piece at 150 m and a chase at
+// 330 m (new players rarely pass ~300 m), then rejoins the normal schedule at the 900 m boss
+const SP_MERCY = [{ type: 'calm', m: 150 }, { type: 'chase', m: 330 }];
+export function spSlot(i, mercy = false) {
+  if (mercy && i < 2) return { ...SP_MERCY[i], loop: 0 };
   if (i < 3) return { ...SP_FIRST[i], loop: 0 };
   const k = i - 3, loop = 1 + Math.floor(k / 3);
   return { type: SP_FIRST[k % 3].type, m: 900 + SP_LOOP * (k + 1), loop };
@@ -47,8 +51,8 @@ const bossStream = (s, i) => mulberry32((s.seed ^ (0x1b873593 + i * 0x2545f491))
 export function spOpen(s, y, m) {
   const D = s.dir;
   D.spI = D.spI || 0;
-  let slot = spSlot(D.spI);
-  while (slot && !spAllowed(s.R, slot.type) && D.spI < 60) slot = spSlot(++D.spI);
+  let slot = spSlot(D.spI, !!s.mercy);
+  while (slot && !spAllowed(s.R, slot.type) && D.spI < 60) slot = spSlot(++D.spI, !!s.mercy);
   if (!slot || m < slot.m) return null;
   D.spI++;
   const wm = worldMech(s.world), def = wm.setPieces[slot.type];
