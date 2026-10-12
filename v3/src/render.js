@@ -543,6 +543,7 @@ export class Renderer {
       this.safe(ctx, () => drawTrapFx(this, ctx, s, now, px, ui)); // P8-FX: boosts, hit / avoid / pickup effects
       this.safe(ctx, () => drawFeelWorld(ctx, s, now, topY, botY, fx, ui.calm)); // V3-FEEL
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
+      if (ui.hud) this.safe(ctx, () => this.drawSapGuide(ctx, s, now)); // P0-FTUE
     }
     this.drawParticles(ctx, fx, px);
     // playfield edges: a hairline ink rule either side
@@ -621,6 +622,7 @@ export class Renderer {
       this.safe(ctx, () => drawTrapFx(this, ctx, s, now, px, ui));
       this.safe(ctx, () => drawFeelWorld(ctx, s, now, topY, botY, fx, ui.calm)); // V3-FEEL
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
+      if (ui.hud) this.safe(ctx, () => this.drawSapGuide(ctx, s, now)); // P0-FTUE
     }
     this.drawParticles(ctx, fx, px, true);
     this._screen(ctx);
@@ -874,6 +876,40 @@ export class Renderer {
     this.card(ctx, x - tw / 2, y - 44, tw, 17, 8, '#ffe7a8', 2);
     ctx.fillStyle = INK; ctx.fillText('RIVAL', x, y - 35);
     ctx.textBaseline = 'alphabetic';
+  }
+
+  /** P0-FTUE: low sap reads at the tip, not in a corner: a sap ring around each tip below 50%,
+   *  and a pulsing gold chevron pointing at the nearest sunlight ahead below 35%. */
+  drawSapGuide(ctx, s, now) {
+    if (s.dead || !s.tips || !s.tips.length) return;
+    const fr = Math.max(0, Math.min(1, s.sap / SAP_MAX));
+    if (fr >= 0.5) return;
+    const low = fr < 0.25, beat = low ? 0.5 + 0.5 * Math.sin(now * 9) : 0;
+    for (const tip of s.tips) {
+      const x = tip.x, y = s.cy, R = 26;
+      ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(20,16,12,0.30)';
+      ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = low ? `rgba(236,${Math.round(70 + 40 * beat)},60,0.95)` : 'rgba(250,200,80,0.92)';
+      ctx.beginPath(); ctx.arc(x, y, R, -Math.PI / 2, -Math.PI / 2 + TAU * fr); ctx.stroke();
+    }
+    if (fr >= 0.35) return;
+    let best = null, bd = Infinity;
+    for (const o of s.motes) {
+      if (o.taken || o.kind !== 'sun' || o.y > s.cy + 10 || o.y < s.cy - 620) continue;
+      for (const tip of s.tips) { const d = Math.hypot(o.x - tip.x, o.y - s.cy); if (d < bd) { bd = d; best = { o, tip }; } }
+    }
+    if (!best || bd < 60) return;
+    const { o, tip } = best, ang = Math.atan2(o.y - s.cy, o.x - tip.x);
+    const k = (now * 2.2) % 1, off = 40 + k * 18, cx = tip.x + Math.cos(ang) * off, cy = s.cy + Math.sin(ang) * off;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang);
+    ctx.globalAlpha = 0.95 * (1 - k * 0.6);
+    ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(30,22,10,0.55)';
+    ctx.beginPath(); ctx.moveTo(-9, -11); ctx.lineTo(4, 0); ctx.lineTo(-9, 11); ctx.stroke();
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,214,90,1)';
+    ctx.beginPath(); ctx.moveTo(-9, -11); ctx.lineTo(4, 0); ctx.lineTo(-9, 11); ctx.stroke();
+    ctx.restore();
   }
 
   drawTapCue(ctx, s, now) {
