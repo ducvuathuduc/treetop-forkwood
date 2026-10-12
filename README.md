@@ -242,7 +242,7 @@ Bot difficulty is measured, not guessed: on Oak the weak / average / expert bots
 
 | Metric | Budget | Measured |
 |---|---|---|
-| First load (gzip transfer) | ≤ 700 KB | checked by `tests/extra.mjs` (see FINAL test log) |
+| First load (gzip transfer) | ≤ 700 KB | **486 KB** (`tests/extra.mjs`) |
 | Lazy world | 200–350 KB each | loaded on demand |
 | Draw calls (phone) | ≤ 25 | **10–12** (Starry River, 390×844 @ DPR 2) |
 | Live particles (phone) | ≤ 300 | 260–300, capped per quality tier |
