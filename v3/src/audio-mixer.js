@@ -2,7 +2,6 @@
 // installed onto Sound.prototype. Holds the asset loading, sprite playback, music stems,
 // ducking, intensity cross-fades and the sim-event map. See work/v2/AUDIO-REPORT.md.
 import { LegacySound, WORLDS } from './audio.js';
-import { installGit } from './audio-git.js'; // V3.2-AUDIO: git you can hear
 
 export const MANIFEST_URL = 'assets/v2/common/audio/audio.json';
 const COMMON_DIR = 'assets/v2/common/audio/';
@@ -57,7 +56,6 @@ export const LEGACY_EVENTS = {
 class Mixer {
   /** Kick off the shared sprites and the music once the mixer is installed and a context exists. */
   _mixerReady() {
-    if (this._gitBuild) this._gitBuild(); // V3.2-AUDIO: branch voices / low-sap / lift graph (before any stem attaches)
     // ui first (smallest, needed by the very next tap), then play, then the music
     const ui = this._sprite('ui');
     this._manifest().then((m) => {
@@ -159,7 +157,7 @@ class Mixer {
     this._last.set(id, now);
     if (this.voices >= MAX_VOICES && c.c !== 'warn' && c.c !== 'reward') return true;
     let rate = opts.rate || 1;
-    if (c.tonal) rate *= Math.pow(2, ((WORLD_SHIFT[this.world] || 0) + (this.keyLift || 0)) / 12); // V3.2: golden hour lift
+    if (c.tonal) rate *= Math.pow(2, (WORLD_SHIFT[this.world] || 0) / 12);
     if (opts.step != null) rate *= Math.pow(2, pentaSemis(Math.round(opts.step)) / 12);
     const s = this.ctx.createBufferSource();
     s.buffer = buf; s.playbackRate.value = rate;
@@ -255,8 +253,7 @@ class Mixer {
     const c = this.ctx, now = c.currentTime + 0.05;
     this._stopStems(1.6);
     const len = info.loopEnd - info.loopStart;
-    const r0 = Math.pow(2, (this.keyLift || 0) / 12);
-    const st = { world: w, t0: now, info, len, src: {}, gain: {}, anc: { t: now, pos: 0, r0, r1: r0, d: 0 } }; // V3.2: playhead anchor (rate can change)
+    const st = { world: w, t0: now, info, len, src: {}, gain: {} };
     this.stems = st;
     this._attach(st, 'calm', calmBuf, 0.0001);
     st.gain.calm.gain.setTargetAtTime(1, now, 0.6); // fade in
@@ -273,11 +270,8 @@ class Mixer {
     const s = c.createBufferSource();
     s.buffer = buf; s.loop = true; s.loopStart = st.info.loopStart; s.loopEnd = st.info.loopEnd;
     const g = c.createGain(); g.gain.value = g0;
-    s.connect(g); g.connect(this._musicDest ? this._musicDest() : this.musicBus);
-    // V3.2: phase from the playhead anchor (golden hour changes the rate), same rate automation as the others
-    const a = st.anc, pos = a ? stemPos(a, now) : now - st.t0;
-    const off = st.info.loopStart + (((pos % st.len) + st.len) % st.len);
-    if (a) { s.playbackRate.value = stemRate(a, now); if (now < a.t + a.d) s.playbackRate.linearRampToValueAtTime(a.r1, a.t + a.d); }
+    s.connect(g); g.connect(this.musicBus);
+    const off = st.info.loopStart + ((((now - st.t0) % st.len) + st.len) % st.len);
     s.start(now, off);
     st.src[stem] = s; st.gain[stem] = g;
   }
@@ -290,18 +284,6 @@ class Mixer {
     const t = this.ctx.currentTime;
     for (const k of Object.keys(st.src)) {
       try { st.gain[k].gain.setTargetAtTime(0.0001, t, fade / 4); st.src[k].stop(t + fade + 0.1); } catch { /* already stopped */ }
-    }
-  }
-
-
-  /** V3.2: ramp every stem's playback rate together (key lift); keeps the anchor exact. */
-  _setStemRate(st, r, d = 0.5) {
-    if (!st || !st.anc || !this.ctx) return;
-    const t = this.ctx.currentTime + 0.02, cur = stemRate(st.anc, t);
-    st.anc = { t, pos: stemPos(st.anc, t), r0: cur, r1: r, d };
-    for (const k of Object.keys(st.src)) {
-      const p = st.src[k].playbackRate;
-      p.cancelScheduledValues(t); p.setValueAtTime(cur, t); p.linearRampToValueAtTime(r, t + d);
     }
   }
 
@@ -326,14 +308,13 @@ class Mixer {
     const st = this.stems;
     if (!st || !this.ctx) return;
     const want = { calm: 1, chase: this.level !== 'calm' ? 1 : (this.feelLift || 0), boss: this.level === 'boss' ? 1 : 0 }; // V3-FEEL: the chase stem rises a little with the combo
-    if (this.goldenFull) { want.chase = 1; if (!this.lowMemory || st.src.boss) want.boss = Math.max(want.boss, 0.8); } // V3.2: golden hour = the full stem
     const t = this.ctx.currentTime;
     for (const stem of ['chase', 'boss']) {
       if (want[stem] && !st.src[stem]) {
         this._stem(st.world, stem).then((b) => { if (b && this.stems === st) { this._attach(st, stem, b, 0.0001); this._levels(); } });
         continue;
       }
-      if (st.gain[stem]) st.gain[stem].gain.setTargetAtTime(want[stem] ? want[stem] >= 0.99 ? 1 : want[stem] : 0.0001, t, want[stem] ? 0.45 : 0.9);
+      if (st.gain[stem]) st.gain[stem].gain.setTargetAtTime(want[stem] ? 1 : 0.0001, t, want[stem] ? 0.45 : 0.9);
     }
   }
 
@@ -346,7 +327,7 @@ class Mixer {
    */
   onEvents(events, { all = false } = {}) {
     if (!events) return;
-    for (const e of events) { if (this._gitEvent && e) this._gitEvent(e); this.handleEvent(e, all); } // V3.2: the music layer hears every event
+    for (const e of events) this.handleEvent(e, all);
   }
 
 
@@ -471,22 +452,12 @@ class Mixer {
 
 /** Copy the mixer onto Sound.prototype (idempotent). */
 export function install(Sound) {
-  installGit(Sound);
   if (Sound.prototype._mixerInstalled) return;
   for (const k of Object.getOwnPropertyNames(Mixer.prototype)) {
     if (k !== 'constructor') Object.defineProperty(Sound.prototype, k, Object.getOwnPropertyDescriptor(Mixer.prototype, k));
   }
   Sound.prototype._mixerInstalled = true;
 }
-
-/** V3.2: playhead position (s, loop-relative before wrapping) and rate of a stem anchor at time t. */
-export function stemPos(a, t) {
-  const dt = t - a.t;
-  if (dt <= 0) return a.pos;
-  if (dt < a.d) { const r = a.r0 + (a.r1 - a.r0) * dt / a.d; return a.pos + (a.r0 + r) / 2 * dt; }
-  return a.pos + (a.r0 + a.r1) / 2 * a.d + a.r1 * (dt - a.d);
-}
-export function stemRate(a, t) { const dt = t - a.t; return dt <= 0 ? a.r0 : dt >= a.d ? a.r1 : a.r0 + (a.r1 - a.r0) * dt / a.d; }
 
 /**
  * Make a decoded loop seamless whatever the codec did at its edges: blend the last few ms

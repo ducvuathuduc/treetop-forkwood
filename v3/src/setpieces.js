@@ -26,21 +26,6 @@ export const BOSSES = {
   dragon: { phases: [['ring', 'ring', 'ring'], ['dive', 'dive'], ['volley', 'volley']] },
 };
 
-// V3.2 early showcase: players whose best is under EARLY_BEST m (sim opts.early, personal runs only)
-// meet a short calm stretch at ~150 m and a SHORT, beatable mini-boss at ~300 m (<= 15 s, 3 telegraphed
-// attacks), then the regular schedule from the 640 m chase on. Shared courses (daily, weekly, race,
-// quests, challenge links) never set early, so they keep the same set pieces for everyone.
-export const EARLY_BEST = 400;
-export const SP_EARLY = [{ type: 'calm', m: 130 } /* opens at a chunk edge: the calm starts ~150-165 m */, { type: 'mini', m: 300 }];
-export const SP_LEN_EARLY = { calm: 100, mini: 92 }; // mini: 92 m at ~280 px/s (300 m climb speed) is ~10 s
-export const MINI = { attacks: 3, gap: 1.5, intro: 1.9 };
-const MINI_KINDS = new Set(['dive', 'volley', 'sweep']);
-/** n-th set piece slot for an early-showcase run: calm 150, mini-boss 300, then chase 640, boss 900... */
-export function spSlotEarly(i) {
-  if (i < SP_EARLY.length) return { ...SP_EARLY[i], loop: 0, early: true };
-  return spSlot(i - SP_EARLY.length + 1); // skip the regular 260 m calm (already had one)
-}
-
 /** n-th set piece slot: {type, m, loop}. */
 export function spSlot(i) {
   if (i < 3) return { ...SP_FIRST[i], loop: 0 };
@@ -52,7 +37,6 @@ export function spAllowed(R, type) {
   if (R.script) return false;
   if (R.noDeath) return type === 'calm';
   if (R.storms) return type === 'chase';
-  if (type === 'mini') return true;
   return true;
 }
 
@@ -63,15 +47,13 @@ const bossStream = (s, i) => mulberry32((s.seed ^ (0x1b873593 + i * 0x2545f491))
 export function spOpen(s, y, m) {
   const D = s.dir;
   D.spI = D.spI || 0;
-  const slotAt = s.early ? spSlotEarly : spSlot; // V3.2
-  let slot = slotAt(D.spI);
-  while (slot && !spAllowed(s.R, slot.type) && D.spI < 60) slot = slotAt(++D.spI);
+  let slot = spSlot(D.spI);
+  while (slot && !spAllowed(s.R, slot.type) && D.spI < 60) slot = spSlot(++D.spI);
   if (!slot || m < slot.m) return null;
   D.spI++;
-  const mini = slot.type === 'mini', type = mini ? 'boss' : slot.type;
-  const wm = worldMech(s.world), def = wm.setPieces[type];
-  const len = (slot.early ? SP_LEN_EARLY[slot.type] : SP_LEN[type]) * PX;
-  const sp = { i: D.spI - 1, type, mini, id: def.id, name: def.name, nameVi: def.nameVi, boss: def.boss || null, pursuer: def.pursuer || null, loop: slot.loop, y0: y, y1: y - len, n: 0, started: false, ended: false, skin: def.id };
+  const wm = worldMech(s.world), def = wm.setPieces[slot.type];
+  const len = SP_LEN[slot.type] * PX;
+  const sp = { i: D.spI - 1, type: slot.type, id: def.id, name: def.name, nameVi: def.nameVi, boss: def.boss || null, pursuer: def.pursuer || null, loop: slot.loop, y0: y, y1: y - len, n: 0, started: false, ended: false, skin: def.id };
   s.spList.push(sp);
   return sp;
 }
@@ -107,8 +89,8 @@ export function spUpdate(s, dt, A) {
   for (const sp of s.spList) {
     if (!sp.started && s.cy < sp.y0) {
       sp.started = true; s.sp = sp; sp.hits0 = s.hits;
-      A.emit(s, 'setpiece.start', { id: sp.id, kind: sp.type, name: sp.name, nameVi: sp.nameVi, loop: sp.loop, x: s.cx, y: s.cy, skin: sp.skin, mini: !!sp.mini });
-      if (sp.type === 'boss') s.boss = { id: sp.boss, sp, mini: !!sp.mini, phase: -1, t: sp.mini ? MINI.intro : 1.6, atk: null, q: 0, n: 0, foils: 0, hits: 0, plates: 0, rng: bossStream(s, sp.i), skin: `${s.world}.boss.${sp.boss}` };
+      A.emit(s, 'setpiece.start', { id: sp.id, kind: sp.type, name: sp.name, nameVi: sp.nameVi, loop: sp.loop, x: s.cx, y: s.cy, skin: sp.skin });
+      if (sp.type === 'boss') s.boss = { id: sp.boss, sp, phase: -1, t: 1.6, atk: null, q: 0, foils: 0, hits: 0, plates: 0, rng: bossStream(s, sp.i), skin: `${s.world}.boss.${sp.boss}` };
     }
     if (sp.started && !sp.ended && s.cy < sp.y1) {
       sp.ended = true; if (s.sp === sp) s.sp = null;
@@ -116,10 +98,9 @@ export function spUpdate(s, dt, A) {
       const perfect = hitsIn === 0;
       if (sp.type === 'boss' && s.boss) { s.boss = null; s.bossesBeaten = (s.bossesBeaten || 0) + 1; }
       s.setPieces = (s.setPieces || 0) + 1;
-      const tier = sp.mini ? 'chase' : sp.type; // V3.2: the mini-boss pays a chase-tier chest
-      const loot = openChest(s, tier, perfect, sp.boss, A);
-      A.emit(s, 'setpiece.end', { id: sp.id, kind: sp.type, perfect, hits: hitsIn, x: s.cx, y: s.cy, mini: !!sp.mini });
-      A.emit(s, 'chest', { kind: sp.type, tier, perfect, loot, x: s.cx, y: s.cy - 60, skin: `${s.world}.chest.${tier}` });
+      const loot = openChest(s, sp.type, perfect, sp.boss, A);
+      A.emit(s, 'setpiece.end', { id: sp.id, kind: sp.type, perfect, hits: hitsIn, x: s.cx, y: s.cy });
+      A.emit(s, 'chest', { kind: sp.type, tier: sp.type, perfect, loot, x: s.cx, y: s.cy - 60, skin: `${s.world}.chest.${sp.type}` });
     }
   }
   s.spList = s.spList.filter((sp) => !sp.ended || sp.y1 < s.cy + 1200);
@@ -129,17 +110,14 @@ export function spUpdate(s, dt, A) {
 function bossStep(s, dt, A) {
   const B = s.boss, sp = B.sp, def = BOSSES[B.id];
   const p = clamp((sp.y0 - s.cy) / (sp.y0 - sp.y1), 0, 0.999);
-  const ph = B.mini ? 0 : Math.min(2, Math.floor(p * 3)); // V3.2: the mini-boss stays in its first (signature) phase
+  const ph = Math.min(2, Math.floor(p * 3));
   if (ph !== B.phase) { B.phase = ph; B.q = 0; A.emit(s, 'boss.phase', { boss: B.id, phase: ph, x: s.cx, y: s.cy, skin: B.skin, word: def.words ? def.words[ph] : null }); }
-  if (B.atk) { if (atkStep(s, B, B.atk, dt, A)) { B.atk = null; B.t = B.mini ? MINI.gap : Math.max(0.5, 1.0 / (1 + 0.15 * sp.loop)); } return; }
+  if (B.atk) { if (atkStep(s, B, B.atk, dt, A)) { B.atk = null; B.t = Math.max(0.5, 1.0 / (1 + 0.15 * sp.loop)); } return; }
   B.t -= dt;
   if (B.t > 0 || s.cy < sp.y1 + 260) return; // no new attack in the last stretch
-  if (B.mini && B.n >= MINI.attacks) return; // V3.2: three telegraphed attacks, then it gives up
-  B.n = (B.n || 0) + 1;
   const list = def.phases[ph];
   let kind = list[B.q++ % list.length];
   if (kind === 'grab' && !(s.tips.length === 2 && s.tips.some((t) => t.staged > 0))) kind = 'dive';
-  if (B.mini && !MINI_KINDS.has(kind)) kind = 'dive'; // V3.2: the mini-boss only uses the plainest telegraphs
   B.atk = atkStart(s, B, kind, A);
 }
 

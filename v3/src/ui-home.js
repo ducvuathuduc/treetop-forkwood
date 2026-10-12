@@ -4,9 +4,9 @@
 //                    the demo crossfades into it live while the vine keeps growing.
 //   b  Seed picker   the worlds are seeds on a living branch at the bottom; tapping one makes the demo
 //                    vine fork and grow into that world; GROW is a pod on a stem out of the branch.
-//   c  World branch  (V3.2) the 7 worlds hang as gilded medallions on a living branch in a low dock
-//                    above GROW, leaving the middle of the screen to the demo run; the title is written
-//                    by a vine. Tap a medallion: the camera dips back and zooms into that world.
+//   c  World tree    the camera pulls back; the 7 worlds hang as fruit on the branches of a world-tree
+//                    whose trunk rises from GROW; the title is written by a vine. Tap a branch: the
+//                    camera dips back and zooms into that world.
 // The demo itself lives in main.js (bot + sim); this module only talks to it through `demo`
 // ({ fork(), cam({scale, anchor}), worldNow() }) and the hub's chooseWorld().
 import { WORLDS, WORLD } from './worlds-meta.js';
@@ -15,7 +15,7 @@ import { MAP_PRICE } from './economy.js';
 import { MI, paintingSrc, underpainting } from './ui-art.js';
 
 export const HOMES = ['a', 'b', 'c'];
-export const HOME_NAMES = { a: 'Classic', b: 'Seeds', c: 'World branch' };
+export const HOME_NAMES = { a: 'Classic', b: 'Seeds', c: 'World tree' };
 export const DEFAULT_HOME = 'c';
 const KEY = 'forkwood.home';
 export function readHome() {
@@ -28,12 +28,17 @@ export function readHome() {
   return DEFAULT_HOME;
 }
 // demo camera per layout: scale (× base) and anchor (screen fraction the vine tip sits at)
-// V3.2 c: the vine tip rides in the open middle band between the title and the branch dock
-export const CAMS = { a: { scale: 0.9, anchor: 0.62 }, b: { scale: 0.86, anchor: 0.52 }, c: { scale: 0.95, anchor: 0.42 } };
+export const CAMS = { a: { scale: 0.9, anchor: 0.62 }, b: { scale: 0.86, anchor: 0.52 }, c: { scale: 0.74, anchor: 0.4 } };
 
+const SPROUT = '<svg class="logo-sprout" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 38V20" stroke="#2f6b33" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M20 22C12 22 7 16 7 8c8 0 13 6 13 14z" fill="#7cc46a" stroke="#1E2A1C" stroke-width="1.6"/><path d="M20 18c0-8 5-13 13-13 0 8-5 13-13 13z" fill="#a6dd7c" stroke="#1E2A1C" stroke-width="1.6"/></svg>';
 const acorns = (n) => `<span class="price">${MI.acorn}${n.toLocaleString('en-US')}</span>`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+// V3.1: the painted world tree (assets/v3/home/wtree-*.webp, 900×696): medallions sit on its seven
+// foliage clusters, in % of the art box; fireflies drift around the crown
+const TREE_PCT = [[9.5, 58], [16, 32.5], [27.5, 17.5], [46.8, 9], [69, 15], [84, 32.5], [90.5, 58.5]];
+const TREE_ART = new URL('../assets/v3/home/', import.meta.url).href;
+const FIREFLIES = [[22, 44, 0], [36, 28, 1.3], [58, 22, 2.1], [74, 40, 0.6], [12, 70, 3.2], [88, 72, 1.8], [50, 46, 2.7], [64, 60, 4.1], [30, 62, 3.6], [80, 18, 0.9]];
 export function createHome(H) {
   const title = document.getElementById('title');
   const art = document.getElementById('hub-art');
@@ -43,18 +48,16 @@ export function createHome(H) {
   let variant = readHome(), shown = null, busy = 0, booted = false;
 
   // landscape: the tree sits mid-screen, so the vine tip rides higher
-  const cams = () => { const c = { ...CAMS[variant] }; if (variant === 'c' && innerWidth > innerHeight) { c.anchor = 0.4; c.scale = 1.0; } return c; };
+  const cams = () => { const c = { ...CAMS[variant] }; if (variant === 'c' && innerWidth > innerHeight) c.anchor = 0.3; return c; };
   const owns = (id) => SS.ownsWorld(H.getSave(), id);
   const thumb = (id) => `<img alt="" decoding="async" ${booted ? 'src' : 'data-src'}="${paintingSrc(id, true)}">`;
 
-  // V3.2: the title is set in Sansita Swashed (organic swash display); a vine twines under it, curls up
-  // at both ends and puts out a few leaves and a bud. Same markup for every layout.
-  const VINE = '<g class="logo-vine"><path class="logo-tendril" d="M44 128 C 10 124 8 96 30 92 C 44 90 48 104 38 108 M44 128 C 150 140 240 116 300 126 S 450 138 512 118 C 540 110 548 86 530 80 C 516 76 512 92 522 96"/>'
-    + '<path class="logo-leaf" d="M118 133 q -6 -20 14 -26 q 2 18 -14 26z"/><path class="logo-leaf" d="M214 126 q 10 18 30 12 q -10 -18 -30 -12z"/><path class="logo-leaf" d="M352 131 q -4 -20 16 -24 q 0 18 -16 24z"/><path class="logo-leaf" d="M446 130 q 12 16 30 8 q -12 -16 -30 -8z"/>'
-    + '<circle class="logo-bud" cx="528" cy="84" r="5"/></g>';
   function renderLogo() {
-    logo.innerHTML = `<svg class="logo-write" viewBox="0 0 560 150" role="img" aria-label="Forkwood"><text x="280" y="104" text-anchor="middle">Forkwood</text>${VINE}</svg>`;
-    title.classList.remove('wrote'); void logo.offsetWidth; requestAnimationFrame(() => title.classList.add('wrote'));
+    if (variant === 'c') {
+      // the vine writes the title: stroke draws on, then the fill and a leaf bud arrive
+      logo.innerHTML = `<svg class="logo-write" viewBox="0 0 520 120" role="img" aria-label="Forkwood"><text x="260" y="88" text-anchor="middle">Forkwood</text><path class="logo-tendril" d="M30 102 C 120 116 200 92 260 104 S 420 112 492 96" /></svg>`;
+      title.classList.remove('wrote'); void logo.offsetWidth; requestAnimationFrame(() => title.classList.add('wrote'));
+    } else logo.innerHTML = `<svg class="logo-write" viewBox="0 0 520 120" role="img" aria-label="Forkwood"><text x="260" y="88" text-anchor="middle">Forkwood</text><path class="logo-tendril" d="M30 102 C 120 116 200 92 260 104 S 420 112 492 96" />${SPROUT.replace('class="logo-sprout"', 'class="logo-sprout" x="470" y="40" width="44" height="44"')}</svg>`;
   }
   function renderName(id) {
     const w = WORLD[id];
@@ -81,19 +84,12 @@ export function createHome(H) {
         <div class="seeds" role="tablist" aria-label="Worlds">${WORLDS.map((w, i) => { const own = owns(w.id); return `<button role="tab" class="seed ${w.id === id ? 'on' : ''} ${own ? '' : 'locked'}" data-w="${w.id}" style="--x:${(pts[i][0] / 10).toFixed(2)}%;--y:${pts[i][1].toFixed(1)}%;background:${underpainting(w.id)}" aria-label="${esc(w.name)}${own ? '' : ': locked, ' + (MAP_PRICE[w.legacy] || 0) + ' acorns'}" aria-selected="${w.id === id}"><span class="seed-pic">${thumb(w.id)}</span>${own ? '' : `<span class="seed-lock">${MI.lock}</span>`}</button>`; }).join('')}</div></div>
         <p class="seed-cap"><b>${esc(WORLD[id].name)}</b><span lang="vi">${esc(WORLD[id].nameVi)}</span></p>`;
     } else {
-      // V3.2: the world tree became a living branch in a low dock above GROW, so the demo run plays
-      // unobstructed in the middle of the screen. Medallions hang off the branch; the chosen one swells.
-      art.innerHTML = '';
+      pick.innerHTML = '';
       const nextLocked = (WORLDS.find((w) => !owns(w.id)) || {}).id; // only the next unlock shows its price
-      const n = WORLDS.length;
-      const pts = WORLDS.map((w, i) => [80 + (i / (n - 1)) * 840, i % 2 ? 40 : 56]);
-      let d = 'M-10 64';
-      for (let i = 0; i < n; i++) { const [x, y] = pts[i]; const px = i ? pts[i - 1][0] : -10; d += ` Q ${((px + x) / 2).toFixed(1)} ${i % 2 ? 22 : 76} ${x.toFixed(1)} ${y}`; }
-      d += ' Q 980 30 1010 46';
-      const leaves = pts.slice(0, -1).map(([x, y], i) => { const mx = (x + pts[i + 1][0]) / 2, my = (y + pts[i + 1][1]) / 2 + (i % 2 ? 9 : -9), s = i % 2 ? 1 : -1; return `<path class="wb-leaf" d="M${mx.toFixed(1)} ${my.toFixed(1)} q ${-8} ${s * 18} 8 ${s * 26} q 6 ${-s * 14} -8 ${-s * 26}z"/>`; }).join('');
-      pick.innerHTML = `<p class="wb-cap"><b>${esc(WORLD[id].name)}</b><span lang="vi">${esc(WORLD[id].nameVi)}</span></p><div class="wbranch" role="tablist" aria-label="Worlds">
-        <svg class="wb-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path class="wb-shadow" d="${d}"/><path class="wb-wood" d="${d}"/><path class="wb-hi" d="${d}"/>${leaves}</svg>
-        ${WORLDS.map((w, i) => { const own = owns(w.id); return `<button role="tab" class="fruit ${w.id === id ? 'on' : ''} ${own ? '' : 'locked'}" data-w="${w.id}" style="--x:${(pts[i][0] / 10).toFixed(1)}%;--y:${pts[i][1]}%;--i:${i};background:${underpainting(w.id)}" aria-label="${esc(w.name)}${own ? '' : ': locked, ' + (MAP_PRICE[w.legacy] || 0) + ' acorns'}" aria-selected="${w.id === id}"><span class="fruit-pic">${thumb(w.id)}</span>${own ? '' : w.id === nextLocked ? `<span class="fruit-price">${MI.lock}${acorns(MAP_PRICE[w.legacy] || 0)}</span>` : `<span class="seed-lock">${MI.lock}</span>`}</button>`; }).join('')}
+      art.innerHTML = `<div class="wtree" role="tablist" aria-label="Worlds">
+        <img class="wtree-art" alt="" decoding="async" ${booted ? '' : 'fetchpriority="high"'} src="${TREE_ART}wtree-560.webp" srcset="${TREE_ART}wtree-560.webp 560w, ${TREE_ART}wtree-900.webp 900w" sizes="(min-width: 900px) min(760px, 60vw), 92vw">
+        <div class="wtree-ff" aria-hidden="true">${FIREFLIES.map(([x, y, d]) => `<i style="--x:${x}%;--y:${y}%;--d:${d}s"></i>`).join('')}</div>
+        ${WORLDS.map((w, i) => { const own = owns(w.id); return `<button role="tab" class="fruit ${w.id === id ? 'on' : ''} ${own ? '' : 'locked'}" data-w="${w.id}" style="--x:${TREE_PCT[i][0]}%;--y:${TREE_PCT[i][1]}%;--i:${i};background:${underpainting(w.id)}" aria-label="${esc(w.name)}${own ? '' : ': locked, ' + (MAP_PRICE[w.legacy] || 0) + ' acorns'}" aria-selected="${w.id === id}"><span class="fruit-pic">${thumb(w.id)}</span>${own ? '' : `<span class="seed-lock">${MI.lock}</span>${w.id === nextLocked ? `<span class="fruit-price">${acorns(MAP_PRICE[w.legacy] || 0)}</span>` : ''}`}</button>`; }).join('')}
       </div>`;
     }
     void S;

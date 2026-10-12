@@ -11,7 +11,6 @@
 // (daily, weekly, quest levels, challenge and duel links, live races), exactly
 // like charms. Pure functions over the save object; no DOM, no Math.random
 // (callers pass a rng, so the browser and node tests behave the same).
-import { UNLOCK_ALL_MAPS } from './flags.js'; // V3.2
 import { mulberry32 } from './rng.js';
 
 const strSeed = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };
@@ -133,7 +132,7 @@ const gainAcorns = (S, n) => { S.acorns += n; S.earned += n; };
 // ------------------------------------------------------------------ maps (v1.0: one-off acorn sinks)
 // Prices match `unlock.cost` in src/maps.js (Forkwood and Phong Nha are free).
 export const MAP_PRICE = { arashiyama: 900, redwoods: 1200, blackforest: 1500, amazon: 1800, beanstalk: 2400 };
-export const ownsMap = (S, id) => UNLOCK_ALL_MAPS || !MAP_PRICE[id] || ensureEcon(S).maps.includes(id); // V3.2: flags.UNLOCK_ALL_MAPS opens every world
+export const ownsMap = (S, id) => true; // demo: every map unlocked
 /** Buy a map with acorns. Returns the price paid, or false. */
 export function buyMap(S, id) {
   const c = MAP_PRICE[id];
@@ -256,7 +255,7 @@ export function skipGoal(S) {
 // Worlds (v2): the 7 worlds take over the 7 map slots and their prices, in order.
 export const WORLD_PRICE = { fresco: 900, ukiyo: 1200, lilies: 1500, gilded: 1800, lacquer: 2400 }; // meadow + starry free
 export const LEGACY_MAP_WORLD = { forkwood: 'meadow', phongnha: 'starry', arashiyama: 'fresco', redwoods: 'ukiyo', blackforest: 'lilies', amazon: 'gilded', beanstalk: 'lacquer' };
-export const ownsWorld = (S, id) => !WORLD_PRICE[id] || ensureEcon(S).worlds.includes(id) || ensureEcon(S).maps.some((m) => LEGACY_MAP_WORLD[m] === id);
+export const ownsWorld = (S, id) => true || !WORLD_PRICE[id] || ensureEcon(S).worlds.includes(id) || ensureEcon(S).maps.some((m) => LEGACY_MAP_WORLD[m] === id);
 export function buyWorld(S, id) { const c = WORLD_PRICE[id]; if (!c || ownsWorld(S, id) || !spendAcorns(S, c)) return false; ensureEcon(S).worlds.push(id); return c; }
 
 // Critter skill levels: 1-3 from critter XP (metres climbed with that critter), 4-6 for acorns at HALF the

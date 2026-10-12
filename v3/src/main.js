@@ -28,8 +28,7 @@ import { createHub } from './ui-hub.js'; // META-V2: museum hub, rooms, store
 import { WORLD_IDS, worldForSeed } from './world-mech.js'; // V2-INT: world per run
 import { updateFeelFx } from './render-feel.js'; import { FT as FEEL_T } from './feel.js'; // V3-FEEL
 let hub = null; // META-V2
-import { CONTEST, EARLY_PARAM } from './flags.js'; import { initContest, nearestGoal, showGoal } from './ui-play32.js'; import { EARLY_BEST } from './setpieces.js'; // V3.2 gameplay
-import { applyFont } from './fonts.js'; applyFont(); initContest(); // V3.2: contest build hides League / Pass / Shop / offers // v3 HOME: type pairing (?font=1|2|3) for DOM + canvas text
+import { applyFont } from './fonts.js'; applyFont(); // v3 HOME: type pairing (?font=1|2|3) for DOM + canvas text
 // v3 HOME: the title demo run (bot growing the vine behind the menu): slowed, 30 fps, camera + fork driven by the home layout
 const DEMO_SPEED = 0.6, DEMO_PREROLL = 5; const DEMO_60 = typeof location !== 'undefined' && /[?&]demo60\b/.test(location.search); // ?demo60 paints the demo every frame
 const demoCam = { scale: 0.9, anchor: 0.62 }; let demoFork = false, demoTick = 0, demoSnap = true;
@@ -126,7 +125,7 @@ const REPLY = DUEL && DUEL.r ? R.settleReply(S, DUEL) : null;
 persist();
 // first launch: the story plays, then the first run starts with no menu in between
 // (automated browsers skip it unless the URL says ?intro=1, so headless tests stay on the title)
-const FIRST_LAUNCH = !CONTEST /* V3.2: contest build = one tap to play, no story first */ && !BOT_MODE && !CHALLENGE && !LINK_LVL && !LINK_WEEK && !LINK_MODE && S.stats.runs === 0 && !S.ret.introSeen && !params.has('race') /* P6-RACE */ && (!navigator.webdriver || params.get('intro') === '1');
+const FIRST_LAUNCH = !BOT_MODE && !CHALLENGE && !LINK_LVL && !LINK_WEEK && !LINK_MODE && S.stats.runs === 0 && !S.ret.introSeen && !params.has('race') /* P6-RACE */ && (!navigator.webdriver || params.get('intro') === '1');
 const motionQuery = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
 const isCalm = () => (S.calm == null ? !!(motionQuery && motionQuery.matches) : S.calm);
 
@@ -139,7 +138,6 @@ let bot = createBot(0.8, 7);
 let botSkill = 0.8;
 let lastSum = null;
 let cardCanvas = null;
-let lastCardMeta = {}, lastCardSim = null; // V3.2-CARD: the wide card re-renders from the same run
 let deathShown = false;
 let autoplay = false; // trailer capture: the bot plays a normal (saved) run in real time
 // what is being played: endless (with a stake), a mode, a quest level or the weekly tree
@@ -304,11 +302,7 @@ function startRun(isDaily = daily) {
   const world = pure || isRace ? worldForSeed(seed) : (trialWorld || selectedWorld());
   trialWorld = null;
   const mech = BOT_MODE || autoplay ? null : EC.mechOptions(S, { pure, race: isRace, level: !!lv, tutorial });
-  // V3.2 early showcase: personal classic runs while the player's record is under EARLY_BEST m
-  const early = EARLY_PARAM ?? (!pure && !isRace && !lv && !challenge && run.mode === 'classic' && Math.max(S.best.height || 0, bestM || 0) < EARLY_BEST);
-  const md = MODE[run.mode], stakeId = md && md.stake ? md.stake : md && md.stakes ? run.stake : 'sapling';
-  const choices = !daily && !lv && !isRace && STAKE[stakeId] && stakeId !== 'sapling' && !early; // V3.2: fork-choice gates off on Sapling + early showcase
-  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director, econ, world, ...(mech || {}), feel: FEEL, early, choices });
+  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director, econ, world, ...(mech || {}), feel: FEEL });
   replay.n = 0; replay.at = 0; // V3-FEEL: last-moment frames
   showWorld(world);
   // /P8-ECON
@@ -359,7 +353,7 @@ function toMenu() {
   setMode('title');
   refreshTitle();
   startDemo();
-  if (hub && !CONTEST) hub.onHome(); // META-V2: at most one offer, never mid-run (V3.2: none in the contest build)
+  if (hub) hub.onHome(); // META-V2: at most one offer, never mid-run
 }
 
 function refreshTitle() {
@@ -462,10 +456,9 @@ function coachView(s) {
   if (!coach.step || mode !== 'play' || s.dead) return null;
   const tap = input.kind === 'touch' ? 'TAP' : input.kind === 'key' ? 'SPACE' : 'CLICK';
   const steer = input.kind === 'touch' ? 'Drag anywhere to steer' : input.kind === 'key' ? '← → to steer' : 'Move the mouse to steer';
-  const tapHow = input.kind === 'touch' ? 'a quick tap, no drag' : input.kind === 'key' ? 'or ↑' : 'a quick click'; // V3.2: drag steers, tap forks
   switch (coach.step) {
-    case 'steer': return { title: steer, sub: input.kind === 'touch' ? 'Dragging only steers · catch sunlight to refill your sap' : 'Catch sunlight to refill your sap', n: 1 };
-    case 'fork': return { title: `${tap} to fork`, sub: coach.retry === 'emptymerge' ? 'Grab sunlight on both branches before merging' : coach.retry === 'revert' ? 'A hit reverts a branch. Fork again!' : `${tapHow[0].toUpperCase() + tapHow.slice(1)} · split into two branches, one per gap`, n: 2, urgent: coach.slow, cue: coach.slow };
+    case 'steer': return { title: steer, sub: 'Catch sunlight to refill your sap', n: 1 };
+    case 'fork': return { title: `${tap} to fork`, sub: coach.retry === 'emptymerge' ? 'Grab sunlight on both branches before merging' : coach.retry === 'revert' ? 'A hit reverts a branch. Fork again!' : 'Split into two branches: one per gap', n: 2, urgent: coach.slow, cue: coach.slow };
     case 'merge': {
       const staged = s.tips.length === 2 ? s.tips[0].staged + s.tips[1].staged : 0;
       const ready = staged >= 2 && s.forkTime > 0.9;
@@ -501,18 +494,6 @@ function handleEvents(s, quiet) {
         burst(e.x, e.y, 6, '#ffe08a', 170, 7, 0.45, 'spark');
         if (sim && sim.feelS) { fx.chainPts = fx.chainPts || []; fx.chainPts.push({ x: e.x, y: e.y, age: 0 }); if (fx.chainPts.length > 10) fx.chainPts.shift(); } // V3-FEEL sparkle chain
         if (!quiet) { sound.collect(e.chain, e.forked); spark(e.x, e.y); floater(e.x + (e.chain % 2 ? 26 : -26), e.y - 10, `+${e.pts}`, '#fbe3a4', 15 + Math.min(7, e.chain), 0.6); }
-        break;
-      // V3.2 gameplay events (see work/v3/V32-EVENTS.md)
-      case 'vine.revive': // the wilted vine greens up again: a burst of fresh leaves along the tip
-        for (const t of s.tips) { burst(t.x, s.cy + 10, 10 + Math.round((1 - e.from) * 10), '#7fe08a', 210, 8, 0.8, 'leaf'); ring(t.x, s.cy, '#b8ffb0', 64, 0.55); }
-        if (!quiet && e.from < 0.25) floater(e.x, e.y - 52, 'revived!', '#b8ffb0', 20, 0.8);
-        break;
-      case 'choice.pick':
-        if (!quiet && e.lane !== 'safe') floater(e.x, e.y - 60, e.lane === 'both' ? 'both lanes!' : 'brave lane', e.lane === 'both' ? '#8fd0e6' : '#ffd36a', 20, 0.9);
-        break;
-      case 'setpiece.start':
-        if (!quiet) fx.banner = e.mini ? { text: `MINI-BOSS · ${e.name}`, sub: 'dodge 3 attacks · watch the red warnings', t: 0, max: 2.6, small: true }
-          : { text: e.name, sub: e.kind === 'calm' ? 'free sunlight · ride the bloom' : e.kind === 'chase' ? 'keep climbing · it is right behind you' : 'boss · watch the warnings', t: 0, max: 2.4, small: true };
         break;
       case 'fork':
         for (const t of s.tips) { ring(t.x, s.cy, '#8fd0e6', 50); burst(t.x, s.cy, 5, '#a9cf5a', 130, 6, 0.6, 'leaf'); }
@@ -891,7 +872,6 @@ function showGameOver() {
   const modeLine = lv ? `Quest ${lv.id} · ${lv.name}${sum.won ? '' : ' · not finished'}` : run.mode === 'weekly' ? `Weekly tree ${weekCode(run.week)} · Oak` : run.mode !== 'classic' && !daily ? MODE[run.mode].name : (!daily && run.stake !== 'sapling' ? `${STAKE[run.stake].name} stake ×${STAKE[run.stake].mult}` : '');
   const cardStars = lv && lastQuest ? { run: lastQuest.runStars || 0, best: lastQuest.stars || 0 } : null;
   const cardMeta = { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '', map: mapId(), world: shownWorld || (sim && sim.world) || selectedWorld() }; // P8-MAPS: map; V2-INT fix: the card is from the v2 world
-  lastCardMeta = cardMeta; lastCardSim = sim; // V3.2-CARD
   const paintCard = (SH, cs) => {
     try {
       cardCanvas = SH.renderCard(cs, sum, cardMeta);
@@ -901,7 +881,7 @@ function showGameOver() {
     }
   };
   cardCanvas = null;
-  { const cs = sim; (SHARE ? Promise.resolve(SHARE) : loadShare()).then((SH) => (SH.preloadPainting ? SH.preloadPainting(cardMeta.world).then(() => SH) : SH)).then((SH) => { paintCard(SH, cs); if (SH.poetize) SH.poetize(cs, sum, cardMeta).then((p) => { if (p && lastSum === sum) paintCard(SH, cs); }); }).catch((e) => console.warn('card module failed', e)); } // V3.2-CARD: optional AI commit line (2 s, offline fallback)
+  { const cs = sim; (SHARE ? Promise.resolve(SHARE) : loadShare()).then((SH) => (SH.preloadPainting ? SH.preloadPainting(cardMeta.world).then(() => SH) : SH)).then((SH) => paintCard(SH, cs)).catch((e) => console.warn('card module failed', e)); }
   const toGo = STAGES[TREETOP_IDX].m - sum.height;
   const why = { hit: 'one hit', time: "time's up", sap: 'out of sap', finish: 'finished' }[sum.end] || '';
   $('over-kicker').textContent = challenge ? (challenge.won ? `★ CHALLENGE BEATEN (${challenge.pts ? challenge.m.toLocaleString('en-US') + ' pts' : challenge.m + ' m'})` : challenge.pts ? `CHALLENGE: friend scored ${challenge.m.toLocaleString('en-US')}` : `CHALLENGE: ${challenge.m - sum.height + 1} m short`)
@@ -926,13 +906,6 @@ function showGameOver() {
     rec.hidden = !rec.textContent;
   }
   // P6-ART end
-  // V3.2 "one more run": the nearest goal (record, next rank) as one big line, the next world blurred behind
-  {
-    const prior = lv ? 0 : (sim.bestM || 0);
-    const g = lv ? null : nearestGoal(sum.height, prior);
-    showGoal(g, { world: shownWorld || sim.world, headline: g && sum.height > prior && prior > 0 ? 'Kỷ lục mới!' : '' });
-    const rec = $('over-record'); if (rec && g) rec.hidden = true; // the goal line says it bigger
-  }
   document.querySelector('.over-panel').classList.toggle('lvl', !!lv);
   // stars for quest levels: this run's stars light up, newly earned ones stamp in
   const os = $('over-stars');
@@ -958,7 +931,7 @@ function showGameOver() {
   $('share-msg').textContent = '';
   setMode('over'); showReplay(); // V3-FEEL
   ui.showRewards(rewards, { before });
-  if (hub && rewards) { hub.afterRun({ lost: !newBest }); if (!CONTEST) hub.offerDouble({ gained: S.acorns - before, fair: !!lv || daily || challengeRun || run.mode === 'weekly' }); } // META-V2
+  if (hub && rewards) { hub.afterRun({ lost: !newBest }); hub.offerDouble({ gained: S.acorns - before, fair: !!lv || daily || challengeRun || run.mode === 'weekly' }); } // META-V2
   refreshGroveChip();
   if (input.kind !== 'touch') $('btn-again').focus({ preventScroll: true });
 }
@@ -1032,8 +1005,7 @@ function shareText() {
     return `Forkwood quest ${lv.id} "${lv.name}" ${'★'.repeat(n)}${'☆'.repeat(3 - n)} · ${s.score.toLocaleString('en-US')} pts\n${Q.mapGrid(S)}\nBeat my score: ${challengeUrl()}`;
   }
   const what = run.mode === 'weekly' && !daily ? ` on the weekly tree ${weekCode(run.week)}` : run.mode !== 'classic' && !daily ? ` in ${MODE[run.mode].name}` : run.stake !== 'sapling' && !daily ? ` on ${STAKE[run.stake].name} stake` : '';
-  const cl = lastCardSim && lastCardSim.__card ? `${lastCardSim.__card.poem.text}\n` : ''; // V3.2-CARD: the tree's commit line
-  return `${cl}I grew a ${s.height} m tree in Forkwood${what} (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
+  return `I grew a ${s.height} m tree in Forkwood${what} (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
 }
 
 // ------------------------------------------------------------------ input
@@ -1056,16 +1028,6 @@ const TOUCH_GAIN = 1.5;
 // Looking-glass mode: steering is mirrored (the course is not)
 const mirrored = () => mode === 'play' && !daily && !run.level && run.mode === 'mirror';
 const mirrorX = (x) => (mirrored() ? W - x : x);
-// V3.2 control split: moving / dragging only ever steers; a quick tap or click with no drag forks or
-// merges (on release). TAP: < TAP_MS and < TAP_PX of travel; a press held still a little longer
-// (< HOLD_MS, < STILL_PX) still counts, so a slow tap is never dead. Every pointer is tracked, so a
-// second finger can tap to fork while the first keeps steering. Keyboard is unchanged.
-// Mouse: hover already steers, so a click made while the hand is moving is not a drag; it gets a looser
-// travel limit (MOUSE_PX) so clicks on the move are never dead.
-export const TAP = { ms: 220, px: 10, holdMs: 450, stillPx: 5, mouseMs: 300, mousePx: 26 };
-const isTap = (dt, moved, mouse) => mouse ? moved < TAP.mousePx && dt < TAP.holdMs && (dt < TAP.mouseMs || moved < TAP.stillPx)
-  : moved < TAP.px && (dt < TAP.ms || (dt < TAP.holdMs && moved < TAP.stillPx));
-const taps = new Map(); // pointerId -> { t, x, y, moved }
 canvas.addEventListener('pointerdown', (e) => {
   sound.unlock();
   input.kind = e.pointerType === 'mouse' ? 'mouse' : 'touch';
@@ -1074,16 +1036,12 @@ canvas.addEventListener('pointerdown', (e) => {
   else if (mode === 'play' && paused) { resume(); return; }
   const cz = renderer.layout.charm;
   if (mode === 'play' && cz && Math.hypot(e.clientX - cz.x, e.clientY - cz.y) < cz.r) { input.charm = true; return; }
-  if (e.pointerType === 'mouse' && e.button !== 0) return;
-  taps.set(e.pointerId, { t: performance.now(), x: e.clientX, y: e.clientY, moved: 0, mouse: e.pointerType === 'mouse' });
-  if (input.pointerId != null && e.pointerType !== 'mouse') return; // a second finger: tap only, the first keeps steering
   input.pointerId = e.pointerId; input.downT = performance.now(); input.downX = e.clientX; input.downY = e.clientY; input.moved = 0;
   if (e.pointerType === 'mouse') input.targetX = mirrorX(worldX(e.clientX));
   else input.anchor = input.targetX ?? (sim ? sim.cx : W / 2);
+  if (e.pointerType === 'mouse' && mode === 'play' && e.button === 0) toggleFork();
 });
 window.addEventListener('pointermove', (e) => {
-  const tp = taps.get(e.pointerId);
-  if (tp) tp.moved = Math.max(tp.moved, Math.hypot(e.clientX - tp.x, e.clientY - tp.y));
   if (e.pointerType === 'mouse') {
     if (input.dir !== 0) return;
     if (input.kind === 'key' && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) < 3) return;
@@ -1095,11 +1053,11 @@ window.addEventListener('pointermove', (e) => {
   }
 });
 window.addEventListener('pointerup', (e) => {
-  const tp = taps.get(e.pointerId); taps.delete(e.pointerId);
-  if (tp && mode === 'play' && isTap(performance.now() - tp.t, tp.moved, tp.mouse)) toggleFork();
-  if (e.pointerId === input.pointerId) input.pointerId = null;
+  if (e.pointerId !== input.pointerId) return;
+  if (e.pointerType !== 'mouse' && mode === 'play' && performance.now() - input.downT < 260 && input.moved < 16) toggleFork();
+  input.pointerId = null;
 });
-window.addEventListener('pointercancel', (e) => { taps.delete(e.pointerId); if (e.pointerId === input.pointerId) input.pointerId = null; });
+window.addEventListener('pointercancel', () => { input.pointerId = null; });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 window.addEventListener('keydown', (e) => {
@@ -1184,11 +1142,8 @@ $('btn-challenge').addEventListener('click', async () => {
 });
 $('btn-resume').addEventListener('click', resume);
 $('pause').addEventListener('pointerdown', (e) => { if (e.target === $('pause')) resume(); });
-const saveWide = () => { if (!cardCanvas || !SHARE.renderCard || !lastCardSim) return; SHARE.downloadCard(SHARE.renderCard(lastCardSim, lastSum, { ...lastCardMeta, size: 'wide' }), `forkwood-${lastSum.hash}-${lastSum.height}m-1200x630.png`); }; // V3.2-CARD: link-preview size
-if ($('btn-save-wide')) $('btn-save-wide').addEventListener('click', saveWide);
-$('btn-save').addEventListener('click', (e) => {
+$('btn-save').addEventListener('click', () => {
   if (!cardCanvas) return;
-  if (e.shiftKey) { saveWide(); return; } // V3.2-CARD
   SHARE.downloadCard(cardCanvas, `forkwood-${lastSum.hash}-${lastSum.height}m.png`);
   $('share-msg').textContent = 'Saved your tree as a PNG.';
 });
@@ -1280,7 +1235,7 @@ function frame(nowMs) {
     cam.scale += (base * demoCam.scale - cam.scale) * Math.min(1, dt * 1.6);
     cam.anchor += (demoCam.anchor - cam.anchor) * Math.min(1, dt * 1.6);
     cam.y += (sim.cy - cam.y) * Math.min(1, dt * 3);
-  } else if (mode === 'play' && !paused && !window.__fwHold) { // V3.2 test hook: __fwHold freezes the sim (screenshots step it with forkwood.advance)
+  } else if (mode === 'play' && !paused) {
     let inp;
     if (BOT_MODE || autoplay) inp = botInput(bot, sim);
     else inp = { targetX: input.dir !== 0 ? null : input.targetX, dir: mirrored() ? -input.dir : input.dir, toggle: input.toggle, charm: input.charm };
@@ -1301,7 +1256,7 @@ function frame(nowMs) {
       cam.anchor += (0.32 - cam.anchor) * Math.min(1, dt * 2.2);
       cam.y += (sim.cy - cam.y) * Math.min(1, dt * 3);
       // P8-ECON: second chance (gems, cost doubles each time in a run)
-      if (sim.deathT > 0.5 && !deathShown && !reviveAsked && sim.econ && sim.end === 'sap' && !CONTEST) { // V3.2: no gem/ad continue in the contest build
+      if (sim.deathT > 0.5 && !deathShown && !reviveAsked && sim.econ && sim.end === 'sap') {
         reviveAsked = true;
         rv.offer(sim.revives, (yes, via) => { if (yes && (via === 'ad' || EC.payRevive(S, sim.revives) !== false) && reviveSim(sim)) { persist(false); reviveAsked = false; fx.banner = { text: 'SECOND CHANCE', sub: 'sap refilled · the way ahead is clear', t: 0, max: 1.6, small: true }; sound.sprout(); } });
       }
@@ -1342,7 +1297,6 @@ function drawFrame(dt) {
     touch: input.kind === 'touch',
     raceDraw: raceUI && raceUI.racing && run.mode === 'race' ? raceUI.draw : null, // P6-RACE
     quickRetry: mode === 'play' && quickRetryOk(), // V3-FEEL
-    stake: !daily && run.mode === 'classic' ? run.stake : 'sapling', // V3.2: the sun shaft is weaker on Ancient
     ghostM: mode === 'play' && CHALLENGE && CHALLENGE.duel && isChallengeRun() ? R.ghostHeight(CHALLENGE.duel, sim.t) : null,
   });
   if (!introUp && !skipDemo) SEA.drawOverlay(renderer, sim, SEASON.theme, paused ? 0 : dt, isCalm()); // P6-SEASONS

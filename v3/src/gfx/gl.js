@@ -19,17 +19,11 @@ import { WORLDS, WORLD, currentWorld, onWorldChange, loadWorld, preloadNext, zon
 import { VINE_SKINS, skinDef, paintStrip, paintGlowStrip } from './skins.js';
 import { buildAtlas, paintPlaceholder } from './atlas.js';
 import { vstyle, paintShadowStrip, paintRimStrip, paintFreshStrip, paintTendrilStrip, paintGround, paintRoots, GROUND } from './vine-art.js';
-import { Living, liveConfig, liveWorld, livingSupported } from './living.js'; // V3.2 living backdrops
-export const SUN_K = 1.6, SUN_TEACH = 14; // V3.2: sunlight size and how many of a run's first sunlights pulse
 
 const TAU = Math.PI * 2;
 const hexN = (h) => parseInt(String(h).slice(1, 7), 16);
 const hex3 = (h) => { const n = hexN(h); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
 const mixN = (a, b, t) => { const A = hex3(a), B = hex3(b); return ((A[0] + (B[0] - A[0]) * t) << 16) | ((A[1] + (B[1] - A[1]) * t) << 8) | (A[2] + (B[2] - A[2]) * t); };
-// V3.2: the vine is the sap bar. Below WILT_HI of max sap the stem browns and the leaves droop, fully at WILT_LO.
-export const WILT_HI = 0.62, WILT_LO = 0.15, WILT_STEM = 0x94582a, WILT_LEAF = 0xc8884a, WILT_DRY = 0xf0c89a;
-const mulN = (a, b) => (((((a >> 16) & 255) * ((b >> 16) & 255) / 255) << 16) | ((((a >> 8) & 255) * ((b >> 8) & 255) / 255) << 8) | ((a & 255) * (b & 255) / 255)) >>> 0;
-const lerpN = (a, b, t) => { const A = [(a >> 16) & 255, (a >> 8) & 255, a & 255], B = [(b >> 16) & 255, (b >> 8) & 255, b & 255]; return ((A[0] + (B[0] - A[0]) * t) << 16) | ((A[1] + (B[1] - A[1]) * t) << 8) | (A[2] + (B[2] - A[2]) * t); };
 const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 const easeBack = (t) => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 // V3: a zone sky pans by progress through its OWN zone (zt.prog belongs to zone i, so the upper sky
@@ -90,7 +84,7 @@ const AMB = {
   embers: { frame: 'fx.ember', w: 0.8, vx: [-6, 10], vy: [-40, -18], spin: 0, sway: 10, scale: [0.4, 0.8], tint: ['#ffb04a', '#ff7a3a', '#ffd27a'], alpha: 1, add: true, blink: true },
   goldflakes: { frame: 'fx.flake', w: 1, vx: [-12, 12], vy: [14, 30], spin: 3, sway: 18, scale: [0.5, 1], tint: ['#ffd75a', '#fff0a8', '#e8b030'], alpha: 1, glint: true },
   inksplash: { frame: 'fx.ink.0', w: 0.25, vx: [0, 0], vy: [6, 14], spin: 0, sway: 0, scale: [0.5, 1], tint: ['#1b2a4a'], alpha: 0.35, fade: true },
-  ripples: { livingOff: true, frame: 'fx.ripple', w: 0.5, vx: [0, 0], vy: [0, 0], spin: 0, sway: 0, scale: [0.6, 1.4], tint: ['#ffffff', '#ffe9a0'], alpha: 0.45, grow: true, low: true },
+  ripples: { frame: 'fx.ripple', w: 0.5, vx: [0, 0], vy: [0, 0], spin: 0, sway: 0, scale: [0.6, 1.4], tint: ['#ffffff', '#ffe9a0'], alpha: 0.45, grow: true, low: true },
   foam: { frame: 'fx.foam', w: 0.8, vx: [20, 50], vy: [10, 30], spin: 1, sway: 8, scale: [0.4, 0.9], tint: ['#fbf3e0', '#ffffff'], alpha: 0.9 },
   plasterdust: { frame: 'fx.dust', w: 1, vx: [-4, 4], vy: [4, 12], spin: 0, sway: 6, scale: [0.3, 0.8], tint: ['#fff6e0', '#f0e0c0'], alpha: 0.6 },
   motes: { frame: 'fx.dust', w: 0.8, vx: [-5, 5], vy: [-8, 8], spin: 0, sway: 10, scale: [0.3, 0.6], tint: ['#fff6d0'], alpha: 0.7, add: true, blink: true },
@@ -128,9 +122,6 @@ export class GLLayer {
     const game = this.host.canvas; game.parentNode.insertBefore(cv, game);
     cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.fail('context lost'); });
     if (r.gl) this.countDrawCalls(r.gl);
-    // V3.2: painted plates drawn by the living shader (flow maps, water, wind, haze, rays); WebGL2 only
-    this.living = null;
-    if (!gpu && livingSupported(r)) { try { this.living = new Living(PIXI, this, loadBitmap); } catch (e) { console.info('[forkwood] living backdrops off:', e.message); } }
 
     // V2-INT: one GSAP copy is shared with the DOM menus (motion.js), so the engine no longer stops the global
     // ticker; its tweens live on a private paused timeline driven by presentation time (pause/slow-mo stay in sync).
@@ -171,7 +162,6 @@ export class GLLayer {
     // curling tendrils are their own small ribbons; back leaves sit under the stem for depth
     this.vineShadow = new PIXI.Mesh({ geometry: this.vine.geometry, texture: PIXI.Texture.WHITE });
     this.vineRim = new PIXI.Mesh({ geometry: this.vine.geometry, texture: PIXI.Texture.WHITE }); this.vineRim.blendMode = 'add';
-    this.vineWilt = new PIXI.Mesh({ geometry: this.vine.geometry, texture: PIXI.Texture.WHITE }); this.vineWilt.tint = WILT_STEM; this.vineWilt.visible = false; this.wilt = 0; // V3.2
     this.fresh = this.makeRibbon(null, null, 1600);
     this.tendril = this.makeRibbon(null, null, 3200);
     this.leafBackC = new PIXI.Container();
@@ -182,7 +172,7 @@ export class GLLayer {
     this.tipC = new PIXI.Container();
     this.fxPC = new PIXI.ParticleContainer({ texture: this.atlasBase, dynamicProperties: { position: true, rotation: true, color: true, vertex: true, uvs: true } });
     this.juiceC = new PIXI.Container();
-    this.world.addChild(this.ground, this.vineShadow, this.leafBackC, this.vineGlow.mesh, this.vine.mesh, this.vineWilt, this.vineRim, this.fresh.mesh, this.tendril.mesh, this.leafC, this.glowC, this.entC, this.tipC, this.fxPC, this.juiceC);
+    this.world.addChild(this.ground, this.vineShadow, this.leafBackC, this.vineGlow.mesh, this.vine.mesh, this.vineRim, this.fresh.mesh, this.tendril.mesh, this.leafC, this.glowC, this.entC, this.tipC, this.fxPC, this.juiceC);
 
     this.front = new PIXI.Container();
     this.vignette = new PIXI.Sprite(this.makeVignette());
@@ -333,12 +323,6 @@ export class GLLayer {
     L.bitmap = bitmap;
     L.tex = PIXI.Texture.from(bitmap); L.tex.source.scaleMode = 'linear';
     this.trackTex('layer:' + L.id + L.k, bitmap.width, bitmap.height);
-    const cfg = this.living && liveConfig(this.worldId, L);
-    if (cfg) { // V3.2: one living quad replaces the sprite / tiling sprite (wrapping happens in the shader)
-      L.tex.source.addressMode = L.fit === 'cover' ? 'mirror-repeat' : 'repeat';
-      L.live = this.living.make(L, L.tex, cfg); L.root.addChild(L.live.mesh);
-      return;
-    }
     if (L.mode === 'tile-x' || L.mode === 'tile-y') {
       L.tex.source.addressMode = 'repeat';
       L.tile = new PIXI.TilingSprite({ texture: L.tex, width: 10, height: 10 });
@@ -361,7 +345,7 @@ export class GLLayer {
       if (!L.zones || !L.tex || L.loading || L.zones.some((z) => Math.abs(z - zt.i) <= 1)) continue;
       L.root.removeChildren().forEach((c) => c.destroy());
       L.tex.destroy(true); this.texBytes.delete('layer:' + L.id + L.k);
-      L.tex = L.tile = L.main = L.sides = L.live = null;
+      L.tex = L.tile = L.main = L.sides = null;
       if (!L.ownBitmap) { if (L.src) dropBitmap(L.src.url); L.bitmap = null; } // zone-0 bitmaps stay cached with the world (cheap re-upload)
       L.lazy = true; this.trackTex('_', 0, 0);
     }
@@ -391,11 +375,6 @@ export class GLLayer {
     for (const L of this.layers) {
       if (!L.tex) continue;
       const tw = L.tex.width, th = L.tex.height;
-      if (L.live) { // V3.2 living quad: same fit as the sprite path, mirrored sides come from the shader
-        if (L.fit === 'cover') { L.k0 = Math.min(Math.max(cw / tw, ch / th) * 1.04, 1 / res); L.travel = Math.max(0, th * L.k0 - ch); if (L.opaque && L.zone == null && th * L.k0 >= ch - 1) this.opaqueSky = true; }
-        else { L.k0 = L.mode === 'tile-x' || L.mode === 'tile-y' ? Math.min(1 / res, Math.max(cw / tw, 0.0001)) : Math.min(cw / tw, 1 / res); L.travel = 0; }
-        continue;
-      }
       if (L.tile) { // tile-y: width-fit (capped at 1.0x), repeats vertically as the camera climbs
         const k = Math.min(1 / res, Math.max(cw / tw, 0.0001));
         L.k0 = k; L.tile.width = cw; L.tile.height = ch; L.tile.tileScale.set(k, k);
@@ -470,7 +449,7 @@ export class GLLayer {
     const sh = PIXI.Texture.from(paintShadowStrip(m)), rim = PIXI.Texture.from(paintRimStrip(m));
     sh.source.addressMode = 'repeat'; rim.source.addressMode = 'repeat';
     const old = [this.vineShadow.texture, this.vineRim.texture];
-    this.vineShadow.texture = sh; this.vineRim.texture = rim; this.vineWilt.texture = sh; // V3.2: the wilt wash uses the stem body mask
+    this.vineShadow.texture = sh; this.vineRim.texture = rim;
     for (const t of old) if (t && t !== PIXI.Texture.WHITE) t.destroy(true);
   }
 
@@ -633,18 +612,11 @@ export class GLLayer {
     G.mesh.visible = gn > 0; G.mesh.alpha = gold > 0 ? 0.5 : 0.2;
     F.mesh.visible = fn > 0; TD.mesh.visible = tn > 0;
     this.vineShadow.visible = tier <= 2 && n > 0; this.vineRim.visible = tier <= 1 && n > 0 && !!st.rim;
-    // V3.2 vine = sap bar: a dry-brown wash over the stem body, a warm-grey multiply, fading fresh growth
-    const wl = this.wilt || 0;
-    this.vineWilt.visible = n > 0 && wl > 0.02; this.vineWilt.alpha = 0.82 * wl;
-    R.mesh.tint = wl > 0.01 ? lerpN(0xffffff, WILT_DRY, wl) : 0xffffff;
-    F.mesh.alpha = 1 - 0.85 * wl; TD.mesh.tint = wl > 0.01 ? lerpN(0xffffff, WILT_LEAF, wl) : 0xffffff;
-    this.vineRim.alpha = (st.rimA || 0.5) * (1 - 0.6 * wl);
     if (gold > 0) G.mesh.tint = 0xffd36a; else if (sk.glow) G.mesh.tint = hexN(sk.glow);
   }
 
   drawLeaves(s, now, topY, botY, px) {
     const pool = this.leafPool, id = this.skinId; pool.begin();
-    const wl = this.wilt || 0, wTint = wl > 0.01 ? lerpN(0xffffff, WILT_LEAF, wl) : 0xffffff; // V3.2: leaves brown + droop with low sap
     const artLeaf = this.regFrames.get(`${id}.leaf`), artFlower = this.regFrames.get(`${id}.flower`);
     const leafT = this.tex[`leaf.${id}`] || this.tex['fx.leaf'], darkT = this.tex[`leaf.${id}.dark`] || leafT, dotT = this.tex['vine.dot'];
     const k = 1 / this.atlas.res;
@@ -674,12 +646,12 @@ export class GLLayer {
             if (artLeaf) { // ART leaf: anchor at its base, drawn pointing up-right (rotate so it follows `ang`)
               const ft = artLeaf.frames[0]; sp.texture = ft; sp.anchor.set(artLeaf.anchor[0], artLeaf.anchor[1]);
               sp.x = pt.x; sp.y = pt.y; sp.rotation = ang + Math.PI / 4; const q = len / (ft.width * 0.5 * 0.9) * Math.max(1, px * 0.8) * 0.5 * Math.max(0.4, pop);
-              sp.scale.set(side < 0 ? -q : q, q * (1 - 0.3 * wl)); sp.rotation = (side < 0 ? ang + Math.PI * 3 / 4 : ang + Math.PI / 4) + side * wl * 0.6;
-              sp.tint = mulN(j % 2 ? 0xd8e0d8 : 0xffffff, wTint); sp.alpha = 1;
+              sp.scale.set(side < 0 ? -q : q, q); sp.rotation = side < 0 ? ang + Math.PI * 3 / 4 : ang + Math.PI / 4;
+              sp.tint = j % 2 ? 0xd8e0d8 : 0xffffff; sp.alpha = 1;
             } else {
               sp.texture = j % 2 ? darkT : leafT; sp.anchor.set(0.03, 0.5);
-              sp.x = pt.x; sp.y = pt.y; sp.rotation = ang + side * wl * 0.6; sp.scale.set(len / 30 * k * Math.max(1, px * 0.8), Math.max(0.4, pop) * Math.max(1, px * 0.8) * 0.9 * k * (1 - 0.3 * wl));
-              sp.tint = mulN(j >= 2 ? 0xfff2d8 : 0xffffff, wTint); sp.alpha = 1;
+              sp.x = pt.x; sp.y = pt.y; sp.rotation = ang; sp.scale.set(len / 30 * k * Math.max(1, px * 0.8), Math.max(0.4, pop) * Math.max(1, px * 0.8) * 0.9 * k);
+              sp.tint = j >= 2 ? 0xfff2d8 : 0xffffff; sp.alpha = 1;
             }
           }
         }
@@ -716,19 +688,19 @@ export class GLLayer {
               const pop = g < 1 ? easeBack(g) : 1, side = (kL + p.id) % 2 ? 1 : -1, h2 = hash(kL * 5.1 + 2.3), h3 = hash(kL * 9.7 + 4.1);
               const back = tier <= 1 && h3 < 0.32;
               const sway = Math.sin(now * 1.7 + kL * 1.3) * (0.07 + (pts.length - i < 30 ? 0.06 : 0));
-              const ang = dir + side * (0.75 + h2 * 0.65) * (0.25 + 0.75 * Math.min(1, pop)) * (back ? 1.25 : 1) + sway * (1 - 0.7 * wl) + side * wl * 0.75; // V3.2: droop
+              const ang = dir + side * (0.75 + h2 * 0.65) * (0.25 + 0.75 * Math.min(1, pop)) * (back ? 1.25 : 1) + sway;
               const len = (19 + h * 14) * (back ? 1.2 : 1) * Math.min(1.25, 0.8 + core / 40) * Math.max(0.05, pop);
               const sp = back ? bp.next() : pool.next();
               const bx = a.x - side * dy * core * 0.55, by = a.y + side * dx * core * 0.55;
               if (artLeaf) {
                 const ft = artLeaf.frames[0]; sp.texture = ft; sp.anchor.set(artLeaf.anchor[0], artLeaf.anchor[1]);
                 const q = len / (ft.width * 0.5 * 0.9) * 0.5 * Math.max(1, px * 0.8);
-                sp.x = bx; sp.y = by; sp.scale.set(side < 0 ? -q : q, q * (1 - 0.3 * wl)); sp.rotation = side < 0 ? ang + Math.PI * 3 / 4 : ang + Math.PI / 4;
+                sp.x = bx; sp.y = by; sp.scale.set(side < 0 ? -q : q, q); sp.rotation = side < 0 ? ang + Math.PI * 3 / 4 : ang + Math.PI / 4;
               } else {
                 sp.texture = h2 > 0.5 ? darkT : leafT; sp.anchor.set(0.03, 0.5); sp.x = bx; sp.y = by; sp.rotation = ang;
-                sp.scale.set(len / 30 * k * Math.max(1, px * 0.8), Math.min(1, pop) * Math.max(1, px * 0.8) * 0.9 * k * (1 - 0.3 * wl));
+                sp.scale.set(len / 30 * k * Math.max(1, px * 0.8), Math.min(1, pop) * Math.max(1, px * 0.8) * 0.9 * k);
               }
-              sp.tint = mulN(back ? 0x8c9a8c : h2 > 0.62 ? 0xe2eadc : 0xffffff, wTint); sp.alpha = 1;
+              sp.tint = back ? 0x8c9a8c : h2 > 0.62 ? 0xe2eadc : 0xffffff; sp.alpha = 1;
             }
           }
           if (kF !== lastF) {
@@ -741,7 +713,7 @@ export class GLLayer {
               const sp = pool.next();
               if (artFlower) { const ft = artFlower.frames[0]; sp.texture = ft; sp.anchor.set(0.5); sp.scale.set(size * pop / ft.width); }
               else { sp.texture = this.tex['fx.petal']; sp.anchor.set(0.5); sp.scale.set(k * 1.6 * pop); sp.tint = 0xffd0dc; }
-              sp.x = fx0; sp.y = fy0; sp.rotation = (1 - Math.min(1, g * 1.2)) * -0.9 * side + Math.sin(now * 0.9 + kF) * 0.08 + side * wl * 0.5; sp.alpha = 1 - 0.75 * wl; if (artFlower) sp.tint = wTint; // V3.2: flowers fade + droop
+              sp.x = fx0; sp.y = fy0; sp.rotation = (1 - Math.min(1, g * 1.2)) * -0.9 * side + Math.sin(now * 0.9 + kF) * 0.08; sp.alpha = 1; if (artFlower) sp.tint = 0xffffff;
             }
           }
         }
@@ -781,23 +753,13 @@ export class GLLayer {
           const h = pool.next(); h.texture = this.tex.glow; h.anchor.set(0.5); h.tint = 0x0d3f48; h.alpha = 0.62; h.rotation = 0;
           h.x = o.x; h.y = o.y; h.scale.set((o.r * 3.4) / 64 * k);
         }
-        // V3.2: sunlight ("sap rings") drawn SUN_K x bigger (the visual now matches the pickup radius r + 13),
-        // with a glowing outline; the first few of a run pulse to teach "grab these"
-        const sun = o.kind === 'sun' && !o.fin;
-        if (sun && !o.v32) { o.v32 = 1; o.v32i = this.sunSeen = (this.sunSeen || 0) + 1; }
-        const teach = sun && o.v32i <= SUN_TEACH ? 1 : 0, by = Math.sin(now * (o.kind === 'sun' ? 2.2 : 3) + o.ph) * 2.5;
-        const pulse = 1 + Math.sin(now * 5 + o.ph) * 0.07 + teach * 0.16 * Math.max(0, Math.sin(now * 6.5 + o.ph));
-        if (sun) {
-          const ring = this.tex['fx.ring'];
-          if (ring) { const q = pool.next(); q.texture = ring; q.anchor.set(0.5); q.x = o.x; q.y = o.y + by; q.rotation = 0; q.tint = o.rich ? 0xffc85a : 0xfff0b8; q.alpha = 0.55 + 0.3 * teach; q.scale.set((o.r * 2 * SUN_K + 8) * pulse / ring.width); }
-          const g = this.glowPool.next(); g.anchor.set(0.5); g.x = o.x; g.y = o.y + by; g.tint = 0xffd36a; g.alpha = 0.22 + 0.25 * teach; g.scale.set(o.r * SUN_K * 3.6 / 32 * k * pulse);
-        }
         const sp = pool.next(); sp.texture = t; sp.anchor.set(0.5); sp.alpha = 1; sp.tint = 0xffffff;
         const reg = this.regTex.has(resolveId(id) || id), sc = reg ? (o.r * 2.6) / Math.max(t.width, t.height) : k;
-        sp.x = o.x; sp.y = o.y + by;
+        const pulse = 1 + Math.sin(now * 5 + o.ph) * 0.07;
+        sp.x = o.x; sp.y = o.y + Math.sin(now * (o.kind === 'sun' ? 2.2 : 3) + o.ph) * 2.5;
         sp.rotation = o.kind === 'acorn' && !o.gem ? Math.sin(now * 2 + o.ph) * 0.18 : o.kind === 'chip' ? now : 0;
-        sp.scale.set(sc * (o.kind === 'sun' ? pulse * o.r / 11 * (sun ? SUN_K : 1) : 1));
-        if (o.kind === 'sun' || o.gem) { const g = this.glowPool.next(); g.anchor.set(0.5); g.x = sp.x; g.y = sp.y; g.tint = o.gem ? 0x8fa8ff : 0xf2b33d; g.alpha = gold > 0 ? 0.6 : 0.42; g.scale.set(o.r * (gold > 0 ? 3.4 : 2.8) / 32 * k * (o.gem ? 1.1 : 0.78) * (sun ? SUN_K : 1)); }
+        sp.scale.set(sc * (o.kind === 'sun' ? pulse * o.r / 11 : 1));
+        if (o.kind === 'sun' || o.gem) { const g = this.glowPool.next(); g.anchor.set(0.5); g.x = sp.x; g.y = sp.y; g.tint = o.gem ? 0x8fa8ff : 0xf2b33d; g.alpha = gold > 0 ? 0.6 : 0.42; g.scale.set(o.r * (gold > 0 ? 3.4 : 2.8) / 32 * k * (o.gem ? 1.1 : 0.78)); }
       }
       for (const b of s.beetles) {
         if (b.y < this.topY - 30 || b.y > this.botY + 30) continue;
@@ -837,7 +799,7 @@ export class GLLayer {
   // ---------------------------------------------------------------- sky + ambient
   updateFlow(dt, zt) {
     const W = this.W, pool = this.flowPool; pool.begin();
-    if (W.sky === 'flow' && !(this.living && liveWorld(W.id))) { // V3.2: with living plates the painted sky itself swirls
+    if (W.sky === 'flow') {
       const want = BUDGET[quality.tier].flow, F = this.flowField, cw = this.cw, ch = this.ch;
       const cols = zt.i >= 3 ? [0xf8e27a, 0xdfe8ff, 0x6a8ae0, 0x2a4ab0, 0xfff6c0] : [0x3a6ad0, 0x6a9ae8, 0xf2d86a, 0xdfe8ff, 0x1e3c90];
       while (this.flow.length < want) this.flow.push({ u: Math.random(), v: Math.random() * 0.75, life: 0, max: 2 + Math.random() * 2, f: (Math.random() * 6) | 0, c: cols[(Math.random() * cols.length) | 0], s: 0.6 + Math.random() * 0.7 });
@@ -861,7 +823,7 @@ export class GLLayer {
 
   updateAmbient(dt, now, zt, camDy) {
     const W = this.W, cw = this.cw, ch = this.ch;
-    const ids = W.ambient.filter((id) => AMB[id] && !(this.living && liveWorld(W.id) && AMB[id].livingOff));
+    const ids = W.ambient.filter((id) => AMB[id]);
     const want = BUDGET[quality.tier].amb;
     if (ids.length) {
       const total = ids.reduce((s, id) => s + AMB[id].w, 0);
@@ -913,7 +875,6 @@ export class GLLayer {
     const hiReady = new Set();
     for (const L of this.layers) if (L.zones && L.tex && L.zones.includes(hi)) hiReady.add(L.group);
     let skyCovered = this.opaqueSky;
-    let groundY = 9; // V3.2: screen-uv y of the painted horizon of the visible sky (far clouds fade out below it)
     for (const L of this.layers) {
       // zone-limited layers crossfade by height; all-zone layers are re-lit with the zone tint
       let a = 1;
@@ -927,25 +888,6 @@ export class GLLayer {
       }
       if (!L.tex) { L.root.visible = false; continue; }
       if (L.opaque && L.fit === 'cover' && a >= 0.999) skyCovered = true;
-      if (L.live) {
-        const tw = L.tex.width, th = L.tex.height, sw = tw * L.k0, sh = th * L.k0;
-        let x0, y0;
-        if (L.fit === 'cover') {
-          const y = ch * L.anchor[1] + L.travel * (L.zone != null ? zoneProg(L.zone, view.camM) : Math.min(1, view.camM / 1400));
-          x0 = cw * L.anchor[0] - view.camX * L.parallax * 0.15 - sw * L.anchor[0]; y0 = y - sh * L.anchor[1];
-          L.root.visible = a > 0.003 && y0 < ch + 2;
-        } else if (L.mode === 'tile-x' || L.mode === 'tile-y') {
-          x0 = (cw - sw) / 2 - view.camX * L.parallax * 0.15; y0 = ch - sh + view.camPx * L.parallax;
-          L.root.visible = a > 0.003;
-        } else {
-          const y = ch * L.anchor[1] + view.camPx * L.parallax;
-          x0 = cw * L.anchor[0] - view.camX * L.parallax * 0.15 - sw * L.anchor[0]; y0 = y - sh * L.anchor[1];
-          L.root.visible = a > 0.003 && y0 < ch + 2;
-        }
-        if (L.fit === 'cover' && L.opaque) { const hy = L.live.hz != null ? (y0 + L.live.hz * sh) / ch : 1.2; groundY = a >= 0.999 ? hy : groundY + (hy - groundY) * a; }
-        if (L.root.visible) this.living.update(L.live, cw, ch, [cw / sw, ch / sh, -x0 / sw, -y0 / sh], tint, a, quality.tier, groundY);
-        continue;
-      }
       if (L.main) {
         let y;
         if (L.fit === 'cover') y = ch * L.anchor[1] + L.travel * (L.anchor[1] - 0.5) * 0 + L.travel * (L.zone != null ? zoneProg(L.zone, view.camM) : Math.min(1, view.camM / 1400));
@@ -1018,7 +960,6 @@ export class GLLayer {
   // ---------------------------------------------------------------- frame
   draw(s, cam, fx, ui, view) {
     if (!this.ready || this.failed) return;
-    if (this.r.gl && this.r.gl.isContextLost()) return; // V3.2: never compile a shader on a lost context (the contextlost event switches renderer)
     const t0 = performance.now();
     const now = view.now, nowS = t0 / 1000, dt = Math.min(1 / 20, Math.max(0, nowS - this.lastNow)); this.lastNow = nowS;
     this.gsapT += dt; this.tl.totalTime(this.gsapT);
@@ -1028,11 +969,8 @@ export class GLLayer {
     const camDy = this.lastCamPx == null ? 0 : (view.camPx - this.lastCamPx); this.lastCamPx = view.camPx;
 
     this.updateBackdrop(view, zt);
-    // V3.2: a pinned living clock (frame-sequence tests) drives the ambient layers too, so captures are deterministic
-    let dtA = dt, nowA = nowS;
-    if (this.living && this.living.clock != null) { dtA = Math.max(0, Math.min(0.2, this.living.clock - (this.lastClock ?? this.living.clock))); this.lastClock = this.living.clock; nowA = this.living.clock; }
-    this.updateFlow(view.frozen ? 0 : dtA, zt);
-    this.updateAmbient(view.frozen ? 0 : dtA, nowA, zt, Math.max(-40, Math.min(40, camDy)));
+    this.updateFlow(view.frozen ? 0 : dt, zt);
+    this.updateAmbient(view.frozen ? 0 : dt, nowS, zt, Math.max(-40, Math.min(40, camDy)));
 
     // world transform (shared with the 2D overlay)
     this.rollC.pivot.set(this.cw / 2, this.ch / 2); this.rollC.position.set(this.cw / 2, this.ch / 2); this.rollC.rotation = view.roll || 0;
@@ -1040,12 +978,6 @@ export class GLLayer {
     this.ground.visible = view.botY > -300;
     if (this.ground.visible) this.drawRoots(s);
 
-    // V3.2 vine = sap bar: smoothed wilt from the sap fraction (browns slowly, greens up fast on sunlight)
-    if (this.wSim !== s) { this.wSim = s; this.wilt = 0; this.sunSeen = 0; }
-    { const fr = s.sap / Math.max(1, s.sapMaxV || 100);
-      const wT = ui.reveal || s.golden > 0 ? 0 : Math.max(0, Math.min(1, (WILT_HI - fr) / (WILT_HI - WILT_LO)));
-      const wdt = Math.min(0.25, Math.max(0, nowS - (this.wLast || nowS))); this.wLast = nowS; // own clock: not capped at 1/20 like dt
-      this.wilt += (wT - this.wilt) * Math.min(1, wdt * (wT < this.wilt ? 6 : 1.8)); }
     this.buildVine(s, now, view.topY, view.botY, view.px, view.gold);
     this.drawLeaves(s, now, view.topY, view.botY, view.px);
     this.glowPool.begin(); // tips and glowing pickups share one additive batch
@@ -1070,7 +1002,7 @@ export class GLLayer {
   }
 
   /** Dim the frozen frame behind a modal (re-renders once with the veil). */
-  veil(a) { this.veilS.alpha = a; this.veilS.visible = a > 0; if (this.ready && !this.failed && !(this.r.gl && this.r.gl.isContextLost())) this.r.render(this.stage); }
+  veil(a) { this.veilS.alpha = a; this.veilS.visible = a > 0; if (this.ready && !this.failed) this.r.render(this.stage); }
 }
 
 export default GLLayer;

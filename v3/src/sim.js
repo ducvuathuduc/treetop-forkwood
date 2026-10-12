@@ -12,7 +12,6 @@ import { RIDES, mount as rideMount, dismount as rideDismount, rideHit, rideMods,
 import { SKILLS, makeSkill, fireSkill, skillTick, skillMergeCut, skillEffects, skillReady } from './skills.js';
 import { ringAt, ringOffer, takeRing, addKnot, ringLevel, knotAcornK, knotScoreK, ringCatchK, ringJitK, ringJitMult, ringLuck, ringGolden, ringAcornK, ringEcho, ringDancer, ringEmber, ringCrow, OFFER_SLOW, KNOTS } from './rings.js';
 import { spOpen, spChunk, spUpdate, hollowYs, openHollow } from './setpieces.js';
-import { wantChoice, choiceGate, v32Post } from './play32.js'; // V3.2 gameplay
 // V3-FEEL: combo, flow, input buffer, coyote merge, last gasp, signature currents, choice lanes, finisher
 import { feelInit, feelInput, feelPost, feelGasp, feelSigBeat, feelLanes, feelCollect, feelSapK, feelCoyote, feelPassed, feelDeath, turnK, grazeK, scoreTierK, surgeV } from './feel.js';
 export const MECH_TUNE = { trap2W: 1.0, rideChance: 0.06, rideGapM: 150, rideFirstM: 120, calmSap: 0.35, lateSpan: 525 }; // V3.1: lateSpan 420 -> 525 (faster climb)
@@ -178,9 +177,6 @@ export function createSim(opts = {}) {
     charmUses: 0,
     blocks: 0,
     bestM: opts.bestM || 0,
-    // V3.2: fork-choice gates only on Oak / Ancient stakes (opts.choices), never on Sapling or during the early showcase
-    choicesOn: !!opts.choices && !opts.early,
-    early: !!opts.early, // V3.2: first runs (best < 400 m) get the early showcase set pieces
     t: 0,
     cx: W / 2,
     cy: 0,
@@ -724,8 +720,6 @@ function pull(s, reach) { let n = 0; for (const o of s.motes) if (!o.taken && o.
 const heightM2 = (y) => -y / PX_PER_M;
 
 // P6-TRAPS: tests and screenshots: grow one chunk (by id) with its bottom at y
-const CHOICE_API = { hazardSkin }; // V3.2
-const V32_API = { emit: (s, t, d) => emit(s, t, d), sapMax: (s) => sapMax(s) }; // V3.2
 const FEEL_API = { addScore: (s, p) => addScore(s, p), sapMax: (s) => sapMax(s), newTrail: (s, n) => newTrail(s, n) }; // V3-FEEL
 export function spawnChunkAt(s, id, y, d = 0.4) { const c = CHUNK[id]; return c ? c.gen(s, y, d, -y / PX_PER_M) : 0; }
 // /P6-TRAPS
@@ -841,9 +835,9 @@ function spawnBeat(s, y) {
   const idx = s.beatIndex++;
 
   // Scripted opening that teaches by doing: steer, fork, merge.
-  if (idx === 0) { addTrail(s, y, { n: 6, cx: W / 2, amp: 120 }); if (s.tutorial) s.hints.push({ y: y + 70, text: 'steer the tip', sub: 'move · drag · ← →' }); return 340; }
+  if (idx === 0) { addTrail(s, y, { n: 6, cx: W / 2, amp: 120 }); if (s.tutorial) s.hints.push({ y: y + 70, text: 'steer the tip', sub: 'mouse · touch · ← →' }); return 340; }
   if (idx === 1) { addTrail(s, y, { n: 6, amp: 160 }); return 360; }
-  if (idx === 2) { addSplit(s, y - 40, W / 2, 112); if (s.tutorial) s.hints.push({ y: y + 150, text: 'TAP to fork', sub: 'quick tap or click · space' }); return 330; }
+  if (idx === 2) { addSplit(s, y - 40, W / 2, 112); if (s.tutorial) s.hints.push({ y: y + 150, text: 'TAP to fork', sub: 'click · tap · space' }); return 330; }
   if (idx === 3) { addTwinTrail(s, y, W / 2); if (s.tutorial) s.hints.push({ y: y - 290, text: 'TAP again to merge', sub: 'merge = combo ×' }); return 420; }
 
   const D = s.dir;
@@ -894,8 +888,6 @@ function spawnBeat(s, y) {
       // V2-MECH: the ride/reward beat: after every second spike a rest glade carries a Ride Knot
       if (role === 'rest' && m >= MECH_TUNE.rideFirstM && (D.spikes || 0) >= 2) { D.spikes = 0; role = 'reward'; placeRide(s, y - len * 0.45, m); }
       else if (role === 'rest' && s.feelS && m >= 18) { const ex = feelSigBeat(s, y, len, m, mi0, FEEL_API); if (ex || s.motes.length !== mi0) len += ex; } // V3-FEEL: signature current
-    } else if (role === 'build' && wantChoice(s, m)) { // V3.2: fork-choice gate (safe lane vs sunlight + thorns)
-      len = choiceGate(s, y, m, CHOICE_API); chunk = { id: 'choice', tier: 1 };
     } else {
       const tf = d * 2.3 + (role === 'spike' ? 0.9 : D.pos === 2 ? 0.35 : 0) + (r() - 0.5) * 0.6 - 0.3;
       chunk = pickChunk(s, clamp(Math.round(tf), 0, 3), m);
@@ -1122,7 +1114,6 @@ export function step(s, dt, input = {}) {
   traps2Collide(s, dt, API2); // V2-MECH
   retract(s, dt);
   if (s.feelS) feelPost(s, dt, FEEL_API); // V3-FEEL
-  v32Post(s, dt, V32_API); // V3.2: choice gates + vine health cues
 
   const cull = s.cy + 1000;
   s.motes = s.motes.filter((o) => o.y < cull && !o.taken);
@@ -1224,7 +1215,6 @@ function revert(s, tipIdx) {
   const other = s.tips[1 - tipIdx];
   const p = s.paths[tip.path];
   p.state = 'reverting'; p.endT = s.t;
-  p.died = { y: s.cy, t: s.t, src: s.lastHitSrc || '', sun: p.commits.filter((c) => c.kind === 'commit').length }; // V3.2-CARD: the retract erases the branch; keep its death for the commit graph
   // staged commits on the reverted branch are lost
   const lost = tip.staged;
   s.commits -= lost;
