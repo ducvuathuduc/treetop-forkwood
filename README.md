@@ -1,188 +1,295 @@
+<div align="center">
+
+<img src="v3/icon-180.png" width="88" height="88" alt="Forkwood icon">
+
 # Forkwood
 
-**A one-touch tree that grows from your choices. Fork it in two, merge it back for combos, and climb from twig to treetop.**
+### Grow a vine through living masterpieces.
 
-<p>
-<img src="screenshots/00-hook.webp" width="560" alt="Forkwood title card over a painted dawn meadow at the foot of a giant tree, a young branch already growing">
-<img src="screenshots/21-duel-invite-phone.webp" width="200" alt="Phone: a friend's duel invite on the title card, with their critter portrait">
-</p>
+A one-touch browser game: **fork** your vine in two, **merge** it back for combos, and climb through seven painted worlds, from twig to treetop.
 
-▶ **Play now in your browser:** https://ducvuathuduc.github.io/treetop-forkwood/
-No install, no account, no ads. Desktop and phone. Made for **Twigpine Project Treetop, Round 01 (Games)**, theme *"From twig to treetop"*.
+[![Play live](https://img.shields.io/badge/play-live%20demo-2f6b33?style=flat-square&logo=github)](https://ducvuathuduc.github.io/treetop-forkwood/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![PixiJS 8](https://img.shields.io/badge/PixiJS-v8-e91e63?style=flat-square)](https://pixijs.com/)
+[![WebGL + Canvas2D fallback](https://img.shields.io/badge/WebGL-Canvas2D%20fallback-990000?style=flat-square&logo=webgl)](#architecture)
+[![First load](https://img.shields.io/badge/first%20load-351%20KB%20gzip-success?style=flat-square)](#performance-budgets)
+[![No build step](https://img.shields.io/badge/build-none%20(vanilla%20ESM)-lightgrey?style=flat-square)](#getting-started)
 
-## Why it is fun
+<br>
 
-Your branch grows by itself; you steer it into sunlight. **Tap to fork** it into two tips that sweep twice the sky and slip through split gates. **Tap again to merge** and everything both branches caught is banked at once, raising your combo. Get hit while forked and that branch is **reverted**: you watch it un-grow back to the fork. It is version control you can feel, and the tree you end with is the record of how you played.
+<img src="v3/assets/v2/meadow/ui/meadow.ui.painting.s.webp" width="108" alt="Golden Hour Meadow: anime-film painting"><img src="v3/assets/v2/starry/ui/starry.ui.painting.s.webp" width="108" alt="Starry River: impasto night sky"><img src="v3/assets/v2/fresco/ui/fresco.ui.painting.s.webp" width="108" alt="Fresco Cathedral: Renaissance fresco"><img src="v3/assets/v2/ukiyo/ui/ukiyo.ui.painting.s.webp" width="108" alt="Great Wave Cliffs: ukiyo-e woodblock"><img src="v3/assets/v2/lilies/ui/lilies.ui.painting.s.webp" width="108" alt="Lily Garden: impressionist dabs"><img src="v3/assets/v2/gilded/ui/gilded.ui.painting.s.webp" width="108" alt="Gilded Grove: gold-leaf mosaic"><img src="v3/assets/v2/lacquer/ui/lacquer.ui.painting.s.webp" width="108" alt="Lantern Village: Vietnamese sơn mài lacquer">
 
-* **One input, real decisions.** Every fork doubles your reach and your risk; every merge is a bet you cash in.
-* **Short, readable runs.** A weak player lasts about a minute; experts fight for the stars.
-* **Your tree as a postcard.** Every run ends with a printed card of the whole tree, its height, score and commit hash.
+<sub>The seven worlds, as their in-game gallery paintings.</sub>
 
-## What's new in 1.0
+<br><br>
 
-| Manga intro | Seven maps | Crow attack |
+**[▶ Play now](https://ducvuathuduc.github.io/treetop-forkwood/)** · **[2.0 preview](https://ducvuathuduc.github.io/treetop-forkwood/v2/)** · **[v3 preview](https://ducvuathuduc.github.io/treetop-forkwood/v3/)** · [Tiếng Việt](#tiếng-việt)
+
+<sub>No install, no account, no ads. Desktop and phone.</sub>
+
+</div>
+
+---
+
+## Contents
+
+[Features](#features) · [Controls](#controls) · [Architecture](#architecture) · [Project structure](#project-structure) · [Getting started](#getting-started) · [Testing](#testing) · [Performance budgets](#performance-budgets) · [Fair modes](#deterministic-fair-modes) · [Roadmap](#roadmap) · [Contributing](#contributing) · [Credits](#credits--licenses) · [License](#license)
+
+## Features
+
+### One input, real decisions
+Your vine grows on its own; you steer it into sunlight. **Tap to fork** into two tips that sweep twice the sky. **Tap again to merge** and bank everything both tips caught, raising your combo. Get hit while forked and that branch is **reverted**: it un-grows back to the fork. Sap drains as you climb; sunlight refills it.
+
+### Seven painterly worlds
+Each world has its own painted parallax layers (portrait and desktop), its own 8–9 traps, a signature ride, a calm set piece, a chase and a three-phase boss, plus its own adaptive music.
+
+| World | Medium | Boss |
 |---|---|---|
-| ![Manga page: the sprout opens its eyes, a speech bubble says it will bring the light back](screenshots/25-manga-intro.webp) | ![Map carousel on a phone: Arashiyama Bamboo, Kyoto, with its price in acorns](screenshots/26-maps-carousel.webp) | ![The crow dives on a marked lane and pecks the branch: sap and sunlight fly off](screenshots/27-crow-hit.webp) |
+| Golden Hour Meadow *(free)* | cinematic anime painting | Meadow Giant |
+| Starry River | Van Gogh-style impasto, animated swirling sky | Crow King |
+| Fresco Cathedral | Renaissance buon fresco, plaster and gold | Gargoyle |
+| Great Wave Cliffs | ukiyo-e woodblock on washi | Kitsune |
+| Lily Garden | Monet-style impressionist dabs | Great Heron |
+| Gilded Grove | Klimt-style gold-leaf mosaic | Gilded Stag |
+| Lantern Village | Vietnamese sơn mài lacquer | Lantern Dragon |
 
-* **A manga intro.** Your first launch opens on an eight-panel manga: a storm, a crow that steals the light, and one sprout that decides to bring it back. Panels slam in, the page shakes on impact, and the last page breaks out of its frame into your first run. Under 30 seconds, Skip any time, replay it from the title.
-* **Seven maps to grow in.** Forkwood, **Phong Nha Caves** (Việt Nam) and five more to unlock with acorns: **Arashiyama Bamboo** (Kyoto), **Redwood Giants** (California), **Black Forest** (Hansel & Gretel), **Amazon Canopy** and **Beanstalk Sky** (Jack and the Beanstalk). Each has its own painted plates, day-to-night palette, zone names and weather, and stamps its own postage stamp on your game-over postcard.
-* **An endless-runner economy, earned only by playing** (no money anywhere): acorns plus rare **dew gems**; **boosts**, **upgrades** that make power-ups last longer, **seed pods** with their odds published in full, a **second chance** for 1, 2, 4, 8 gems, a daily **word hunt** (gold letter tiles in the tree) and a **grower multiplier**. Maps (900-2,400 acorns) and 20 new map-themed skins (filter the shop by map) are the big things to save for. All of it is off on the daily and weekly trees, quest levels, challenge links and races. Numbers and a 30-day simulation of casual, average and hardcore players: [ECONOMY.md](ECONOMY.md).
-* **Traps you can feel.** Every trap warns you about 1.2 s ahead and lands with real impact: hit-stop, a coral burst, sap draining into the meter, damage numbers; near misses get a mint swoosh. The crow always dives on a marked lane: swerve out or fork round it, or lose sap, staged sunlight and 5% of your points ([TRAP-EVENTS.md](TRAP-EVENTS.md)).
-* **Harder, fairer.** On Oak the bots last about 33 s (weak), 57 s (average) and 85 s (expert); Ancient is brutal. 300 seeded courses checked, 0 fairness problems.
-* Still under 700 KB on first load: the story, the map art, the carousel, the race and the shop sections load only when you open them.
+Painters are emulated in technique only (public domain); every composition is original.
 
-## What's new in 0.8.0
+### Systems
+- **24 trap mechanics** (9 classic + 15 new), each telegraphed **≥ 0.8 s** before it can hurt (boss attacks ≥ 1.2 s), each with a fork or merge counterplay.
+- **10 rides** (hummingbird, crane, swiftlet, goose…), **9 new pickups**, **8 critter skills**.
+- **Growth Rings**: in-world 3-way choices; fork through two to take both plus a Knot. **4 opt-in curses** pay +20% acorns / +15% points.
+- **Set pieces** on a rotation (calm ~260 m, chase ~640 m, boss ~900 m, then every 350 m at +15% intensity).
 
-* **A calmer world.** The painted plates behind the play band are replaced by a quiet procedural woodblock backdrop that changes by height (meadow, oak, canopy, clouds, stars), with side art on wide screens, a zone bar, and a **record flag** planted on the trunk at your best height. Before and after: [before](screenshots/before-after/bg-before.webp), [after](screenshots/before-after/bg-after.webp).
-* **9 telegraphed traps:** cracked twig, pulse thorns, trapdoor gate, crosswind, sap drain, golden lure, twin beetles, rising thorns and the crow. Each one warns you at least 0.8 s before it can hurt, comes in a gentle intro version the first time you meet it, and after 45 s they start arriving in combos. Close calls trigger a short slow-mo, and sap drain was retuned (quest levels keep their old drain).
-* **A quiet difficulty director** in free play only: from your last 5 runs it moves pacing by at most ±15% (rest glades, how soon harder chunks come). It is off for daily, weekly, quest levels, challenge and duel links, and live races.
-* **Seasons on your local clock:** Firefly Night, Golden Dawn, Autumn Maple, Winter Snow, Tết and the Weekend Twin Storm, shown as cards on the title with a countdown. They recolour the backdrop everywhere, but their gameplay modifiers only apply in free play; daily, weekly, quest, challenge, duel and race runs stay the same for everyone.
-* **Live race** with a friend (below).
+### Modes
+Grow (endless, with Sapling / Oak / Ancient stakes) · Quest map (5 worlds × 4 hand-made levels, 60 stars) · Zen · Sprint · Hardcore · Looking-glass · Storm Rush · Daily tree · Weekly tree · Duel links · **Live race**.
+
+### v3 game feel
+A pure, deterministic feel layer (`src/feel.js`) on top of the sim:
+
+| System | What it does |
+|---|---|
+| Combo meter | sunlight, close calls, merges, blooms and foils chain into 5 tiers (+15% points each) |
+| Flow state | 14 clean seconds at tier ≥ 2: wider magnet, the world brightens |
+| Input buffer | a tap during the fork cooldown is kept for 0.22 s, never dropped |
+| Coyote merge | a merge up to 0.18 s after passing a thorn row still counts as just-in-time |
+| Last gasp | at 0 sap the tip wilts for 1.4 s; catch one sunlight to come back |
+| Signature currents | every ~205 m a rest glade becomes the world's current (Swirl Current, Wave Crest, Lantern Updraft…) |
+| Choice lanes | split gates offer sap on one side, gold seeds on the other |
+| Boss finisher · death reading | a glowing weak point after phase 3; one line on why the run ended |
+
+The v3 layer never moves a course hazard and draws from its own random stream, so the course RNG sequence is unchanged. Rendering adds juice on top: hit-stop, trauma-based screen shake, haptics, one-tap retry and a last-moment replay card.
 
 ### Live race
+Tap **Live**, send the link, and both players grow the **same 90-second tree** at the same time, each seeing the other as a ghost vine. Peer-to-peer over WebRTC ([PeerJS](https://peerjs.com/) 1.5.5, loaded only when a race starts). If no connection is made in ~8 s, the same course plays as a duel link. No accounts, nothing stored on a server.
 
-Tap **Live** on the title card (next to Daily tree). You get a link (`?race=forkwood-<code>-<random>`); when your friend opens it you both land in a lobby, tap Ready, count down 3-2-1 and grow the **same 90-second tree** at the same time. Each of you sees the other's branch climbing as a dashed ghost with their name, plus a height bar at the bottom. When both trees are done the finish card names the winner (height, then points) and offers a rematch on a fresh course. Connections are peer-to-peer over WebRTC using [PeerJS](https://peerjs.com/) 1.5.5 and its free public broker; the library loads only when you start or join a race. If the connection cannot be made within about 8 seconds (or your friend drops), you can play the same course as an ordinary duel link instead. No accounts, nothing stored on a server. `npm run race` tests it with two browsers.
+### Accessibility
+- **Calm mode** turns off shake, flashes, vibration and interface motion; on automatically with `prefers-reduced-motion`.
+- Relative drag steering on phones, so the thumb never covers the tip.
+- Constant safety colours in every world: readable vine, warm-gold rewards, red-orange danger telegraphs.
+- Live regions (`aria-live`) for the story, race countdown and map panel.
+- English and Vietnamese world names; fonts ship Latin + Vietnamese subsets.
+- Adaptive quality tiers (`?quality=auto|high|low`) step resolution and soft layers down on slow devices.
 
-## What's new in v0.7: the Grove update
+### Sound
+Seven adaptive world loops with **calm / chase / boss** stems and **249 sound cues** in nine sprites, all composed and synthesised by our own code (`tools/audio/`). Opus with an AAC fallback; the mixer loads after first paint.
 
-| Story intro (v0.7) | Painted world (dusk, 550 m) | Practice league |
+## Controls
+
+| Action | Desktop | Phone |
 |---|---|---|
-| ![The v1.0 manga intro: the sprout decides to bring the light back](screenshots/25-manga-intro.webp) | ![Forked branch over a pink cloud sea with blossom trees at dusk](screenshots/24-dusk-desktop.webp) | ![League table: you and nine labelled ghost growers, promotion and demotion zones](screenshots/19-league-desktop.webp) |
+| Steer | mouse, or ← → / A D | drag anywhere (relative) |
+| **Fork / merge** | click, Space, ↑ or W | tap |
+| Fire charm / critter skill | E, Q or Shift | tap the badge, bottom left |
+| Restart | R | Grow again |
+| Pause | P or Esc | ⏸ button |
+| Mute | M | 🔊 button |
+| Daily tree (title) | D | Daily button |
 
-* **A story before your first run** (replaced by the manga intro in 1.0). Illustrated storybook plates told how a storm reverted the Great Tree and a sparrow saved one seed. Then the game drops you straight into your first tree, no menu in between. Replay it any time from the title (Story) or your profile.
-* **A painted world.** Every stage now has its own illustrated backdrop in the woodblock style (dawn meadow, sunlit forest, amber canopy, dusk above the clouds, starlight), drifting with the climb and cross-fading between stages, with painted boughs framing the playfield on wide screens, a painted meadow and soil, and illustrated thorn vines, beetles and sun tokens. Buttons and cards got a finished edition look. Before and after: [desktop play](screenshots/before-after/desktop-play.webp), [title](screenshots/before-after/desktop-title.webp), [late game](screenshots/before-after/desktop-late.webp), [phone play](screenshots/before-after/phone-play.webp), [phone title](screenshots/before-after/phone-title.webp).
-* **The Grove** (tap your portrait, top left):
-  * **Streak** with milestones at 3, 7, 14, 30, 60 and 100 days, up to two frost guards that each save a missed day, and a 28-day calendar. Finishing a run counts; so does the daily gift.
-  * **Grove season**: a free 30-tier track each month, earned only by playing (rings from height, goals, challenges and your first run of the day). New trails, portraits, frames, a Sakura leaf, a Lotus blossom and Mossy oak bark.
-  * **Practice league**: Seedling → Sprout → Sapling → Bough → Canopy → Treetop → Ancient. Each week you race nine **ghost growers** generated from the week's seed (the same for everyone, and labelled as simulated, never as live players). Top 3 move up, bottom 2 move down.
-  * **Duels**: tap **Duel** on any endless or daily result. Your friend opens the link, grows the exact same course and races your **rival tip**, which climbs at your average pace. They send their answer back and both of you collect acorns on your own device. No server, no account.
-  * **Profile**: a critter portrait (sparrow, squirrel, owl, fox, snail, moth, frog, beetle), a frame, a badge and a name for your duels. Plus a new **Trail** slot for your tree (pollen, petals, fireflies, ink, stardust and more).
-  * **Welcome back gifts** after three or more days away.
+## Architecture
 
-| Season track | Streak | Profile |
-|---|---|---|
-| ![Season track on a phone, tier list with rewards](screenshots/20-season-phone.webp) | ![Streak page: flame, frost guards, next milestone, 28-day calendar](screenshots/23-streak-phone.webp) | ![Profile: critter portrait, name, portrait and frame pickers](screenshots/22-profile-phone.webp) |
+Vanilla ES modules, no framework, no build step. The simulation is pure and renderer-agnostic; everything else reads its state and subscribes to its event bus.
 
-## The Quest update (v0.6)
+```mermaid
+flowchart LR
+  subgraph Core["Pure core (deterministic, no DOM)"]
+    SIM["sim.js<br/>seeded RNG · modes · stakes"]
+    DIR["director.js · world-mech.js<br/>traps · traps2 · rides · rings · setpieces"]
+    FEEL["feel.js<br/>combo · flow · buffer · last gasp"]
+  end
+  subgraph Render["Render"]
+    GL["gfx/gl.js<br/>PixiJS v8 WebGL<br/>backdrop · vine · particles"]
+    C2D["render.js<br/>Canvas2D overlay: traps, HUD, text<br/>full Canvas2D fallback"]
+  end
+  subgraph Meta["UI / meta (DOM + CSS)"]
+    UI["ui-home · ui-hub · ui-rooms<br/>shop · grove · pass · league · race"]
+    ECO["economy.js · store.js · retention.js<br/>localStorage save"]
+  end
+  AUD["audio.js → audio-mixer.js<br/>WebAudio buses · stems · ducking"]
+  BOT["bot.js<br/>headless auto-play"]
 
-| Quest map | Modes and stakes | A storm level |
-|---|---|---|
-| ![Quest map: five worlds of four levels with stars and locks](screenshots/13-quest-map.jpg) | ![Modes board: Grow with Sapling, Oak and Ancient stakes, Zen, Sprint, Hardcore](screenshots/15-modes.jpg) | ![Storm Crown level: lightning columns and rain on a purple sky](screenshots/16-storm-level.jpg) |
-
-* **Quest map: 5 worlds, 20 hand-made levels, 60 stars.** Meadow teaches; Frost Bough slows you; Windy Canopy pushes you around thorn columns; Storm Crown throws lightning; Starlight throws everything. Each level is a short, fixed course (the same every try) with a finish ribbon and two goals of its own, such as "no hits", "merge 4 times" or "finish in 29 s". Goal stars stay once earned. The last level of each world is a harder remix.
-* **Stakes: Sapling ×1, Oak ×1.5, Ancient ×2.2.** Each stake keeps the rules below it and adds its own: hazards sooner, thirstier sap, faster beetles, harder hits, fewer rest glades. Reach the Treetop on one stake to open the next.
-* **Six modes**, each a different question:
-  * **Zen**: no sap to lose. Grow to the Cloudline at your own pace.
-  * **Sprint**: sixty seconds on the clock. How high can you get?
-  * **Hardcore**: one hit and the tree is done. Points ×2.
-  * **Looking-glass**: your steering is mirrored. Points ×1.5.
-  * **Storm Rush**: storm after storm from 60 m up, each longer than the last.
-  * **Weekly tree**: one course for everyone all week, on Oak, with a share code like `FW-2026W41`.
-* **Rewards you earn, never buy:** a chest every 6 stars, 8 quest-only skins (Dandelion, Hoarfrost, Red cedar, Storm print, Aurora, Ember cap, Swift maple, Starwood) and 10 titles that print on your postcard.
-* **A harder climb.** After the first minute the endless run tightens: hazards reach full strength by about 475 m instead of 620 m, sap drains faster from 280 m on, and three new late combos mix two biome ideas at once.
-* **Share and challenge.** Every result has a challenge link: the same course (`?seed=…&beat=…`), the same quest level (`?lvl=2-3&beat=…`) or the same weekly tree (`?week=2026-W41&beat=…`). Level shares come with a spoiler-free star grid:
-
+  DIR <--> SIM
+  FEEL <--> SIM
+  SIM -- "state + events" --> GL
+  SIM -- "state + events" --> C2D
+  GL -. "context lost / no WebGL" .-> C2D
+  SIM -- "events" --> AUD
+  SIM -- "run summary / loot" --> ECO
+  UI <--> ECO
+  UI -- "start run, world, skin" --> SIM
+  BOT -- "inputs" --> SIM
 ```
-Forkwood quest 23/60★
-1 ★★★ ★★★ ★★★ ★★☆
-2 ★★★ ★★☆ ★★☆ ★☆☆
-3 ★☆☆ ☆☆☆ ☆☆☆ ☆☆☆
-4 · locked
-5 · locked
+
+**Key decisions**
+- **One sim, many modes.** Modes, stakes, quest levels, daily/weekly trees and races are the same simulation with a few rules changed, so the headless bot measures balance on exactly the code players run.
+- **Registry-driven art.** Entities carry `kind` + a registry `skin` id (`starry.trap.crowflock`); a missing id renders a clean vector placeholder instead of crashing.
+- **Two canvases.** Pixi (WebGL) draws the world under a 2D canvas that keeps traps, HUD and text. On context loss or no WebGL, the full Canvas2D renderer takes over automatically.
+- **Lazy everything.** Worlds, music, the story, the race library and shop sections load on demand.
+
+## Project structure
+
+```text
+.
+├── index.html            # single page; DOM menus over the game canvases
+├── src/
+│   ├── sim.js            # pure deterministic simulation
+│   ├── director.js       # course director (chunks, pacing, rest beats)
+│   ├── world-mech.js     # per-world traps, rides, set pieces (single source of truth)
+│   ├── traps.js traps2.js rides.js rings.js setpieces.js skills.js
+│   ├── feel.js           # v3 game-feel layer (pure)
+│   ├── modes.js campaign.js quest.js seasons.js race.js
+│   ├── gfx/              # gl.js (Pixi WebGL layer), atlas.js, skins.js
+│   ├── render*.js        # Canvas2D overlay + fallback, trap and feel FX
+│   ├── ui-*.js           # home, hub, rooms, shop, grove, maps, race
+│   ├── economy.js store.js store-state.js retention.js meta.js
+│   ├── audio.js audio-mixer.js
+│   ├── fonts.js quality.js worlds.js worlds-meta.js
+│   └── vendor/           # pixi.mjs, gsap.mjs, zzfx.js (+ licences)
+├── assets/
+│   ├── v2/<world>/       # painted layers, trap/boss atlases, music, SFX
+│   ├── v2/common/        # pickups, rides, rings, vines, UI kit, audio manifest
+│   └── fonts/            # self-hosted OFL WOFF2 subsets + licence texts
+├── art-src/              # art pipeline scripts and prompt records
+├── tools/                # audio composer, perf, feel telemetry, vendor build
+├── tests/                # Node + Playwright suites
+├── CREDITS.md  ECONOMY.md  TRAP-EVENTS.md  LICENSE
+└── package.json
 ```
 
-## How to play
+## Getting started
 
-| | Desktop | Phone |
-|---|---|---|
-| Steer the growing tip | mouse, or ← → / A D | drag anywhere (relative, so your thumb never covers the tip) |
-| **Fork** / **merge** | click, or Space / ↑ | tap |
-| Fire your charm (from level 2) | E or Shift | tap the charm badge, bottom left |
-| Restart | R | Grow again / Retry |
-| Pause / mute | P or Esc / M | buttons, top right |
-
-* The first run teaches itself in three steps (steer, fork, merge), slowing time while it waits for your first tap.
-* Your tip burns **sap**; sunlight refills it. Forking burns sap faster, so merge to bank what you caught.
-* Beetles and thorns hurt. On one tip a hit costs sap and your combo; on a fork it reverts that branch.
-* **Every stage adds one thing:** frost and zig-zags (Bough), gusts and thorn columns you can straddle with a fork (Canopy), the **storm** with telegraphed lightning (Treetop), sliding thorns (Cloudline), and all of it under the stars.
-* **Power-ups** (Pollen, Ink ×2, Sap Rush), **grafts** with a boon and a cost (fork to take both), graze chains, just-in-time merges, **golden hour** at ×8 and **full bloom** when you catch a whole trail.
-
-## Modes at a glance
-
-| Mode | Rule | Unlock |
-|---|---|---|
-| Grow (Endless) | climb as high as you can; pick a stake | from the start |
-| Zen | no sap loss, finish at 600 m, points ×0.5 | clear level 1-2, or play 3 runs |
-| Sprint | 60 s clock, growth ×1.12 | clear World 1, or grow 240 m |
-| Hardcore | any hit ends the run, points ×2 | clear World 2, or reach 400 m |
-| Looking-glass | mirrored steering, points ×1.5 | clear World 3, or grow 600 m |
-| Storm Rush | 8 storms from 60 m, thornier ground, points ×1.6 | clear World 4, or Treetop on Oak |
-| Weekly tree | same course for all week, Oak, no charms | 12 stars, or grow 850 m |
-| Daily tree | same course for all today, no charms | from the start |
-
-## Grow with it
-
-Acorns come only from playing (pick-ups, height, merges, blooms, chests, the season, the league and duels). They buy cosmetic skins in seven slots, all drawn in the woodblock style; skins never change the game. There are levels with three goals each, daily and weekly challenges, a daily gift with a streak, 21 badges and four charms (small, measured edges that the daily tree, weekly tree, quest levels and challenge links switch off so they stay fair). Progress is saved only on your device.
-
-## Difficulty, measured
-
-The game shares one deterministic simulation with a headless auto-play bot, so balance is measured, not guessed. Median survival over 60 seeded runs per cell (`npm run stakes`):
-
-| Bot | Sapling | Oak | Ancient |
-|---|---|---|---|
-| weak (0.3) | 60 s · 335 m | 51 s · 290 m | 37 s · 211 m |
-| average (0.6) | 75 s · 464 m | 70 s · 422 m | 50 s · 308 m |
-| expert (0.95) | 110 s · 770 m | 98 s · 658 m | 70 s · 466 m |
-
-Every quest level is beaten by the expert bot and all 60 stars are reachable (`npm run quest`); the final level, *Starlight Remix*, is cleared by the expert bot in about 1 run in 6.
-
-## Look, feel and sound
-
-* **A pressed-leaf woodblock print.** Painted backdrops for every stage, one warm ink outline on everything you play with, paper grain. The tree, its leaves, blossoms, skins and effects are drawn in code; the painted plates, story plates, portraits and three sprites are images made for Forkwood (see CREDITS.md).
-* **Game feel:** smooth-noise screen shake, hit-stop, a camera punch that grows with the combo, squash and stretch, a slow-motion first fork, a print-pull intro, stage colour plates, stamped rewards.
-* **Sound:** music generated live (FM kalimba, bass and soft drums that speed up as you climb), plus CC0 wooden foley.
-* **Calm mode** turns off shake, flashes, vibration and interface motion (on automatically with reduced motion).
-
-## Tech
-
-* Vanilla JavaScript (ES modules), one `<canvas>`, no framework, no build step, **no third-party requests**. First load about 645 KB uncompressed (fonts, sound and about 170 KB of painted art included); the other stage plates load as you climb toward them, and the story, quest map and Grove load only when opened.
-* 60 fps on desktop and phone viewports in headless Chromium, about 2–5 ms of JavaScript per frame; images are decoded off the main thread before they are first drawn.
-* `src/sim.js` is pure and deterministic: modes, stakes and quest levels are the same simulation with a few rules changed (`src/modes.js`, `src/campaign.js`); quest progress, unlocks, chests and titles are pure functions in `src/quest.js`.
-* One small library: [ZzFX](https://github.com/KilledByAPixel/ZzFX) (MIT), vendored and loaded after your first tap.
-* Saves live in one `localStorage` key with automatic upgrade and repair; saves from earlier builds keep their progress, and returning growers find modes and stakes already open for the heights they reached.
-
-## Run locally
+Requirements: **Node 18+** for tests, **Python 3** (or any static server) to serve. Browser tests need **Playwright + Chromium**.
 
 ```bash
-python3 -m http.server 8080   # then open http://localhost:8080
-npm run quest                 # every level beatable + 3 stars reachable, mode rules, unlocks, saves (Node 18+)
-npm run stakes                # survival per stake and mode with three bots
-npm run fairness              # 300 seeded courses: every gap fits, every gate reachable
-npm run chunks                # course director, power-ups, grafts, storms
-npm run meta                  # progression rules and economy pacing
-npm run retention             # streak, season, league ghosts, comeback, duel links, save migration
-npm run intro                 # first-launch story, returning players, Grove, a duel between two devices
-npm run quest-ui              # quest map, levels, modes, phone layouts in headless Chromium
-npm test                      # everything (browser tests need Playwright + Chromium)
+git clone https://github.com/ducvuathuduc/treetop-forkwood.git
+cd treetop-forkwood
+npm run serve          # python3 -m http.server 8080 → open http://localhost:8080
 ```
 
-## More screenshots
+There is **no build step and no runtime dependency to install**: the game is plain ES modules with three vendored libraries. `npm install` is only needed if you add Playwright for the browser suites (`npm i -D playwright && npx playwright install chromium`).
 
-| On a phone | Golden hour at ×8 | The postcard |
+Useful URL flags: `?quality=auto|high|low` · `?home=a|b|c` · `?font=1|2|3` · `?glfail=1` (force the Canvas2D fallback) · `?renderer=webgpu` (experimental).
+
+| Script | What it does |
+|---|---|
+| `npm run serve` | static server on :8080 |
+| `npm test` | the full suite (26 suites, Node + headless Chromium) |
+| `npm run perf` | frame-time / draw-call profile (`tools/perf/v2-perf.mjs`) |
+| `npm run balance-worlds` | bot survival per world |
+| `npm run audio:build` | recompose and re-encode all music and SFX (Python + NumPy/SciPy + FFmpeg) |
+
+## Testing
+
+`npm test` chains every suite below; each also runs alone (`npm run <name>`).
+
+| Area | Suites |
+|---|---|
+| Simulation & fairness | `fairness` (300 seeded courses: every gap fits, every gate reachable) · `chunks` · `traps` · `trap-audit` · `mech` (~110 checks) · `stages` · `stakes` |
+| Progression & economy | `economy` · `meta` · `retention` · `quest` · `seasons` · `store` |
+| Engine & FX | `engine` · `hitfx` · `audio` (all 249 cues, stems, ducking, loop seams) |
+| Browser / UI (Playwright) | `smoke` · `extra` (first-load budget, no third-party requests) · `tutorial` · `intro` · `meta-ui` · `quest-ui` · `toasts` · `econ-ui` · `hub-ui` · `race` (two browsers) |
+
+Bot difficulty is measured, not guessed: on Oak the weak / average / expert bots are tuned to about **33 s / 57 s / 85 s** median survival (`npm run stakes`).
+
+## Performance budgets
+
+| Metric | Budget | Measured |
 |---|---|---|
-| ![Quest level on a phone](screenshots/17-level-phone.jpg) | ![Golden hour above the Treetop](screenshots/02-golden-hour-desktop.jpg) | ![End-of-run postcard](screenshots/05-share-card.jpg) |
+| First load (gzip transfer) | ≤ 700 KB | **351 KB** (`tests/extra.mjs`, 2.0 integration) |
+| Lazy world | 200–350 KB each | loaded on demand |
+| Draw calls (phone) | ≤ 25 | **10–12** (Starry River, 390×844 @ DPR 2) |
+| Live particles (phone) | ≤ 300 | 260–300, capped per quality tier |
+| Texture memory | < 64 MB | **12.2 MB** (Starry River) |
+| Frame rate | 60 fps target on mid phones | adaptive governor steps tiers at 18.5 ms median |
+| Persistent filters | none | glows and outlines are baked |
+| Pixi vendor bundle | — | 135 KB gzip (WebGL-only trimmed build) |
 
-| Shop | Goals and gift streak | Title |
+Draw-call, particle and texture figures come from a headless-Chromium profile (`tools/perf/v2-perf.mjs`); real-device numbers are on the roadmap.
+
+## Deterministic fair modes
+
+Daily tree, weekly tree, quest levels, challenge and duel links, and live races are **pure runs**: the same seed produces the same course for everyone.
+
+- Charms, critter skills, boosts, curses, the difficulty director and season gameplay modifiers are **off** in pure runs.
+- Pure runs always use the default feel layer, so both players of a duel or race play the same game.
+- Cosmetics (vine skins, frames, portraits) never change gameplay.
+- Seed-pod odds are published in full on the pod card. League rivals are simulated "ghost growers" and are labelled as such.
+
+## Roadmap
+
+- [x] 2.0 "Living Masterpieces": 7 painted worlds, world traps, rides, bosses, adaptive audio
+- [x] Pixi WebGL renderer with automatic Canvas2D fallback
+- [ ] v3: game-feel layer and new home screen (in preview)
+- [ ] Vite build with per-world code splitting and hashed assets
+- [ ] PWA: web manifest, service worker, offline play, install prompt
+- [ ] Performance budget test in CI (draw calls, texture bytes, first load)
+- [ ] Real-device profiling (iOS Safari, mid-range Android)
+- [ ] WebGPU renderer (currently experimental behind `?renderer=webgpu`)
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+1. Fork, then branch from `main`.
+2. Keep `src/sim.js` and the other core modules **pure and deterministic** (no DOM; draw all in-run randomness from the seeded streams in `src/rng.js`).
+3. Run `npm test` before opening a PR; add a test for new mechanics.
+4. Respect the [performance budgets](#performance-budgets).
+5. Only add assets that are CC0, MIT, OFL or your own work, and record each in `CREDITS.md`. No copyrighted characters, logos or brands.
+
+## Credits & licenses
+
+Design, code and art direction: **Huynh Dieu Thanh** ([@thanhdicode](https://github.com/thanhdicode)), with AI assistance.
+
+| Item | Origin | License |
 |---|---|---|
-| ![Shop with skins drawn in the print style](screenshots/09-shop-desktop.jpg) | ![Goals page on a phone](screenshots/10-goals-phone.jpg) | ![Title card](screenshots/01-title-desktop.jpg) |
+| Code | own work | MIT |
+| World paintings, sprites, UI kit (`assets/v2/`) | AI-assisted from our own prompts and art direction, post-processed by our own pipeline (`art-src/`); masters emulated in technique only | MIT (with the game) |
+| Music and sound (`assets/v2/*/audio/`) | composed and synthesised by our own code; no samples | MIT (with the game) |
+| v1 fallback SFX | Kenney Impact / Interface Sounds | CC0 |
+| Fonts: Baloo 2, Nunito, Lexend, Be Vietnam Pro, Bricolage Grotesque, Plus Jakarta Sans, Cormorant Garamond, Fraunces, JetBrains Mono | Google Fonts sources, self-hosted subsets | SIL OFL 1.1 (texts in `assets/fonts/`) |
+| PixiJS v8 | vendored | MIT |
+| ZzFX | vendored | MIT |
+| GSAP 3 | vendored, loaded lazily | GreenSock Standard No-Charge License (not OSI) |
+| Lucide icons | inline SVG | ISC |
+| PeerJS 1.5.5 | CDN, live race only | MIT |
 
-## Built during the round
+Full sources, licence texts and AI disclosure: **[CREDITS.md](CREDITS.md)**.
 
-Built from scratch during **9–16 October 2026** for the round; the commit history shows the build. Made with AI assistance, as the round rules allow.
+## License
 
-## Credits and license
+Code released under the [MIT License](LICENSE). © 2026 Huynh Dieu Thanh. Fonts keep their OFL licence; Kenney sounds are CC0; GSAP keeps its own licence.
 
-Design, code, procedural art and generative music: Huynh Dieu Thanh ([@thanhdicode](https://github.com/thanhdicode)) with AI assistance.
-Fonts: Fraunces, Bricolage Grotesque and JetBrains Mono (SIL Open Font License 1.1). Sound effects: Kenney's Impact Sounds and Interface Sounds (CC0). Sources and licence files in [CREDITS.md](CREDITS.md). No third-party characters, logos or brands.
+---
 
-Code: MIT, see [LICENSE](LICENSE). Fonts keep their OFL licence; the Kenney sounds are CC0.
+## Tiếng Việt
+
+**Forkwood** là game trình duyệt một chạm: điều khiển dây leo hướng về ánh nắng, **chạm để tách nhánh** (fork), **chạm lần nữa để gộp** (merge) và nhận combo, leo qua **bảy thế giới tranh vẽ**: Đồng cỏ hoàng hôn, Đêm sao bên sông, Thánh đường bích họa, Sóng lớn núi thiêng, Vườn súng, Rừng dát vàng và Làng đèn lồng (sơn mài Việt Nam).
+
+- **Chơi ngay:** https://ducvuathuduc.github.io/treetop-forkwood/ (không cần cài đặt, không tài khoản, không quảng cáo).
+- **Đua trực tiếp** với bạn bè qua đường link (WebRTC, ngang hàng), cùng một cây 90 giây.
+- **Công bằng:** cây hằng ngày, hằng tuần, màn quest, link thách đấu và đua dùng cùng một seed cho mọi người; bùa, kỹ năng và boost đều tắt.
+- **Hiệu năng:** lần tải đầu 351 KB (gzip), 10–12 draw call trên điện thoại; tự hạ chất lượng khi máy chậm.
+- **Chế độ êm dịu (Calm mode)** tắt rung, nháy sáng và chuyển động; tự bật khi máy đặt giảm chuyển động.
+- **Chạy cục bộ:** `npm run serve` rồi mở `http://localhost:8080`; kiểm thử: `npm test`.
+
+Mã nguồn theo giấy phép MIT. Font theo SIL OFL 1.1. Chi tiết nguồn gốc hình ảnh và âm thanh trong [CREDITS.md](CREDITS.md).
