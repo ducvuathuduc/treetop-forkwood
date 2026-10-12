@@ -14,7 +14,7 @@ import { ringAt, ringOffer, takeRing, addKnot, ringLevel, knotAcornK, knotScoreK
 import { spOpen, spChunk, spUpdate, hollowYs, openHollow } from './setpieces.js';
 // V3-FEEL: combo, flow, input buffer, coyote merge, last gasp, signature currents, choice lanes, finisher
 import { feelInit, feelInput, feelPost, feelGasp, feelSigBeat, feelLanes, feelCollect, feelSapK, feelCoyote, feelPassed, feelDeath, turnK, grazeK, scoreTierK, surgeV } from './feel.js';
-export const MECH_TUNE = { trap2W: 1.0, rideChance: 0.06, rideGapM: 150, rideFirstM: 120, calmSap: 0.35, lateSpan: 420 };
+export const MECH_TUNE = { trap2W: 1.0, rideChance: 0.06, rideGapM: 150, rideFirstM: 120, calmSap: 0.35, lateSpan: 525 }; // V3.1: lateSpan 420 -> 525 (faster climb)
 // /V2-MECH
 
 export const W = 560;            // playfield width in world units
@@ -113,7 +113,8 @@ export function makeRules(r = {}) { return { ...RULES, ...r }; }
 
 // Balance knobs (tuned with tests/balance.mjs).
 export const TUNE = {
-  drain0: 5.0,      // sap drain per second at ground level (P6-TRAPS: 4.6 -> 5.0)
+  drain0: 6.2,      // sap drain per second at ground level (P6-TRAPS: 4.6 -> 5.0; V3.1: 6.2 with the +25% climb so weak runs stay ~33 s)
+  climbM: 850,      // V3.1: metres per unit of the height part of the drain (600 before the +25% climb)
   drainK: 7.3,      // extra drain per second per 600 m climbed (P6-TRAPS: 5.8 -> 6.9; V2-MECH: 7.3, rides and set pieces give back)
   forkDrain: 1.4,   // drain multiplier while two tips grow
   moteSap0: 7.0,    // sap from one sunlight mote at ground level
@@ -781,6 +782,9 @@ function pickChunk(s, tier, m, maxTier = 3) {
   for (let t = Math.min(tier, maxTier); t >= 0; t--) {
     const pool = CHUNKS.filter((c) => c.tier === t && m >= c.minM && !s.dir.last.includes(c.id) && worldOK(s, c));
     if (!pool.length) continue;
+    // V3.1: the world's Acorn Squirrel (cone) is met early in a run instead of maybe never
+    const cone = !s.trapSeen.cone && m >= 60 && pool.find((c) => c.id === 'cone');
+    if (cone && r() < 0.6) return cone;
     const here = sig(m);
     let tot = 0; const ws = pool.map((c) => { const w = c.w * (c.sig === here ? 1.8 : 1); tot += w; return w; });
     let q = r() * tot;
@@ -928,7 +932,7 @@ function spawnBeat(s, y) {
 }
 
 // ---------------------------------------------------------------- core step
-const SPEED0 = 170;
+const SPEED0 = 212; // V3.1: +25% base climb (was 170); snappier ease-in and steering below
 
 export function step(s, dt, input = {}) {
   s.events.length = 0;
@@ -969,7 +973,7 @@ export function step(s, dt, input = {}) {
 
   // speed and steering
   const frostK = s.inFrost ? 0.62 : 1;
-  let target = (SPEED0 + 90 * prog + Math.min(40, Math.max(0, m - 650) * 0.05)) * frostK * (rush ? 1.8 : 1) * s.R.speed;
+  let target = (SPEED0 + 105 * prog + Math.min(40, Math.max(0, m - 650) * 0.05)) * frostK * (rush ? 1.8 : 1) * s.R.speed;
   // V2-MECH: rides, webs, the snail's shell, the sparrow's dash, a leaf sail in the wind
   if (RM) target *= RM.speed;
   if (s.webT > 0) target *= 0.4;
@@ -977,13 +981,13 @@ export function step(s, dt, input = {}) {
   if (s.dashT > 0) target += s.dashV;
   if (s.pu.sail > 0 && Math.abs(s.wind) > 20) target *= 1.25;
   target += surgeV(s); // V3-FEEL: signature current surge
-  s.speed += (target - s.speed) * Math.min(1, dt * (rush ? 5 : 3));
+  s.speed += (target - s.speed) * Math.min(1, dt * (rush ? 6 : 4.5));
   let desired = 0;
   const railX = railTarget(s); // V2-MECH: the rail carries you
   if (railX != null) desired = clamp(Math.atan2(railX - s.cx, 120), -1.12, 1.12);
   else if (input.targetX != null) desired = clamp(Math.atan2((s.invertT > 0 ? 2 * s.cx - input.targetX : input.targetX) - s.cx, 120), -1.12, 1.12);
   else desired = (input.dir || 0) * 0.98 * (s.invertT > 0 ? -1 : 1);
-  const maxTurn = 5.2 * turnK(s) /* V3-FEEL */ * dt * (1 - (s.R.slip || 0)) * (RM ? RM.steer : 1); // P6-SEASONS: slippery branches
+  const maxTurn = 6.0 * turnK(s) /* V3-FEEL */ * dt * (1 - (s.R.slip || 0)) * (RM ? RM.steer : 1); // P6-SEASONS: slippery branches
   s.heading += clamp(desired - s.heading, -maxTurn, maxTurn);
 
   // wind bands
@@ -1049,7 +1053,7 @@ export function step(s, dt, input = {}) {
   }
 
   // energy
-  const climb = Math.min(2.2, (m + s.R.climb) / 600);
+  const climb = Math.min(2.2, (m + s.R.climb) / (s.R.script ? 600 : TUNE.climbM)); // V3.1: drain-by-height stretched with the faster climb
   const forkK = s.pu.twin > 0 ? 1 : TUNE.forkDrain * (hasGraft(s, 'wild') ? 1.2 : 1); // V2-MECH: Twin Seed forks for free
   const TU = s.R.script ? TUNE_QUEST : TUNE; // P6-TRAPS: quest levels keep their pass-5 drain
   const late = TU.drainLate * clamp((m + s.R.climb - 280) / (s.R.script ? 420 : MECH_TUNE.lateSpan), 0, 1); // pass 4: pressure after the opening minute

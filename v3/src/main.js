@@ -145,6 +145,8 @@ let run = { mode: 'classic', stake: 'sapling', level: null, week: null };
 let lastQuest = null;
 
 const cam = { x: W / 2, y: -200, scale: 1, anchor: 0.7, trauma: 0, punch: 0 };
+// V3.1: at the start of a run the tip rides low so the ground is a thin painted strip, not half the screen
+const playAnchor = (sm) => 0.7 + 0.14 * Math.max(0, Math.min(1, 1 + sm.cy / 360));
 const fx = { particles: [], floaters: [], sparks: [], flash: 0, flashColor: '255,80,80', banner: null, shownScore: 0, shownSap: SAP_MAX, multPulse: 0, sapPulse: 0, squash: 0, hitStop: 0 };
 const input = { targetX: null, dir: 0, toggle: false, keys: new Set(), pointerId: null, downT: 0, downX: 0, downY: 0, moved: 0, anchor: W / 2, kind: window.matchMedia && matchMedia('(pointer: coarse)').matches ? 'touch' : 'mouse' };
 // first-run coach: steer -> fork -> merge, taught by doing (screen-space, never overlaps the world)
@@ -308,7 +310,7 @@ function startRun(isDaily = daily) {
   coach.step = sim.tutorial ? 'steer' : null; coach.t = 0; coach.collects = 0; coach.retry = false; coach.slow = false;
   timeScale = 1;
   bot = createBot(botSkill, seed & 0xffff);
-  cam.y = sim.cy - 60; cam.scale = renderer.baseScale() * (isCalm() ? 1 : 0.86); cam.anchor = 0.7;
+  cam.y = sim.cy - 60; cam.scale = renderer.baseScale() * (isCalm() ? 1 : 0.86); cam.anchor = playAnchor(sim);
   resetFx();
   deathShown = false;
   input.toggle = false;
@@ -1246,7 +1248,7 @@ function frame(nowMs) {
     if (sound.setFeelLift) sound.setFeelLift(sim.feelS && !sim.dead ? Math.min(0.55, sim.feelS.tier * 0.09 + (sim.feelS.flow ? 0.12 : 0)) : 0); // V3-FEEL: the music rises with the combo
     if (!sim.dead) {
       cam.scale += (base * (1 + (cam.punch || 0)) - cam.scale) * Math.min(1, dt * 4);
-      cam.anchor += (0.7 - cam.anchor) * Math.min(1, dt * 4);
+      cam.anchor += (playAnchor(sim) - cam.anchor) * Math.min(1, dt * 4);
       cam.y += (sim.cy - cam.y) * Math.min(1, dt * 9);
     } else {
       // gentle pull-back that shows off the tree before the card appears

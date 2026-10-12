@@ -34,15 +34,11 @@ const SPROUT = '<svg class="logo-sprout" viewBox="0 0 40 40" aria-hidden="true">
 const acorns = (n) => `<span class="price">${MI.acorn}${n.toLocaleString('en-US')}</span>`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-// world-tree geometry (viewBox 400×300): fruit positions on a crown arc, low unlock at the lower left
-const TREE = [[58, 222], [74, 142], [126, 80], [200, 54], [274, 80], [326, 142], [342, 222]];
-const TRUNK = 'M200 300 C 198 268 203 246 200 214';
-function branchPath([x, y], i) {
-  const sx = 200, sy = i === 3 ? 150 : 214 - Math.abs(3 - i) * 14; // where it leaves the trunk
-  const mx = (sx + x) / 2 + (x < 200 ? 18 : x > 200 ? -18 : 0), my = Math.min(sy, y) - 10 - (3 - Math.abs(3 - i)) * 6;
-  return `M${sx} ${sy} Q ${mx} ${my} ${x} ${y}`;
-}
-
+// V3.1: the painted world tree (assets/v3/home/wtree-*.webp, 900×696): medallions sit on its seven
+// foliage clusters, in % of the art box; fireflies drift around the crown
+const TREE_PCT = [[9.5, 58], [16, 32.5], [27.5, 17.5], [46.8, 9], [69, 15], [84, 32.5], [90.5, 58.5]];
+const TREE_ART = new URL('../assets/v3/home/', import.meta.url).href;
+const FIREFLIES = [[22, 44, 0], [36, 28, 1.3], [58, 22, 2.1], [74, 40, 0.6], [12, 70, 3.2], [88, 72, 1.8], [50, 46, 2.7], [64, 60, 4.1], [30, 62, 3.6], [80, 18, 0.9]];
 export function createHome(H) {
   const title = document.getElementById('title');
   const art = document.getElementById('hub-art');
@@ -90,12 +86,10 @@ export function createHome(H) {
     } else {
       pick.innerHTML = '';
       const nextLocked = (WORLDS.find((w) => !owns(w.id)) || {}).id; // only the next unlock shows its price
-      art.innerHTML = `<div class="wtree" role="tablist" aria-label="Worlds"><svg class="wtree-svg" viewBox="0 0 400 300" aria-hidden="true">
-          <path class="wt-trunk-s" d="${TRUNK}"/><path class="wt-trunk" d="${TRUNK}"/>
-          ${TREE.map((p, i) => `<path class="wt-branch ${WORLDS[i].id === id ? 'on' : ''}" style="--i:${i}" d="${branchPath(p, i)}"/>`).join('')}
-          ${TREE.map((p, i) => `<path class="wt-leaf" style="--i:${i}" d="M${(p[0] + 200) / 2} ${(p[1] + 214) / 2 - 8} q 10 -14 22 -8 q -8 12 -22 8z"/>`).join('')}
-        </svg>
-        ${WORLDS.map((w, i) => { const own = owns(w.id); return `<button role="tab" class="fruit ${w.id === id ? 'on' : ''} ${own ? '' : 'locked'}" data-w="${w.id}" style="--x:${(TREE[i][0] / 4).toFixed(2)}%;--y:${(TREE[i][1] / 3).toFixed(2)}%;--i:${i};background:${underpainting(w.id)}" aria-label="${esc(w.name)}${own ? '' : ': locked, ' + (MAP_PRICE[w.legacy] || 0) + ' acorns'}" aria-selected="${w.id === id}"><span class="fruit-pic">${thumb(w.id)}</span>${own ? '' : `<span class="seed-lock">${MI.lock}</span>${w.id === nextLocked ? `<span class="fruit-price">${acorns(MAP_PRICE[w.legacy] || 0)}</span>` : ''}`}</button>`; }).join('')}
+      art.innerHTML = `<div class="wtree" role="tablist" aria-label="Worlds">
+        <img class="wtree-art" alt="" decoding="async" ${booted ? '' : 'fetchpriority="high"'} src="${TREE_ART}wtree-560.webp" srcset="${TREE_ART}wtree-560.webp 560w, ${TREE_ART}wtree-900.webp 900w" sizes="(min-width: 900px) min(760px, 60vw), 92vw">
+        <div class="wtree-ff" aria-hidden="true">${FIREFLIES.map(([x, y, d]) => `<i style="--x:${x}%;--y:${y}%;--d:${d}s"></i>`).join('')}</div>
+        ${WORLDS.map((w, i) => { const own = owns(w.id); return `<button role="tab" class="fruit ${w.id === id ? 'on' : ''} ${own ? '' : 'locked'}" data-w="${w.id}" style="--x:${TREE_PCT[i][0]}%;--y:${TREE_PCT[i][1]}%;--i:${i};background:${underpainting(w.id)}" aria-label="${esc(w.name)}${own ? '' : ': locked, ' + (MAP_PRICE[w.legacy] || 0) + ' acorns'}" aria-selected="${w.id === id}"><span class="fruit-pic">${thumb(w.id)}</span>${own ? '' : `<span class="seed-lock">${MI.lock}</span>${w.id === nextLocked ? `<span class="fruit-price">${acorns(MAP_PRICE[w.legacy] || 0)}</span>` : ''}`}</button>`; }).join('')}
       </div>`;
     }
     void S;
@@ -140,7 +134,7 @@ export function createHome(H) {
     } else H.chooseWorld(id);
     if (H.sound.page) H.sound.page();
   }
-  function markOn(id) { title.querySelectorAll('[data-w]').forEach((b) => { const on = b.dataset.w === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); title.querySelectorAll('.wt-branch').forEach((p, i) => p.classList.toggle('on', WORLDS[i].id === id)); }
+  function markOn(id) { title.querySelectorAll('[data-w]').forEach((b) => { const on = b.dataset.w === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); }
   function step(d) {
     const owned = WORLDS.filter((w) => owns(w.id));
     if (owned.length < 2) { H.openRoom('gallery', {}); return; }

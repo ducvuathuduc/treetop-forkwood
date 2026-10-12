@@ -183,7 +183,9 @@ const MEM = new WeakMap();
 const mem = (tr) => { let m = MEM.get(tr); if (!m) { m = {}; MEM.set(tr, m); } return m; };
 
 // shake added on top of main.js's own (which is 12/26 trauma for a hit) by source
-const SHAKE = { tide: 0.32, door: 0.2, pulse: 0.16, cap: 0.14, wall: 0.12, hedge: 0.12, beetle: 0.12, twig: 0.1, crow: 0.26, gate: 0.08, split: 0.08, bolt: 0.2 };
+const SHAKE = { tide: 0.32, door: 0.2, pulse: 0.16, cap: 0.14, wall: 0.12, hedge: 0.12, beetle: 0.12, twig: 0.1, crow: 0.26, gate: 0.08, split: 0.08, bolt: 0.2,
+  // V3.1: the 15 v2 mechanics get their own weight (heavy slams shake more, stings less)
+  cone: 0.2, icicle: 0.22, jaws: 0.24, pendulum: 0.22, seesaw: 0.18, candy: 0.26, strangle: 0.18, pecker: 0.16, hornets: 0.12, bats: 0.14, beam: 0.16, vortex: 0.18, embers: 0.08, web: 0.06, spores: 0.06 };
 
 // ---------------------------------------------------------------- events
 /** Read this frame's sim events once (marks them) and start their effects. */

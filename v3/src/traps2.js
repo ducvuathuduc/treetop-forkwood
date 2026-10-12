@@ -140,7 +140,7 @@ export const TRAP2_CHUNKS = [
     if (!first && d > 0.5) addWeb(s, x < W / 2 ? x + 210 : x - 210, y - 440, WEB.r);
     s.lastGate = null; return first ? 460 : 560;
   } },
-  { id: 'cone', trap: 'cone', tier: 1, minM: 70, w: 1.0, gen(s, y, d, A) {
+  { id: 'cone', trap: 'cone', tier: 1, minM: 40, w: 1.45, gen(s, y, d, A) { // V3.1: the squirrel shows up sooner and more often
     intro(s, 'cone', y + 40);
     A.addTrail(s, y - 20, { n: 5, amp: 120 });
     addCone(s, y - 160, rnd(s) < 0.5 ? -1 : 1);

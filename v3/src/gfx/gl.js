@@ -18,6 +18,7 @@ import quality from '../quality.js';
 import { WORLDS, WORLD, currentWorld, onWorldChange, loadWorld, preloadNext, zoneAt, loadRegistry, registryEntry, pickVariant, loadBitmap, resolveId, loadLayerBitmap, ZONE_M, dropBitmap } from '../worlds.js';
 import { VINE_SKINS, skinDef, paintStrip, paintGlowStrip } from './skins.js';
 import { buildAtlas, paintPlaceholder } from './atlas.js';
+import { vstyle, paintShadowStrip, paintRimStrip, paintFreshStrip, paintTendrilStrip, paintGround, paintRoots, GROUND } from './vine-art.js';
 
 const TAU = Math.PI * 2;
 const hexN = (h) => parseInt(String(h).slice(1, 7), 16);
@@ -151,16 +152,27 @@ export class GLLayer {
     this.rollC = new PIXI.Container();
     this.world = new PIXI.Container({ isRenderGroup: true });
     this.rollC.addChild(this.world);
-    this.ground = new PIXI.Graphics();
+    // V3.1: painted ground strata (tiling sprite per world) + the vine's own roots, over a deep-soil fill
+    this.ground = new PIXI.Container();
+    this.groundFill = new PIXI.Graphics(); this.roots = new PIXI.Container(); this.groundTile = null; this.groundTex = new Map();
+    this.ground.addChild(this.groundFill, this.roots);
     this.vineGlow = this.makeRibbon(paintGlowStrip(), 'add');
     this.vine = this.makeRibbon(null);
+    // V3.1 living vine: drop shadow + rim light share the stem geometry (no extra CPU), fresh growth and
+    // curling tendrils are their own small ribbons; back leaves sit under the stem for depth
+    this.vineShadow = new PIXI.Mesh({ geometry: this.vine.geometry, texture: PIXI.Texture.WHITE });
+    this.vineRim = new PIXI.Mesh({ geometry: this.vine.geometry, texture: PIXI.Texture.WHITE }); this.vineRim.blendMode = 'add';
+    this.fresh = this.makeRibbon(null, null, 1600);
+    this.tendril = this.makeRibbon(null, null, 3200);
+    this.leafBackC = new PIXI.Container();
+    this.stripM = -1; this.trailAcc = 0;
     this.leafC = new PIXI.Container();
     this.entC = new PIXI.Container();
     this.glowC = new PIXI.Container(); this.glowC.blendMode = 'add';
     this.tipC = new PIXI.Container();
     this.fxPC = new PIXI.ParticleContainer({ texture: this.atlasBase, dynamicProperties: { position: true, rotation: true, color: true, vertex: true, uvs: true } });
     this.juiceC = new PIXI.Container();
-    this.world.addChild(this.ground, this.vineGlow.mesh, this.vine.mesh, this.leafC, this.glowC, this.entC, this.tipC, this.fxPC, this.juiceC);
+    this.world.addChild(this.ground, this.vineShadow, this.leafBackC, this.vineGlow.mesh, this.vine.mesh, this.vineRim, this.fresh.mesh, this.tendril.mesh, this.leafC, this.glowC, this.entC, this.tipC, this.fxPC, this.juiceC);
 
     this.front = new PIXI.Container();
     this.vignette = new PIXI.Sprite(this.makeVignette());
@@ -170,6 +182,7 @@ export class GLLayer {
     S.addChild(this.bg, this.rollC, this.front);
 
     this.leafPool = new Pool(this.leafC, () => new PIXI.Sprite());
+    this.leafBackPool = new Pool(this.leafBackC, () => new PIXI.Sprite());
     this.entPool = new Pool(this.entC, () => new PIXI.Sprite());
     this.glowPool = new Pool(this.glowC, () => new PIXI.Sprite(this.tex.glow));
     this.tipPool = new Pool(this.tipC, () => new PIXI.Sprite(this.tex['vine.bud']));
@@ -283,6 +296,7 @@ export class GLLayer {
     if (this.worldId === w.id) return;
     this.worldId = w.id; this.W = w;
     this.setSkin(this.skinOverride || w.vineSkinDefault);
+    this.applyVineStyle();
     this.drawGround();
     this.flow.length = 0; this.amb.length = 0;
     const need = this.needPx();
@@ -384,17 +398,59 @@ export class GLLayer {
     }
   }
 
+  /** V3.1: painted soil strata + grass edge for the world (tile cached per world), deep soil below. */
   drawGround() {
-    const g = this.ground; g.clear();
-    const ink = this.W.palette.ink, body = mixN(this.W.palette.bg, ink, 0.55);
-    const hill = (x) => -70 - 34 * Math.sin(x * 0.006) - 18 * Math.sin(x * 0.017 + 1);
-    const near = (x) => -14 - 12 * Math.sin(x * 0.011 + 2);
-    const X0 = -3200, X1 = 3800;
-    g.moveTo(X0, 10); for (let x = X0; x <= X1; x += 24) g.lineTo(x, hill(x)); g.lineTo(X1, 10); g.closePath(); g.fill({ color: body, alpha: 0.85 });
-    g.moveTo(X0, 10); for (let x = X0; x <= X1; x += 24) g.lineTo(x, near(x)); g.lineTo(X1, 10); g.closePath(); g.fill({ color: hexN(ink) });
-    g.rect(X0, 0, X1 - X0, 4000).fill({ color: hexN(ink) });
-    for (let x = X0; x < X1; x += 11) { const h = 8 + hash(x) * 14, y0 = near(x) + 2; g.moveTo(x, y0); g.quadraticCurveTo(x + 1, y0 - h * 0.6, x + 4, y0 - h); }
-    g.stroke({ color: hexN(ink), width: 2.2, cap: 'round' });
+    const st = vstyle(this.W.id), G = GROUND;
+    let tex = this.groundTex.get(this.W.id);
+    if (!tex) {
+      tex = PIXI.Texture.from(paintGround(this.W.id)); tex.source.addressMode = 'repeat'; tex.source.scaleMode = 'linear';
+      this.groundTex.set(this.W.id, tex); this.trackTex('ground:' + this.W.id, tex.width, tex.height);
+      // keep at most two worlds of ground on the GPU (current + previous)
+      for (const [k, t] of this.groundTex) if (this.groundTex.size > 2 && k !== this.W.id) { t.destroy(true); this.groundTex.delete(k); this.texBytes.delete('ground:' + k); }
+    }
+    if (!this.groundTile) { this.groundTile = new PIXI.TilingSprite({ texture: tex, width: 9000, height: G.H }); this.ground.addChildAt(this.groundTile, 1); }
+    this.groundTile.texture = tex;
+    this.groundTile.tileScale.set(1 / G.RES, 1 / G.RES);
+    this.groundTile.position.set(-4200, -G.TOP);
+    this.groundTile.tilePosition.set(4200 + 280 - G.W / 2, 0); // tile seam far from the vine
+    const g = this.groundFill; g.clear();
+    g.rect(-4200, G.H - G.TOP - 4, 9000, 6000).fill({ color: hexN(st.ground.deep) });
+    this.rootsKey = null;
+  }
+  /** The vine's own roots spreading under the ground from its base (painted once per run). */
+  drawRoots(s) {
+    const p0 = s.paths[0] && s.paths[0].pts[0]; if (!p0) return;
+    const key = s.seed + ':' + this.W.id + ':' + p0.x;
+    if (this.rootsKey === key) return;
+    this.rootsKey = key;
+    const r = paintRoots(this.W.id, (s.seed % 9973) + 1);
+    if (this.rootsS) { this.rootsS.texture.destroy(true); this.rootsS.destroy(); }
+    const t = PIXI.Texture.from(r.cv); t.source.scaleMode = 'linear';
+    this.rootsS = new PIXI.Sprite(t); this.rootsS.scale.set(1 / r.res); this.rootsS.position.set(p0.x - r.ox, p0.y - r.oy);
+    this.roots.addChild(this.rootsS); this.trackTex('roots', r.cv.width, r.cv.height);
+  }
+  /** V3.1: per-world vine dressing (fresh growth + tendril strips, shadow/rim colours). */
+  applyVineStyle() {
+    const st = this.vst = vstyle(this.W.id);
+    if (!this.vineStyleTex) this.vineStyleTex = new Map();
+    let T = this.vineStyleTex.get(this.W.id);
+    if (!T) {
+      T = { fresh: PIXI.Texture.from(paintFreshStrip(st, this.W.id === 'starry' || this.W.id === 'lilies')), tendril: PIXI.Texture.from(paintTendrilStrip(st)) };
+      T.fresh.source.addressMode = 'clamp-to-edge'; T.tendril.source.addressMode = 'clamp-to-edge';
+      this.vineStyleTex.set(this.W.id, T); this.trackTex('vstyle:' + this.W.id, 128 * 32 + 64 * 16, 1);
+    }
+    this.fresh.mesh.texture = T.fresh; this.tendril.mesh.texture = T.tendril;
+    this.vineShadow.tint = hexN(st.shadow[0]); this.vineShadow.alpha = st.shadow[1]; this.vineShadow.position.set(st.shadow[2], st.shadow[3]);
+    this.vineRim.tint = st.rim ? hexN(st.rim) : 0; this.vineRim.alpha = st.rimA || 0.5;
+  }
+  /** Shadow / rim strips must match the stem strip's transparent margin (ART stems carry one). */
+  setStripMargin(m) {
+    m = Math.round(m * 50) / 50; if (m === this.stripM) return; this.stripM = m;
+    const sh = PIXI.Texture.from(paintShadowStrip(m)), rim = PIXI.Texture.from(paintRimStrip(m));
+    sh.source.addressMode = 'repeat'; rim.source.addressMode = 'repeat';
+    const old = [this.vineShadow.texture, this.vineRim.texture];
+    this.vineShadow.texture = sh; this.vineRim.texture = rim;
+    for (const t of old) if (t && t !== PIXI.Texture.WHITE) t.destroy(true);
   }
 
   // ---------------------------------------------------------------- vine
@@ -416,13 +472,13 @@ export class GLLayer {
       t = PIXI.Texture.from(paintStrip(id)); t.source.scaleMode = 'linear'; t.source.addressMode = 'clamp-to-edge';
       this.trackTex('skin:' + id, 256, 64); this.skins.set(id, t);
     }
-    this.vine.mesh.texture = t;
+    this.vine.mesh.texture = t; this.setStripMargin(0);
     this.vineGlow.mesh.tint = sk.glow ? hexN(sk.glow) : 0;
     const stemId = id + '.stem', e = registryEntry(stemId);
     if (e) {
       const want = id;
       const cached = this.skins.get(stemId);
-      const use = (tile) => { if (this.skinId !== want || !tile) return; this.vine.mesh.texture = tile.tex; this.vineTile = tile; };
+      const use = (tile) => { if (this.skinId !== want || !tile) return; this.vine.mesh.texture = tile.tex; this.vineTile = tile; this.setStripMargin((1 - 1.15 / tile.coreK) / 2); };
       if (cached) use(cached);
       else {
         const v = pickVariant(e, 512, 64);
@@ -440,8 +496,7 @@ export class GLLayer {
     }
     for (const part of ['leaf', 'flower']) this.regLoad(`${id}.${part}`);
   }
-  makeRibbon(canvas, blend) {
-    const CAP = 6000; // points (2 verts each)
+  makeRibbon(canvas, blend, CAP = 6000) { // CAP: points (2 verts each)
     const pos = new Float32Array(CAP * 4), uv = new Float32Array(CAP * 4), idx = new Uint32Array((CAP - 1) * 6);
     for (let k = 0; k < CAP - 1; k++) { const a = k * 2, o = k * 6; idx[o] = a; idx[o + 1] = a + 1; idx[o + 2] = a + 2; idx[o + 3] = a + 1; idx[o + 4] = a + 3; idx[o + 5] = a + 2; }
     const geometry = new PIXI.MeshGeometry({ positions: pos, uvs: uv, indices: idx });
@@ -451,12 +506,14 @@ export class GLLayer {
     return { mesh, geometry, pos, uv, cap: CAP, n: 0 };
   }
 
-  /** Builds the vine ribbons for every visible path: width from growth age, U = wood age. */
+  /** Builds the vine ribbons for every visible path: width from growth age, U = wood age / arc length.
+   *  V3.1: thicker tapered trunk, fresh-growth overlay near live tips, curling tendrils (tier <= 1). */
   buildVine(s, now, topY, botY, px, gold) {
-    const R = this.vine, G = this.vineGlow, sk = this.sk;
-    const glowOn = sk.glow && quality.tier <= 1;
-    let n = 0, gn = 0;
-    const P = R.pos, U = R.uv, GP = G.pos, GU = G.uv, cap = R.cap - 4;
+    const R = this.vine, G = this.vineGlow, F = this.fresh, TD = this.tendril, sk = this.sk, st = this.vst || vstyle(this.worldId);
+    const tier = quality.tier;
+    const glowOn = sk.glow && tier <= 1, freshOn = tier <= 2, tendOn = tier <= 1;
+    let n = 0, gn = 0, fn = 0, tn = 0;
+    const P = R.pos, U = R.uv, GP = G.pos, GU = G.uv, FP = F.pos, FU = F.uv, TP = TD.pos, TU = TD.uv, cap = R.cap - 4, fcap = F.cap - 4, tcap = TD.cap - 4;
     const step = Math.max(1, Math.floor(px * 1.3));
     const order = s.paths, tile = this.vineTile;
     const arcU = (p, i) => { // cumulative arc length per path (append-only), cached on our side
@@ -464,8 +521,10 @@ export class GLLayer {
       for (let k = A.length; k <= i; k++) { const q = p.pts[k], r = p.pts[k - 1]; A.push(A[k - 1] + Math.hypot(q.x - r.x, q.y - r.y)); }
       return A[i];
     };
-    const wAt = (pt) => 2.6 + Math.min(24, 2.1 * Math.sqrt(Math.max(0, now - pt.t)));
+    const wAt = (pt) => 8.5 + Math.min(24, 3 * Math.sqrt(Math.max(0, now - pt.t)));
     const brk = (arr, uarr, k, x, y) => { arr[k * 4] = x; arr[k * 4 + 1] = y; arr[k * 4 + 2] = x; arr[k * 4 + 3] = y; uarr[k * 4] = uarr[k * 4 + 2] = 0.5; uarr[k * 4 + 1] = uarr[k * 4 + 3] = 0.5; };
+    const FRESH_L = 72, TSTEP = 60, curlK = st.curl || 4.4;
+    this.vineHW = this.vineHW || new WeakMap();
     for (const p of order) {
       if (p.state === 'gone' || p.pts.length < 2) continue;
       const pts = p.pts, rev = p.state === 'reverting';
@@ -475,24 +534,64 @@ export class GLLayer {
       { let lo = 0, hi = pts.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (pts[m].y > topY - 40) lo = m + 1; else hi = m; } i1 = Math.min(pts.length - 1, lo + 1); }
       if (i1 <= i0) continue;
       const live = p.state === 'live';
-      const first = n;
+      const first = n, ffirst = fn;
       const wmul = sk.width * (rev ? 0.9 : 1);
+      const tipArc = arcU(p, pts.length - 1);
+      let lastT = -1;
       for (let i = i0; i <= i1 && n < cap; i += (i + step > i1 && i !== i1 ? i1 - i : step)) {
         const a = pts[i], b = pts[Math.min(i1, i + 1)], c = pts[Math.max(i0, i - 1)];
         let dx = b.x - c.x, dy = b.y - c.y; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
-        const w0 = Math.max(5.5, wAt(a)); // floor: the stroke always reads as paint, not a hairline
-        // tip taper: the brush lifts off over the last few points of a live path
+        const w0 = Math.max(9, wAt(a)); // floor: the stroke always reads as paint, not a hairline
+        // tip taper: the brush lifts off over the last stretch of a live path; a fork starts slim at its knot
         const fromTip = pts.length - 1 - i;
-        const taper = live ? Math.min(1, 0.45 + fromTip / 10) : 1;
+        const taper = (live ? Math.min(1, 0.3 + fromTip / 16) : 1) * (p.parent != null ? Math.min(1, 0.55 + i / 10) : 1);
+        const core = (w0 * wmul * taper) / 2 + 1.6 * Math.max(1, px * 0.8);
         // keyline lives inside the strip; ART stem strips carry transparent margins (core 48 of 68 px)
-        const hw = ((w0 * wmul * taper) / 2 + 1.6 * Math.max(1, px * 0.8)) * (tile ? tile.coreK : 1);
+        const hw = core * (tile ? tile.coreK : 1);
         const nx = -dy * hw, ny = dx * hw;
-        const age = tile ? arcU(p, i) / tile.len : rev ? 0.98 : Math.min(0.98, Math.max(0.02, (wAt(a) - 4) / 14));
+        const arc = arcU(p, i);
+        const age = tile ? arc / tile.len : rev ? 0.98 : Math.min(0.98, Math.max(0.02, (wAt(a) - 4) / 14));
         if (n === first && n > 0) { brk(P, U, n, a.x, a.y); n++; }
         const o = n * 4;
         P[o] = a.x + nx; P[o + 1] = a.y + ny; P[o + 2] = a.x - nx; P[o + 3] = a.y - ny;
         U[o] = age; U[o + 1] = 0; U[o + 2] = age; U[o + 3] = 1;
         n++;
+        // fresh young growth: bright overlay over the last FRESH_L units of a live stem, fading back
+        const dTip = tipArc - arc;
+        if (freshOn && live && !rev && dTip < FRESH_L && fn < fcap) {
+          if (fn === ffirst && fn > 0) { brk(FP, FU, fn, a.x, a.y); fn++; }
+          const fh = core * 0.94, fo = fn * 4, fu = dTip / FRESH_L;
+          FP[fo] = a.x - dy * fh; FP[fo + 1] = a.y + dx * fh; FP[fo + 2] = a.x + dy * fh; FP[fo + 3] = a.y - dx * fh;
+          FU[fo] = fu; FU[fo + 1] = 0; FU[fo + 2] = fu; FU[fo + 3] = 1; fn++;
+        }
+        // curling tendrils, deterministic per stretch of stem, unfurling as the stem grows past
+        const tk = Math.floor(arc / TSTEP);
+        if (tendOn && !rev && tk !== lastT && tk > 0 && tn < tcap - 40) {
+          lastT = tk;
+          const h = hash(tk * 7.31 + p.id * 13.7);
+          if (h > 0.3) {
+            const grow = Math.min(1, Math.max(0, (now - a.t - 0.12) / 0.75));
+            if (grow > 0.02) {
+              const side = (tk + p.id) % 2 ? 1 : -1, h2 = hash(tk * 3.7 + 1.1);
+              const segs = 16, len = (34 + h2 * 30) * (0.35 + 0.65 * grow), turn = curlK * (0.8 + h * 0.5) * (0.45 + 0.55 * grow);
+              // start on the stem edge, heading outward and up
+              let ang = Math.atan2(dy, dx) + side * (0.95 + h2 * 0.5) + Math.sin(now * 1.3 + tk) * 0.07;
+              let x = a.x - side * dy * core * 0.85, y = a.y + side * dx * core * 0.85;
+              if (tn > 0) { brk(TP, TU, tn, x, y); tn++; }
+              for (let j = 0; j <= segs; j++) {
+                const t = j / segs, tw = (4.2 * (1 - t) + 0.7) * Math.max(1, px * 0.75);
+                const ca = Math.cos(ang + side * Math.PI / 2), sa = Math.sin(ang + side * Math.PI / 2);
+                const to = tn * 4;
+                TP[to] = x + ca * tw; TP[to + 1] = y + sa * tw; TP[to + 2] = x - ca * tw; TP[to + 3] = y - sa * tw;
+                TU[to] = t; TU[to + 1] = 0; TU[to + 2] = t; TU[to + 3] = 1; tn++;
+                const segL = len / segs * (1 - t * 0.45);
+                ang += side * turn * Math.pow(t + 0.08, 1.6) / segs * 2.2;
+                x += Math.cos(ang) * segL; y += Math.sin(ang) * segL;
+              }
+              { const k = tn - 1; brk(TP, TU, tn, TP[k * 4], TP[k * 4 + 1]); tn++; }
+            }
+          }
+        }
         if (glowOn && live && fromTip < 40 && gn < cap) {
           const gw = (Math.min(w0, 10) * 2.4 + 14 * Math.max(1, px * 0.8)) * (1 - fromTip / 44);
           if (gn > 0 && fromTip >= 39) { brk(GP, GU, gn, a.x, a.y); gn++; }
@@ -503,14 +602,16 @@ export class GLLayer {
         if (i === i1) break;
       }
       if (n > first) { const k = n - 1; brk(P, U, n, P[k * 4], P[k * 4 + 1]); n++; }
+      if (fn > ffirst) { const k = fn - 1; brk(FP, FU, fn, FP[k * 4], FP[k * 4 + 1]); fn++; }
       if (glowOn && gn > 0) { const k = gn - 1; brk(GP, GU, gn, GP[k * 4], GP[k * 4 + 1]); gn++; }
     }
     // collapse the tail (unused capacity) into a point
     const clear = (arr, from, to) => { if (to > from) arr.fill(0, from * 4, to * 4); };
-    clear(P, n, R.n); clear(GP, gn, G.n); R.n = n; G.n = gn;
-    R.geometry.getBuffer('aPosition').update(); R.geometry.getBuffer('aUV').update();
-    G.geometry.getBuffer('aPosition').update(); G.geometry.getBuffer('aUV').update();
-    G.mesh.visible = gn > 0; G.mesh.alpha = gold > 0 ? 0.55 : 0.32;
+    clear(P, n, R.n); clear(GP, gn, G.n); clear(FP, fn, F.n); clear(TP, tn, TD.n); R.n = n; G.n = gn; F.n = fn; TD.n = tn;
+    for (const X of [R, G, F, TD]) { X.geometry.getBuffer('aPosition').update(); X.geometry.getBuffer('aUV').update(); }
+    G.mesh.visible = gn > 0; G.mesh.alpha = gold > 0 ? 0.5 : 0.2;
+    F.mesh.visible = fn > 0; TD.mesh.visible = tn > 0;
+    this.vineShadow.visible = tier <= 2 && n > 0; this.vineRim.visible = tier <= 1 && n > 0 && !!st.rim;
     if (gold > 0) G.mesh.tint = 0xffd36a; else if (sk.glow) G.mesh.tint = hexN(sk.glow);
   }
 
@@ -559,6 +660,66 @@ export class GLLayer {
         d.scale.set((r + 2.2) / 10 * k); d.tint = rev ? 0xff9a86 : c.kind === 'merge' ? 0xf2b33d : c.kind === 'fork' ? hexN(dots.fork) : hexN(dots.plain);
       }
     }
+    // V3.1: leaves sprout all along the stem (alternate sides, pop + unfold + sway), flowers now and then,
+    // a few darker back leaves under the stem for depth. Deterministic per stretch of stem.
+    const tier = quality.tier, st = this.vst || vstyle(this.worldId);
+    if (px < 3 && tier <= 2) {
+      const bp = this.leafBackPool; bp.begin();
+      const dens = tier <= 1 ? 1 : 0.6, LSTEP = st.leafStep / dens, FSTEP = st.flowerStep;
+      const wAt = (pt) => 8.5 + Math.min(24, 3 * Math.sqrt(Math.max(0, now - pt.t)));
+      for (const p of s.paths) {
+        if (p.state === 'gone' || p.state === 'reverting' || p.pts.length < 3) continue;
+        const pts = p.pts, A = this.arc.get(p); if (!A) continue;
+        let i0 = 0, i1 = Math.min(pts.length - 1, A.length - 1);
+        { let lo = 0, hi = i1; while (lo < hi) { const m = (lo + hi) >> 1; if (pts[m].y > botY + 40) lo = m + 1; else hi = m; } i0 = Math.max(1, lo - 1); }
+        { let lo = 0, hi = i1; while (lo < hi) { const m = (lo + hi) >> 1; if (pts[m].y > topY - 40) lo = m + 1; else hi = m; } i1 = Math.min(i1, lo + 1); }
+        let lastL = Math.floor(A[i0 - 1] / LSTEP), lastF = Math.floor(A[i0 - 1] / FSTEP);
+        for (let i = i0; i < i1; i++) {
+          const kL = Math.floor(A[i] / LSTEP), kF = Math.floor(A[i] / FSTEP);
+          if (kL === lastL && kF === lastF) continue;
+          const a = pts[i], b = pts[Math.min(pts.length - 1, i + 1)], c = pts[i - 1];
+          let dx = b.x - c.x, dy = b.y - c.y; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+          const dir = Math.atan2(dy, dx), core = Math.max(9, wAt(a)) * this.sk.width / 2;
+          if (kL !== lastL) {
+            lastL = kL;
+            const h = hash(kL * 3.17 + p.id * 11.3);
+            if (h >= st.leafSkip) {
+              const g = Math.min(1, Math.max(0, (now - a.t - 0.05) / 0.42)); if (g <= 0) continue;
+              const pop = g < 1 ? easeBack(g) : 1, side = (kL + p.id) % 2 ? 1 : -1, h2 = hash(kL * 5.1 + 2.3), h3 = hash(kL * 9.7 + 4.1);
+              const back = tier <= 1 && h3 < 0.32;
+              const sway = Math.sin(now * 1.7 + kL * 1.3) * (0.07 + (pts.length - i < 30 ? 0.06 : 0));
+              const ang = dir + side * (0.75 + h2 * 0.65) * (0.25 + 0.75 * Math.min(1, pop)) * (back ? 1.25 : 1) + sway;
+              const len = (19 + h * 14) * (back ? 1.2 : 1) * Math.min(1.25, 0.8 + core / 40) * Math.max(0.05, pop);
+              const sp = back ? bp.next() : pool.next();
+              const bx = a.x - side * dy * core * 0.55, by = a.y + side * dx * core * 0.55;
+              if (artLeaf) {
+                const ft = artLeaf.frames[0]; sp.texture = ft; sp.anchor.set(artLeaf.anchor[0], artLeaf.anchor[1]);
+                const q = len / (ft.width * 0.5 * 0.9) * 0.5 * Math.max(1, px * 0.8);
+                sp.x = bx; sp.y = by; sp.scale.set(side < 0 ? -q : q, q); sp.rotation = side < 0 ? ang + Math.PI * 3 / 4 : ang + Math.PI / 4;
+              } else {
+                sp.texture = h2 > 0.5 ? darkT : leafT; sp.anchor.set(0.03, 0.5); sp.x = bx; sp.y = by; sp.rotation = ang;
+                sp.scale.set(len / 30 * k * Math.max(1, px * 0.8), Math.min(1, pop) * Math.max(1, px * 0.8) * 0.9 * k);
+              }
+              sp.tint = back ? 0x8c9a8c : h2 > 0.62 ? 0xe2eadc : 0xffffff; sp.alpha = 1;
+            }
+          }
+          if (kF !== lastF) {
+            lastF = kF;
+            const h = hash(kF * 13.3 + p.id * 3.9);
+            if (h < st.flowerP) {
+              const g = Math.min(1, Math.max(0, (now - a.t - 0.3) / 0.7)); if (g <= 0) continue;
+              const pop = easeBack(g), side = (kF + p.id) % 2 ? -1 : 1, size = (15 + h * 9) * Math.max(1, px * 0.7);
+              const fx0 = a.x - side * dy * (core + 5), fy0 = a.y + side * dx * (core + 5);
+              const sp = pool.next();
+              if (artFlower) { const ft = artFlower.frames[0]; sp.texture = ft; sp.anchor.set(0.5); sp.scale.set(size * pop / ft.width); }
+              else { sp.texture = this.tex['fx.petal']; sp.anchor.set(0.5); sp.scale.set(k * 1.6 * pop); sp.tint = 0xffd0dc; }
+              sp.x = fx0; sp.y = fy0; sp.rotation = (1 - Math.min(1, g * 1.2)) * -0.9 * side + Math.sin(now * 0.9 + kF) * 0.08; sp.alpha = 1; if (artFlower) sp.tint = 0xffffff;
+            }
+          }
+        }
+      }
+      bp.end();
+    } else this.leafBackPool.begin(), this.leafBackPool.end();
     // scars where a single tip got hit
     for (const sc of s.scars) { if (sc.y < topY - 20 || sc.y > botY + 20) continue; const sp = pool.next(); sp.texture = this.tex['fx.spark']; sp.anchor.set(0.5); sp.x = sc.x; sp.y = sc.y; sp.rotation = Math.PI / 4; sp.scale.set(k * 0.75); sp.tint = 0xe2603f; sp.alpha = 1; }
     pool.end();
@@ -776,6 +937,20 @@ export class GLLayer {
         if (e.type && e.type.startsWith('pickup.')) pop(e.x, e.y, this.sprite(e.type), 0xffffff, 54, 0.4);
     }
   }
+  /** V3.1: a soft per-world particle trail behind each growing tip (pollen, impasto flecks, gold dust...). */
+  tipTrail(s, fx, dt) {
+    if (s.dead || !s.tips || !s.tips.length || quality.tier >= 3 || fx.particles.length > 140) return;
+    const T = (this.vst || vstyle(this.worldId)).trail, rate = T.rate * (quality.tier >= 2 ? 0.5 : 1) * Math.min(1.6, Math.max(0.4, (s.speed || 200) / 230));
+    this.trailAcc += dt * rate;
+    while (this.trailAcc >= 1) {
+      this.trailAcc -= 1;
+      const tip = s.tips[(Math.random() * s.tips.length) | 0], kind = T.kinds[(Math.random() * T.kinds.length) | 0];
+      const life = 0.55 + Math.random() * 0.6;
+      fx.particles.push({ x: tip.x + (Math.random() - 0.5) * 10, y: s.cy + 6 + Math.random() * 6, vx: (Math.random() - 0.5) * 46, vy: 26 + Math.random() * 46, g: -14,
+        life, max: life, size: kind === 'stroke' ? 3 + Math.random() * 3 : kind === 'leaf' ? 3.5 + Math.random() * 2 : 1.6 + Math.random() * 2.2,
+        color: T.cols[(Math.random() * T.cols.length) | 0], kind, v: (Math.random() * 6) | 0, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 5 });
+    }
+  }
   /** Slow-mo hook (vehicle mount, boss phase). */
   slowmo(fx, dur = 0.35) { fx.slowmo = Math.max(fx.slowmo || 0, dur); }
   /** Budgeted screen shake in CSS px for a trauma value 0..1 (phones <= 4 px, desktop <= 7 px). */
@@ -801,6 +976,7 @@ export class GLLayer {
     this.rollC.pivot.set(this.cw / 2, this.ch / 2); this.rollC.position.set(this.cw / 2, this.ch / 2); this.rollC.rotation = view.roll || 0;
     this.world.position.set(view.ox, view.oy); this.world.scale.set(view.sc);
     this.ground.visible = view.botY > -300;
+    if (this.ground.visible) this.drawRoots(s);
 
     this.buildVine(s, now, view.topY, view.botY, view.px, view.gold);
     this.drawLeaves(s, now, view.topY, view.botY, view.px);
@@ -808,6 +984,7 @@ export class GLLayer {
     this.drawTips(s, now, fx, view.gold);
     this.drawEntities(s, now, view.gold, ui);
     this.glowPool.end();
+    if (!view.frozen) this.tipTrail(s, fx, dt);
     this.drawParticles(fx, view.px, ui);
 
     this.flash.alpha = fx.flash > 0 ? Math.min(0.45, fx.flash * 0.3) : 0;

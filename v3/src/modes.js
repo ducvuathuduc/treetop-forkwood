@@ -10,7 +10,7 @@ export const STAKES = [
   { id: 'oak', name: 'Oak', mult: 1.5, blurb: 'Thornier and thirstier.', adds: ['hazards come sooner', 'thirsty from the first metre', 'hits cost 45% more', 'beetles 15% faster', 'full blooms give +8 sap'],
     rules: { hazard: 0.35, drain: 1, drainAdd: 1.7, lateK: 0.62, dmg: 1.45, bloomSap: 8, beetle: 1.15 } },
   { id: 'ancient', name: 'Ancient', mult: 2.2, blurb: 'Brutal. For growers who have seen the stars.', adds: ['everything in Oak', 'hazards at full strength early', 'sap drains hard from the start', 'hits cost 75% more', 'every 2nd rest glade is gone', 'growth 6% faster'],
-    rules: { hazard: 0.8, drain: 1.08, drainAdd: 2.4, lateK: 0.72, dmg: 1.75, bloomSap: 8, beetle: 1.35, restSwap: 2, speed: 1.06 } },
+    rules: { hazard: 0.8, drain: 1.08, drainAdd: 2.9 /* V3.1: 2.4 -> 2.9 with the faster climb */, lateK: 0.72, dmg: 1.75, bloomSap: 8, beetle: 1.35, restSwap: 2, speed: 1.06 } },
 ];
 export const STAKE = Object.fromEntries(STAKES.map((s) => [s.id, s]));
 
