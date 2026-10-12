@@ -300,7 +300,7 @@ function startRun(isDaily = daily) {
   const world = pure || isRace ? worldForSeed(seed) : (trialWorld || selectedWorld());
   trialWorld = null;
   const mech = BOT_MODE || autoplay ? null : EC.mechOptions(S, { pure, race: isRace, level: !!lv, tutorial });
-  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director, econ, world, ...(mech || {}), feel: FEEL });
+  sim = createSim({ seed, tutorial, mercy: tutorial && !daily && !BOT_MODE && !autoplay, bestM, pure, charm: pure ? null : S.charm, rules, director, econ, world, ...(mech || {}), feel: FEEL });
   replay.n = 0; replay.at = 0; // V3-FEEL: last-moment frames
   showWorld(world);
   // /P8-ECON
@@ -455,7 +455,7 @@ function coachView(s) {
   const tap = input.kind === 'touch' ? 'TAP' : input.kind === 'key' ? 'SPACE' : 'CLICK';
   const steer = input.kind === 'touch' ? 'Drag anywhere to steer' : input.kind === 'key' ? '← → to steer' : 'Move the mouse to steer';
   switch (coach.step) {
-    case 'steer': return { title: steer, sub: 'Catch sunlight to refill your sap', n: 1 };
+    case 'steer': return { title: steer, sub: coach.collects ? `Sunlight = sap · ${coach.collects} of 3` : 'Sunlight is your sap: steer into it', n: 1 };
     case 'fork': return { title: `${tap} to fork`, sub: coach.retry === 'emptymerge' ? 'Grab sunlight on both branches before merging' : coach.retry === 'revert' ? 'A hit reverts a branch. Fork again!' : 'Split into two branches: one per gap', n: 2, urgent: coach.slow, cue: coach.slow };
     case 'merge': {
       const staged = s.tips.length === 2 ? s.tips[0].staged + s.tips[1].staged : 0;
@@ -473,7 +473,10 @@ function updateCoach(s, dt) {
   if (!coach.step || s.dead) return 1;
   coach.t += dt;
   const y = s.cy;
-  if (coach.step === 'steer' && s.brambles.some((b) => b.kind === 'split' && b.y < y && b.y > y - 520)) { coach.step = 'fork'; coach.t = 0; }
+  // P0-FTUE: the steer lesson gets its own beat: slow-mo until the first sunlight is caught (max 4 s), and it
+  // only hands over to the fork lesson once at least one sunlight was caught or the split is really close
+  if (coach.step === 'steer' && coach.collects === 0 && coach.t < 4) coach.slow = true;
+  if (coach.step === 'steer' && s.brambles.some((b) => b.kind === 'split' && b.y < y && b.y > y - (coach.collects ? 520 : 360))) { coach.step = 'fork'; coach.t = 0; }
   if (coach.step === 'fork' && !s.forked && s.brambles.some((b) => b.kind === 'split' && b.y < y && b.y > y - 300)) coach.slow = true;
   if (coach.step === 'merge' && s.forked && s.brambles.some((b) => b.kind === 'gate' && b.y < y && b.y > y - 340)) coach.slow = true;
   if (coach.step === 'praise' && coach.t > 3.4) {
@@ -927,6 +930,7 @@ function showGameOver() {
     : `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(run.mode === 'classic' && run.stake === 'sapling' || daily ? S.best.score : ((run.mode === 'classic' ? 0 : (S.quest.modeBest[run.mode] || {}).s) || 0), sum.score).toLocaleString('en-US')}`;
   $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}${sum.grafts ? ` · grafts: ${sum.graftIds.map((g) => (GRAFTS[g] || { name: g }).name).join(', ')}` : ''}`;
   $('share-msg').textContent = '';
+  $('over').classList.toggle('lite', (S.stats.runs | 0) <= 3 && !lv && !daily && !challengeRun); // P0-FTUE: first 3 climbs get a short results card
   setMode('over'); showReplay(); // V3-FEEL
   ui.showRewards(rewards, { before });
   if (hub && rewards) { hub.afterRun({ lost: !newBest }); hub.offerDouble({ gained: S.acorns - before, fair: !!lv || daily || challengeRun || run.mode === 'weekly' }); } // META-V2
