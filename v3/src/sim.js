@@ -1183,7 +1183,7 @@ function merge(s) {
   if (staged > 0 && s.forkTime > 0.9) {
     const jit = feelCoyote(s, hazardAhead(s, 190 * ringJitK(s))); // V3-FEEL: coyote time after a row // V2-MECH: Quick Merge widens the window
     let bonus = addScore(s, (50 + 20 * staged * s.mult) * (jit ? ringJitMult(s) : 1));
-    s.mult = Math.min(MAX_MULT, s.mult + 1);
+    s.mult = Math.min(MAX_MULT, s.mult + (s.mercy && s.goldens < 1 ? 2 : 1)); // P0-FTUE: the first run reaches golden hour in ~4 merges, not 7
     s.maxMult = Math.max(s.maxMult, s.mult);
     const goldenNow = s.mult >= ringGolden(s) && s.golden <= 0; // V2-MECH: Sunwise
     skillMergeCut(s); // V2-MECH: merges charge the critter skill
