@@ -252,6 +252,12 @@ export class LegacySound {
     if (!this.musicLP) return;
     const k = Math.max(0, Math.min(1, f / 0.3));
     this.musicLP.frequency.setTargetAtTime(700 + 15300 * k * k, this.ctx.currentTime, 0.15);
+    // P0-FTUE: below 25% sap a soft heartbeat speeds up as the meter falls; sunlight silences it
+    const now = this.ctx.currentTime;
+    if (f > 0 && f < 0.25 && !this.muted && now >= (this._hbT || 0)) {
+      this.tone(58, { type: 'sine', dec: 0.16, vol: 0.22 }); this.tone(52, { type: 'sine', t: 0.17, dec: 0.2, vol: 0.16 });
+      this._hbT = now + 0.5 + f * 2.4;
+    }
   }
 
   setGolden(on) { this.golden = !!on; }
@@ -323,19 +329,27 @@ export class LegacySound {
   }
 
   // -------------------------------------------------- sfx
-  collect(chain, forked) {
+  /** P0-FTUE: a stereo send (-1 left .. 1 right) for the Git sound story: a fork splits the voice in two, a merge resolves it. */
+  _pan(p) {
+    if (!this.ctx || !this.ctx.createStereoPanner || !p) return undefined;
+    const n = this.ctx.createStereoPanner(); n.pan.value = Math.max(-1, Math.min(1, p)); n.connect(this.sfx);
+    return n;
+  }
+  collect(chain, forked, pan = 0) {
     const deg = Math.min(14, chain - 1);
-    this.kalimba(this._note(deg, 1), { vol: 0.15, dec: 0.45, verb: 0.3, bright: 1.1 });
-    if (forked) this.kalimba(this._note(deg + 2, 1), { t: 0.035, vol: 0.06, dec: 0.3, verb: 0.3 });
+    this.kalimba(this._note(deg, 1), { vol: 0.15, dec: 0.45, verb: 0.3, bright: 1.1, dest: this._pan(forked ? pan * 0.7 : 0) });
+    if (forked) this.kalimba(this._note(deg + 2, 1), { t: 0.035, vol: 0.06, dec: 0.3, verb: 0.3, dest: this._pan(-pan * 0.3) });
   }
   fork() {
     this.sample('fork', { vol: 0.75 });
-    this.kalimba(this._note(0, 1), { vol: 0.1, dec: 0.35 });
-    this.kalimba(this._note(2, 1), { t: 0.05, vol: 0.1, dec: 0.35 });
+    this.kalimba(this._note(0, 1), { vol: 0.1, dec: 0.35, dest: this._pan(-0.75) });
+    this.kalimba(this._note(2, 1), { t: 0.05, vol: 0.1, dec: 0.35, dest: this._pan(0.75) });
     this.noise({ dec: 0.14, vol: 0.05, f0: 1200, f1: 5200, type: 'bandpass', q: 3 });
   }
   merge(mult) {
     this.sample('merge', { vol: 0.8, rate: 0.9 + mult * 0.03 });
+    this.kalimba(this._note(0, 1), { vol: 0.07, dec: 0.18, dest: this._pan(-0.8) }); // P0-FTUE: the two voices meet in the middle
+    this.kalimba(this._note(2, 1), { vol: 0.07, dec: 0.18, dest: this._pan(0.8) });
     [0, 2, 4, 5 + Math.min(4, mult)].forEach((d, i) => this.kalimba(this._note(d, 1), { t: i * 0.05, vol: 0.12, dec: 0.8, verb: 0.5 }));
     this.tone(this._note(0, -1), { dec: 0.45, vol: 0.18, type: 'sine' });
   }
