@@ -1,0 +1,6887 @@
+[
+ {
+  "id": "meadow.layer.sky.p",
+  "file": "meadow/meadow.layer.sky.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 0,
+  "target": "1080x1920",
+  "bytes": 131096,
+  "avif": "meadow/meadow.layer.sky.p.avif",
+  "bytesAvif": 40174,
+  "notes": "V3 anime zone 0 (Sunset meadow); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "meadow.layer.sky.d",
+  "file": "meadow/meadow.layer.sky.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 0,
+  "target": "2560x1440",
+  "bytes": 333822,
+  "avif": "meadow/meadow.layer.sky.d.avif",
+  "bytesAvif": 111725,
+  "notes": "V3 anime zone 0 (Sunset meadow); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.sky.z1.p",
+  "file": "meadow/meadow.layer.sky.z1.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 1,
+  "target": "1080x1920",
+  "bytes": 154244,
+  "avif": "meadow/meadow.layer.sky.z1.p.avif",
+  "bytesAvif": 46363,
+  "notes": "V3 anime zone 1 (Shrine hill); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "meadow.layer.sky.z1.d",
+  "file": "meadow/meadow.layer.sky.z1.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 1,
+  "target": "2560x1440",
+  "bytes": 355986,
+  "avif": "meadow/meadow.layer.sky.z1.d.avif",
+  "bytesAvif": 110016,
+  "notes": "V3 anime zone 1 (Shrine hill); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.sky.z2.p",
+  "file": "meadow/meadow.layer.sky.z2.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 2,
+  "target": "1080x1920",
+  "bytes": 113670,
+  "avif": "meadow/meadow.layer.sky.z2.p.avif",
+  "bytesAvif": 38702,
+  "notes": "V3 anime zone 2 (Sea of clouds); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "meadow.layer.sky.z2.d",
+  "file": "meadow/meadow.layer.sky.z2.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 2,
+  "target": "2560x1440",
+  "bytes": 261544,
+  "avif": "meadow/meadow.layer.sky.z2.d.avif",
+  "bytesAvif": 108175,
+  "notes": "V3 anime zone 2 (Sea of clouds); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.sky.z3.p",
+  "file": "meadow/meadow.layer.sky.z3.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 3,
+  "target": "1080x1920",
+  "bytes": 103350,
+  "avif": "meadow/meadow.layer.sky.z3.p.avif",
+  "bytesAvif": 40668,
+  "notes": "V3 anime zone 3 (Blue hour above the clouds); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "meadow.layer.sky.z3.d",
+  "file": "meadow/meadow.layer.sky.z3.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 3,
+  "target": "2560x1440",
+  "bytes": 240392,
+  "avif": "meadow/meadow.layer.sky.z3.d.avif",
+  "bytesAvif": 102319,
+  "notes": "V3 anime zone 3 (Blue hour above the clouds); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.sky.z4.p",
+  "file": "meadow/meadow.layer.sky.z4.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 4,
+  "target": "1080x1920",
+  "bytes": 165334,
+  "avif": "meadow/meadow.layer.sky.z4.p.avif",
+  "bytesAvif": 41055,
+  "notes": "V3 anime zone 4 (Milky Way night); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "meadow.layer.sky.z4.d",
+  "file": "meadow/meadow.layer.sky.z4.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "zone": 4,
+  "target": "2560x1440",
+  "bytes": 336290,
+  "avif": "meadow/meadow.layer.sky.z4.d.avif",
+  "bytesAvif": 97632,
+  "notes": "V3 anime zone 4 (Milky Way night); opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.far.p",
+  "file": "meadow/meadow.layer.far.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 0,
+  "target": "1080x1920",
+  "bytes": 26174,
+  "avif": "meadow/meadow.layer.far.p.avif",
+  "bytesAvif": 13983,
+  "notes": "V3 anime zone 0 (Sunset meadow); RGBA, tiles vertically (seamless), scroll at cam*0.25; day far-cloud file (shared by zones 0-2); portrait variant"
+ },
+ {
+  "id": "meadow.layer.far.d",
+  "file": "meadow/meadow.layer.far.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 0,
+  "target": "2560x1440",
+  "bytes": 55702,
+  "avif": "meadow/meadow.layer.far.d.avif",
+  "bytesAvif": 31628,
+  "notes": "V3 anime zone 0 (Sunset meadow); RGBA, tiles vertically (seamless), scroll at cam*0.25; day far-cloud file (shared by zones 0-2); desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.far.z1.p",
+  "file": "meadow/meadow.layer.far.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 1,
+  "target": "1080x1920",
+  "bytes": 26174,
+  "avif": "meadow/meadow.layer.far.p.avif",
+  "bytesAvif": 13983,
+  "notes": "V3 anime zone 1 (Shrine hill); RGBA, tiles vertically (seamless), scroll at cam*0.25; day far-cloud file (shared by zones 0-2); portrait variant"
+ },
+ {
+  "id": "meadow.layer.far.z1.d",
+  "file": "meadow/meadow.layer.far.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 1,
+  "target": "2560x1440",
+  "bytes": 55702,
+  "avif": "meadow/meadow.layer.far.d.avif",
+  "bytesAvif": 31628,
+  "notes": "V3 anime zone 1 (Shrine hill); RGBA, tiles vertically (seamless), scroll at cam*0.25; day far-cloud file (shared by zones 0-2); desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.far.z2.p",
+  "file": "meadow/meadow.layer.far.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 2,
+  "target": "1080x1920",
+  "bytes": 26174,
+  "avif": "meadow/meadow.layer.far.p.avif",
+  "bytesAvif": 13983,
+  "notes": "V3 anime zone 2 (Sea of clouds); RGBA, tiles vertically (seamless), scroll at cam*0.25; day far-cloud file (shared by zones 0-2); portrait variant"
+ },
+ {
+  "id": "meadow.layer.far.z2.d",
+  "file": "meadow/meadow.layer.far.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 2,
+  "target": "2560x1440",
+  "bytes": 55702,
+  "avif": "meadow/meadow.layer.far.d.avif",
+  "bytesAvif": 31628,
+  "notes": "V3 anime zone 2 (Sea of clouds); RGBA, tiles vertically (seamless), scroll at cam*0.25; day far-cloud file (shared by zones 0-2); desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.far.z3.p",
+  "file": "meadow/meadow.layer.far.night.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1104,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 3,
+  "target": "1080x1920",
+  "bytes": 24828,
+  "avif": "meadow/meadow.layer.far.night.p.avif",
+  "bytesAvif": 13592,
+  "notes": "V3 anime zone 3 (Blue hour above the clouds); RGBA, tiles vertically (seamless), scroll at cam*0.25; night far-cloud file (shared by zones 3-4); portrait variant"
+ },
+ {
+  "id": "meadow.layer.far.z3.d",
+  "file": "meadow/meadow.layer.far.night.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1104,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 3,
+  "target": "2560x1440",
+  "bytes": 58482,
+  "avif": "meadow/meadow.layer.far.night.d.avif",
+  "bytesAvif": 34551,
+  "notes": "V3 anime zone 3 (Blue hour above the clouds); RGBA, tiles vertically (seamless), scroll at cam*0.25; night far-cloud file (shared by zones 3-4); desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.far.z4.p",
+  "file": "meadow/meadow.layer.far.night.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1104,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 4,
+  "target": "1080x1920",
+  "bytes": 24828,
+  "avif": "meadow/meadow.layer.far.night.p.avif",
+  "bytesAvif": 13592,
+  "notes": "V3 anime zone 4 (Milky Way night); RGBA, tiles vertically (seamless), scroll at cam*0.25; night far-cloud file (shared by zones 3-4); portrait variant"
+ },
+ {
+  "id": "meadow.layer.far.z4.d",
+  "file": "meadow/meadow.layer.far.night.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1104,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "zone": 4,
+  "target": "2560x1440",
+  "bytes": 58482,
+  "avif": "meadow/meadow.layer.far.night.d.avif",
+  "bytesAvif": 34551,
+  "notes": "V3 anime zone 4 (Milky Way night); RGBA, tiles vertically (seamless), scroll at cam*0.25; night far-cloud file (shared by zones 3-4); desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.side.p",
+  "file": "meadow/meadow.layer.side.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 634,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 0,
+  "target": "1080x1920",
+  "bytes": 84468,
+  "avif": "meadow/meadow.layer.side.p.avif",
+  "bytesAvif": 36597,
+  "notes": "V3 anime zone 0 (Sunset meadow); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "meadow.layer.side.d",
+  "file": "meadow/meadow.layer.side.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 822,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 0,
+  "target": "2560x1440",
+  "bytes": 119944,
+  "avif": "meadow/meadow.layer.side.d.avif",
+  "bytesAvif": 49481,
+  "notes": "V3 anime zone 0 (Sunset meadow); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.side.z1.p",
+  "file": "meadow/meadow.layer.side.z1.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 760,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 1,
+  "target": "1080x1920",
+  "bytes": 79372,
+  "avif": "meadow/meadow.layer.side.z1.p.avif",
+  "bytesAvif": 37714,
+  "notes": "V3 anime zone 1 (Shrine hill); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "meadow.layer.side.z1.d",
+  "file": "meadow/meadow.layer.side.z1.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 942,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 1,
+  "target": "2560x1440",
+  "bytes": 94330,
+  "avif": "meadow/meadow.layer.side.z1.d.avif",
+  "bytesAvif": 51972,
+  "notes": "V3 anime zone 1 (Shrine hill); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.side.z2.p",
+  "file": "meadow/meadow.layer.side.z2.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 753,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 2,
+  "target": "1080x1920",
+  "bytes": 43282,
+  "avif": "meadow/meadow.layer.side.z2.p.avif",
+  "bytesAvif": 22045,
+  "notes": "V3 anime zone 2 (Sea of clouds); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "meadow.layer.side.z2.d",
+  "file": "meadow/meadow.layer.side.z2.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 976,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 2,
+  "target": "2560x1440",
+  "bytes": 94386,
+  "avif": "meadow/meadow.layer.side.z2.d.avif",
+  "bytesAvif": 42435,
+  "notes": "V3 anime zone 2 (Sea of clouds); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.side.z3.p",
+  "file": "meadow/meadow.layer.side.z3.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 689,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 3,
+  "target": "1080x1920",
+  "bytes": 38786,
+  "avif": "meadow/meadow.layer.side.z3.p.avif",
+  "bytesAvif": 23206,
+  "notes": "V3 anime zone 3 (Blue hour above the clouds); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "meadow.layer.side.z3.d",
+  "file": "meadow/meadow.layer.side.z3.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 894,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 3,
+  "target": "2560x1440",
+  "bytes": 59994,
+  "avif": "meadow/meadow.layer.side.z3.d.avif",
+  "bytesAvif": 44533,
+  "notes": "V3 anime zone 3 (Blue hour above the clouds); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.layer.side.z4.p",
+  "file": "meadow/meadow.layer.side.z4.p.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 667,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 4,
+  "target": "1080x1920",
+  "bytes": 44420,
+  "avif": "meadow/meadow.layer.side.z4.p.avif",
+  "bytesAvif": 19976,
+  "notes": "V3 anime zone 4 (Milky Way night); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "meadow.layer.side.z4.d",
+  "file": "meadow/meadow.layer.side.z4.d.webp",
+  "type": "layer",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 865,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "zone": 4,
+  "target": "2560x1440",
+  "bytes": 66712,
+  "avif": "meadow/meadow.layer.side.z4.d.avif",
+  "bytesAvif": 40672,
+  "notes": "V3 anime zone 4 (Milky Way night); RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "starry.layer.sky.p",
+  "file": "starry/starry.layer.sky.p.webp",
+  "type": "layer",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "1080x1920",
+  "bytes": 235176,
+  "avif": "starry/starry.layer.sky.p.avif",
+  "bytesAvif": 120444,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "starry.layer.sky.d",
+  "file": "starry/starry.layer.sky.d.webp",
+  "type": "layer",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "2560x1440",
+  "bytes": 327896,
+  "avif": "starry/starry.layer.sky.d.avif",
+  "bytesAvif": 175502,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "starry.layer.far.p",
+  "file": "starry/starry.layer.far.p.webp",
+  "type": "layer",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 81332,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; portrait variant"
+ },
+ {
+  "id": "starry.layer.far.d",
+  "file": "starry/starry.layer.far.d.webp",
+  "type": "layer",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 188220,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; desktop variant (full-width composition)"
+ },
+ {
+  "id": "starry.layer.side.p",
+  "file": "starry/starry.layer.side.p.webp",
+  "type": "layer",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 616,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 97644,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "starry.layer.side.d",
+  "file": "starry/starry.layer.side.d.webp",
+  "type": "layer",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1156,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 169056,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "fresco.layer.sky.p",
+  "file": "fresco/fresco.layer.sky.p.webp",
+  "type": "layer",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "1080x1920",
+  "bytes": 195516,
+  "avif": "fresco/fresco.layer.sky.p.avif",
+  "bytesAvif": 109690,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "fresco.layer.sky.d",
+  "file": "fresco/fresco.layer.sky.d.webp",
+  "type": "layer",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "2560x1440",
+  "bytes": 323112,
+  "avif": "fresco/fresco.layer.sky.d.avif",
+  "bytesAvif": 174182,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "fresco.layer.far.p",
+  "file": "fresco/fresco.layer.far.p.webp",
+  "type": "layer",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 56776,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; portrait variant"
+ },
+ {
+  "id": "fresco.layer.far.d",
+  "file": "fresco/fresco.layer.far.d.webp",
+  "type": "layer",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 122176,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; desktop variant (full-width composition)"
+ },
+ {
+  "id": "fresco.layer.side.p",
+  "file": "fresco/fresco.layer.side.p.webp",
+  "type": "layer",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 812,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 67212,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "fresco.layer.side.d",
+  "file": "fresco/fresco.layer.side.d.webp",
+  "type": "layer",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 978,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 112140,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "ukiyo.layer.sky.p",
+  "file": "ukiyo/ukiyo.layer.sky.p.webp",
+  "type": "layer",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "1080x1920",
+  "bytes": 117050,
+  "avif": "ukiyo/ukiyo.layer.sky.p.avif",
+  "bytesAvif": 81431,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "ukiyo.layer.sky.d",
+  "file": "ukiyo/ukiyo.layer.sky.d.webp",
+  "type": "layer",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "2560x1440",
+  "bytes": 200492,
+  "avif": "ukiyo/ukiyo.layer.sky.d.avif",
+  "bytesAvif": 141985,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "ukiyo.layer.far.p",
+  "file": "ukiyo/ukiyo.layer.far.p.webp",
+  "type": "layer",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 37594,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; portrait variant"
+ },
+ {
+  "id": "ukiyo.layer.far.d",
+  "file": "ukiyo/ukiyo.layer.far.d.webp",
+  "type": "layer",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 94392,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; desktop variant (full-width composition)"
+ },
+ {
+  "id": "ukiyo.layer.side.p",
+  "file": "ukiyo/ukiyo.layer.side.p.webp",
+  "type": "layer",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 770,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 102176,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "ukiyo.layer.side.d",
+  "file": "ukiyo/ukiyo.layer.side.d.webp",
+  "type": "layer",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1156,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 167388,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "lilies.layer.sky.p",
+  "file": "lilies/lilies.layer.sky.p.webp",
+  "type": "layer",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "1080x1920",
+  "bytes": 235580,
+  "avif": "lilies/lilies.layer.sky.p.avif",
+  "bytesAvif": 123593,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "lilies.layer.sky.d",
+  "file": "lilies/lilies.layer.sky.d.webp",
+  "type": "layer",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "2560x1440",
+  "bytes": 326860,
+  "avif": "lilies/lilies.layer.sky.d.avif",
+  "bytesAvif": 187080,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "lilies.layer.far.p",
+  "file": "lilies/lilies.layer.far.p.webp",
+  "type": "layer",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 67438,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; portrait variant"
+ },
+ {
+  "id": "lilies.layer.far.d",
+  "file": "lilies/lilies.layer.far.d.webp",
+  "type": "layer",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 152356,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; desktop variant (full-width composition)"
+ },
+ {
+  "id": "lilies.layer.side.p",
+  "file": "lilies/lilies.layer.side.p.webp",
+  "type": "layer",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1060,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 123112,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "lilies.layer.side.d",
+  "file": "lilies/lilies.layer.side.d.webp",
+  "type": "layer",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1156,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 162298,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "gilded.layer.sky.p",
+  "file": "gilded/gilded.layer.sky.p.webp",
+  "type": "layer",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "1080x1920",
+  "bytes": 288210,
+  "avif": "gilded/gilded.layer.sky.p.avif",
+  "bytesAvif": 125111,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "gilded.layer.sky.d",
+  "file": "gilded/gilded.layer.sky.d.webp",
+  "type": "layer",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "2560x1440",
+  "bytes": 442702,
+  "avif": "gilded/gilded.layer.sky.d.avif",
+  "bytesAvif": 195297,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "gilded.layer.far.p",
+  "file": "gilded/gilded.layer.far.p.webp",
+  "type": "layer",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 94302,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; portrait variant"
+ },
+ {
+  "id": "gilded.layer.far.d",
+  "file": "gilded/gilded.layer.far.d.webp",
+  "type": "layer",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 227944,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; desktop variant (full-width composition)"
+ },
+ {
+  "id": "gilded.layer.side.p",
+  "file": "gilded/gilded.layer.side.p.webp",
+  "type": "layer",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1053,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 106000,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "gilded.layer.side.d",
+  "file": "gilded/gilded.layer.side.d.webp",
+  "type": "layer",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1156,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 168790,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "lacquer.layer.sky.p",
+  "file": "lacquer/lacquer.layer.sky.p.webp",
+  "type": "layer",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1920,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "1080x1920",
+  "bytes": 171898,
+  "avif": "lacquer/lacquer.layer.sky.p.avif",
+  "bytesAvif": 105603,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; portrait variant"
+ },
+ {
+  "id": "lacquer.layer.sky.d",
+  "file": "lacquer/lacquer.layer.sky.d.webp",
+  "type": "layer",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1440,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.0,
+  "mode": "stretch-cover",
+  "target": "2560x1440",
+  "bytes": 243640,
+  "avif": "lacquer/lacquer.layer.sky.d.avif",
+  "bytesAvif": 156997,
+  "notes": "opaque, static (parallax 0), cover-fit; centre lane pre-calmed; desktop variant (full-width composition)"
+ },
+ {
+  "id": "lacquer.layer.far.p",
+  "file": "lacquer/lacquer.layer.far.p.webp",
+  "type": "layer",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 123346,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; portrait variant"
+ },
+ {
+  "id": "lacquer.layer.far.d",
+  "file": "lacquer/lacquer.layer.far.d.webp",
+  "type": "layer",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 1216,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.25,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 300878,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.25; already hazed toward the sky colour; lane alpha pre-reduced; desktop variant (full-width composition)"
+ },
+ {
+  "id": "lacquer.layer.side.p",
+  "file": "lacquer/lacquer.layer.side.p.webp",
+  "type": "layer",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 1080,
+  "h": 563,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "1080x1920",
+  "bytes": 104030,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; portrait variant"
+ },
+ {
+  "id": "lacquer.layer.side.d",
+  "file": "lacquer/lacquer.layer.side.d.webp",
+  "type": "layer",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 2560,
+  "h": 935,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "parallax": 0.5,
+  "mode": "tile-y",
+  "target": "2560x1440",
+  "bytes": 149748,
+  "notes": "RGBA, tiles vertically (seamless), scroll at cam*0.5; left+right framing baked in one strip, centre transparent; desktop variant (full-width composition)"
+ },
+ {
+  "id": "meadow.trap.crow",
+  "file": "meadow/meadow.traps.webp",
+  "type": "sprite",
+  "world": "meadow",
+  "frames": 4,
+  "fps": 8,
+  "w": 212,
+  "h": 210,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.traps",
+  "rects": [
+   [
+    0,
+    0,
+    212,
+    210
+   ],
+   [
+    212,
+    0,
+    212,
+    210
+   ],
+   [
+    424,
+    0,
+    212,
+    210
+   ],
+   [
+    636,
+    0,
+    212,
+    210
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "notes": "3-pose wing cycle, play 0-1-2-1",
+  "anim": "flap; frames 0..2 normal, frame 3 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   3
+  ]
+ },
+ {
+  "id": "meadow.trap.gust",
+  "file": "meadow/meadow.traps.webp",
+  "type": "sprite",
+  "world": "meadow",
+  "frames": 2,
+  "fps": 0,
+  "w": 212,
+  "h": 200,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.traps",
+  "rects": [
+   [
+    0,
+    210,
+    212,
+    200
+   ],
+   [
+    212,
+    210,
+    212,
+    200
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "gust",
+  "notes": "spin in code (0.6 turn/s), scale-pulse on warn",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "meadow.trap.hornet",
+  "file": "meadow/meadow.traps.webp",
+  "type": "sprite",
+  "world": "meadow",
+  "frames": 3,
+  "fps": 12,
+  "w": 148,
+  "h": 120,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.traps",
+  "rects": [
+   [
+    340,
+    410,
+    148,
+    120
+   ],
+   [
+    488,
+    410,
+    148,
+    120
+   ],
+   [
+    636,
+    410,
+    148,
+    120
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "hornets",
+  "anim": "buzz; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "meadow.trap.briar",
+  "file": "meadow/meadow.traps.webp",
+  "type": "sprite",
+  "world": "meadow",
+  "frames": 2,
+  "fps": 0,
+  "w": 340,
+  "h": 178,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.traps",
+  "rects": [
+   [
+    424,
+    210,
+    340,
+    178
+   ],
+   [
+    0,
+    410,
+    340,
+    178
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pulse",
+  "notes": "thorn row; tile-x by repeating, pulse = scale 1.0->1.06",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "starry.trap.crowflock",
+  "file": "starry/starry.traps.webp",
+  "type": "sprite",
+  "world": "starry",
+  "frames": 3,
+  "fps": 6,
+  "w": 221,
+  "h": 244,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.traps",
+  "rects": [
+   [
+    0,
+    0,
+    221,
+    244
+   ],
+   [
+    221,
+    0,
+    221,
+    244
+   ],
+   [
+    442,
+    0,
+    221,
+    244
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "notes": "crow flock over wheat (Wheatfield-with-Crows nod, original drawing)",
+  "anim": "flap; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "starry.trap.crowdive",
+  "file": "starry/starry.traps.webp",
+  "type": "sprite",
+  "world": "starry",
+  "frames": 2,
+  "fps": 0,
+  "w": 142,
+  "h": 180,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.traps",
+  "rects": [
+   [
+    857,
+    244,
+    142,
+    180
+   ],
+   [
+    0,
+    488,
+    142,
+    180
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "notes": "single crow dive pose for the lane dive",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "starry.trap.vortex",
+  "file": "starry/starry.traps.webp",
+  "type": "sprite",
+  "world": "starry",
+  "frames": 2,
+  "fps": 0,
+  "w": 241,
+  "h": 244,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.traps",
+  "rects": [
+   [
+    663,
+    0,
+    241,
+    244
+   ],
+   [
+    0,
+    244,
+    241,
+    244
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "gust",
+  "notes": "swirl vortex; spin in code; red-orange core = telegraph",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "starry.trap.wheatspikes",
+  "file": "starry/starry.traps.webp",
+  "type": "sprite",
+  "world": "starry",
+  "frames": 2,
+  "fps": 0,
+  "w": 308,
+  "h": 187,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.traps",
+  "rects": [
+   [
+    241,
+    244,
+    308,
+    187
+   ],
+   [
+    549,
+    244,
+    308,
+    187
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pulse",
+  "notes": "wheat awns thorn row",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "starry.trap.lampsparks",
+  "file": "starry/starry.traps.webp",
+  "type": "sprite",
+  "world": "starry",
+  "frames": 2,
+  "fps": 0,
+  "w": 147,
+  "h": 180,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.traps",
+  "rects": [
+   [
+    142,
+    488,
+    147,
+    180
+   ],
+   [
+    289,
+    488,
+    147,
+    180
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "embers",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "fresco.trap.dove",
+  "file": "fresco/fresco.traps.webp",
+  "type": "sprite",
+  "world": "fresco",
+  "frames": 3,
+  "fps": 6,
+  "w": 180,
+  "h": 175,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.traps",
+  "rects": [
+   [
+    0,
+    244,
+    180,
+    175
+   ],
+   [
+    180,
+    244,
+    180,
+    175
+   ],
+   [
+    360,
+    244,
+    180,
+    175
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "notes": "stone dove",
+  "anim": "flap; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "fresco.trap.cherub",
+  "file": "fresco/fresco.traps.webp",
+  "type": "sprite",
+  "world": "fresco",
+  "frames": 2,
+  "fps": 0,
+  "w": 200,
+  "h": 244,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.traps",
+  "rects": [
+   [
+    0,
+    0,
+    200,
+    244
+   ],
+   [
+    200,
+    0,
+    200,
+    244
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "cone",
+  "notes": "falling plaster cherub (drop on target circle)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "fresco.trap.candlewax",
+  "file": "fresco/fresco.traps.webp",
+  "type": "sprite",
+  "world": "fresco",
+  "frames": 2,
+  "fps": 0,
+  "w": 67,
+  "h": 212,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.traps",
+  "rects": [
+   [
+    400,
+    0,
+    67,
+    212
+   ],
+   [
+    467,
+    0,
+    67,
+    212
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "embers",
+  "notes": "candle wax drip column (sap/burn zone)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "fresco.trap.archgate",
+  "file": "fresco/fresco.traps.webp",
+  "type": "sprite",
+  "world": "fresco",
+  "frames": 2,
+  "fps": 0,
+  "w": 340,
+  "h": 153,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.traps",
+  "rects": [
+   [
+    540,
+    244,
+    340,
+    153
+   ],
+   [
+    0,
+    419,
+    340,
+    153
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "door",
+  "notes": "stone gate slab; keystone glows on warn",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "fresco.trap.plaster",
+  "file": "fresco/fresco.traps.webp",
+  "type": "sprite",
+  "world": "fresco",
+  "frames": 2,
+  "fps": 0,
+  "w": 212,
+  "h": 194,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.traps",
+  "rects": [
+   [
+    534,
+    0,
+    212,
+    194
+   ],
+   [
+    746,
+    0,
+    212,
+    194
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "icicle",
+  "notes": "falling plaster chunks",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "ukiyo.trap.wavecrest",
+  "file": "ukiyo/ukiyo.traps.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 308,
+  "h": 232,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.traps",
+  "rects": [
+   [
+    296,
+    0,
+    308,
+    232
+   ],
+   [
+    604,
+    0,
+    308,
+    232
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "tide",
+  "notes": "tide body lip; tile-x along the rising band",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "ukiyo.trap.onikite",
+  "file": "ukiyo/ukiyo.traps.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 148,
+  "h": 308,
+  "anchor": [
+   0.5,
+   0.05
+  ],
+  "atlas": "ukiyo.traps",
+  "rects": [
+   [
+    0,
+    0,
+    148,
+    308
+   ],
+   [
+    148,
+    0,
+    148,
+    308
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pendulum",
+  "notes": "oni-mask kite swinging on its string; pivot at top",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "ukiyo.trap.cormorant",
+  "file": "ukiyo/ukiyo.traps.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 3,
+  "fps": 6,
+  "w": 212,
+  "h": 189,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.traps",
+  "rects": [
+   [
+    0,
+    514,
+    212,
+    189
+   ],
+   [
+    212,
+    514,
+    212,
+    189
+   ],
+   [
+    424,
+    514,
+    212,
+    189
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "anim": "flap; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "ukiyo.trap.spray",
+  "file": "ukiyo/ukiyo.traps.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 212,
+  "h": 198,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.traps",
+  "rects": [
+   [
+    424,
+    308,
+    212,
+    198
+   ],
+   [
+    636,
+    308,
+    212,
+    198
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "gust",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "ukiyo.trap.whirlpool",
+  "file": "ukiyo/ukiyo.traps.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 212,
+  "h": 206,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.traps",
+  "rects": [
+   [
+    0,
+    308,
+    212,
+    206
+   ],
+   [
+    212,
+    308,
+    212,
+    206
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "spores",
+  "notes": "inverts steering locally; spin in code",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lilies.trap.dragonflyswarm",
+  "file": "lilies/lilies.traps.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 223,
+  "h": 244,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps",
+  "rects": [
+   [
+    246,
+    0,
+    223,
+    244
+   ],
+   [
+    469,
+    0,
+    223,
+    244
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "hornets",
+  "notes": "swarm ribbon; singles below for the sine path",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lilies.trap.dragonfly",
+  "file": "lilies/lilies.traps.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 4,
+  "fps": 12,
+  "w": 148,
+  "h": 107,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps",
+  "rects": [
+   [
+    244,
+    530,
+    148,
+    107
+   ],
+   [
+    392,
+    530,
+    148,
+    107
+   ],
+   [
+    540,
+    530,
+    148,
+    107
+   ],
+   [
+    688,
+    530,
+    148,
+    107
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "hornets",
+  "anim": "buzz; frames 0..2 normal, frame 3 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   3
+  ]
+ },
+ {
+  "id": "lilies.trap.heron",
+  "file": "lilies/lilies.traps.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 4,
+  "fps": 6,
+  "w": 244,
+  "h": 190,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps",
+  "rects": [
+   [
+    692,
+    0,
+    244,
+    190
+   ],
+   [
+    0,
+    340,
+    244,
+    190
+   ],
+   [
+    244,
+    340,
+    244,
+    190
+   ],
+   [
+    488,
+    340,
+    244,
+    190
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "anim": "flap; frames 0..2 normal, frame 3 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   3
+  ]
+ },
+ {
+  "id": "lilies.trap.willowlash",
+  "file": "lilies/lilies.traps.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 123,
+  "h": 340,
+  "anchor": [
+   0.5,
+   0.02
+  ],
+  "atlas": "lilies.traps",
+  "rects": [
+   [
+    0,
+    0,
+    123,
+    340
+   ],
+   [
+    123,
+    0,
+    123,
+    340
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pendulum",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lilies.trap.lilysink",
+  "file": "lilies/lilies.traps.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 244,
+  "h": 150,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps",
+  "rects": [
+   [
+    732,
+    340,
+    244,
+    150
+   ],
+   [
+    0,
+    530,
+    244,
+    150
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "sapzone",
+  "notes": "lily-pad sink (slow + drain zone)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "gilded.trap.goldshards",
+  "file": "gilded/gilded.traps.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 2,
+  "fps": 0,
+  "w": 143,
+  "h": 212,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps",
+  "rects": [
+   [
+    0,
+    0,
+    143,
+    212
+   ],
+   [
+    143,
+    0,
+    143,
+    212
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "icicle",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "gilded.trap.mosaiceye",
+  "file": "gilded/gilded.traps.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 3,
+  "fps": 4,
+  "w": 212,
+  "h": 212,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps",
+  "rects": [
+   [
+    286,
+    0,
+    212,
+    212
+   ],
+   [
+    498,
+    0,
+    212,
+    212
+   ],
+   [
+    710,
+    0,
+    212,
+    212
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pecker",
+  "notes": "eye fires a beam row; iris glow = telegraph",
+  "anim": "blink; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "gilded.trap.blackbird",
+  "file": "gilded/gilded.traps.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 3,
+  "fps": 6,
+  "w": 212,
+  "h": 208,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps",
+  "rects": [
+   [
+    0,
+    212,
+    212,
+    208
+   ],
+   [
+    212,
+    212,
+    212,
+    208
+   ],
+   [
+    424,
+    212,
+    212,
+    208
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "anim": "flap; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "gilded.trap.spiralthorn",
+  "file": "gilded/gilded.traps.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 3,
+  "fps": 4,
+  "w": 308,
+  "h": 192,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps",
+  "rects": [
+   [
+    636,
+    212,
+    308,
+    192
+   ],
+   [
+    0,
+    420,
+    308,
+    192
+   ],
+   [
+    308,
+    420,
+    308,
+    192
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pulse",
+  "anim": "pulse; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "gilded.trap.shard",
+  "file": "gilded/gilded.traps.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 2,
+  "fps": 0,
+  "w": 161,
+  "h": 180,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps",
+  "rects": [
+   [
+    616,
+    420,
+    161,
+    180
+   ],
+   [
+    777,
+    420,
+    161,
+    180
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "embers",
+  "notes": "spinning shard; spin in code",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lacquer.trap.lanternfire",
+  "file": "lacquer/lacquer.traps.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 141,
+  "h": 244,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps",
+  "rects": [
+   [
+    536,
+    0,
+    141,
+    244
+   ],
+   [
+    677,
+    0,
+    141,
+    244
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "embers",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lacquer.trap.koileap",
+  "file": "lacquer/lacquer.traps.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 144,
+  "h": 244,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps",
+  "rects": [
+   [
+    818,
+    0,
+    144,
+    244
+   ],
+   [
+    0,
+    276,
+    144,
+    244
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "cone",
+  "notes": "koi leaps on an arc into the target circle",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lacquer.trap.egret",
+  "file": "lacquer/lacquer.traps.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 3,
+  "fps": 6,
+  "w": 229,
+  "h": 244,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps",
+  "rects": [
+   [
+    144,
+    276,
+    229,
+    244
+   ],
+   [
+    373,
+    276,
+    229,
+    244
+   ],
+   [
+    602,
+    276,
+    229,
+    244
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "crow",
+  "anim": "flap; frames 0..1 normal, frame 2 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   2
+  ]
+ },
+ {
+  "id": "lacquer.fx.embers",
+  "file": "lacquer/lacquer.traps.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 161,
+  "h": 180,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps",
+  "rects": [
+   [
+    831,
+    276,
+    161,
+    180
+   ],
+   [
+    0,
+    520,
+    161,
+    180
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "embers",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "icon.pickup.lantern",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 119,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    0,
+    0,
+    119,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P1"
+ },
+ {
+  "id": "icon.pickup.dewbubble",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    109,
+    296,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P2"
+ },
+ {
+  "id": "icon.pickup.shears",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 128,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    119,
+    0,
+    128,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P3"
+ },
+ {
+  "id": "icon.pickup.prism",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 129,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    247,
+    0,
+    129,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P4"
+ },
+ {
+  "id": "icon.pickup.twinseed",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 124,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    376,
+    0,
+    124,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P5"
+ },
+ {
+  "id": "icon.pickup.hourglass",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 98,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    0,
+    148,
+    98,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P6"
+ },
+ {
+  "id": "icon.pickup.acornrain",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 123,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    98,
+    148,
+    123,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P7"
+ },
+ {
+  "id": "icon.pickup.goldenleaf",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 146,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    257,
+    296,
+    148,
+    146
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P8"
+ },
+ {
+  "id": "icon.pickup.leafsail",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 136,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    221,
+    148,
+    136,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "P9"
+ },
+ {
+  "id": "icon.pickup.sunlight",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 116,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    0,
+    444,
+    116,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pollen",
+  "notes": "sunlight mote / pollen (reward gold)"
+ },
+ {
+  "id": "icon.pickup.ink2",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    357,
+    148,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "ink",
+  "notes": "Ink x2 = paint tube"
+ },
+ {
+  "id": "icon.pickup.saprush",
+  "file": "common/common.pickups.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 109,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    0,
+    296,
+    109,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "rush"
+ },
+ {
+  "id": "fx.dewdrop",
+  "file": "common/common.pickups.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 50,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.pickups",
+  "rects": [
+   [
+    116,
+    444,
+    50,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "vehicle.hummingbird.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 173,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    668,
+    212,
+    212,
+    173
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V1"
+ },
+ {
+  "id": "vehicle.bamboorocket.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 182,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    0,
+    212,
+    212,
+    182
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V2"
+ },
+ {
+  "id": "vehicle.dandelion.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 172,
+  "h": 212,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    0,
+    0,
+    172,
+    212
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V4"
+ },
+ {
+  "id": "vehicle.mushroom.bounce",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 183,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    808,
+    0,
+    212,
+    183
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V3"
+ },
+ {
+  "id": "vehicle.stagstrider.walk",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 182,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    212,
+    212,
+    212,
+    182
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V5"
+ },
+ {
+  "id": "vehicle.papercrane.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 165,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    212,
+    394,
+    212,
+    165
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V6"
+ },
+ {
+  "id": "vehicle.beanstalk.ride",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 244,
+  "h": 174,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    424,
+    212,
+    244,
+    174
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V7"
+ },
+ {
+  "id": "vehicle.swiftlet.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 198,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    596,
+    0,
+    212,
+    198
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V8"
+ },
+ {
+  "id": "vehicle.morpho.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 203,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    172,
+    0,
+    212,
+    203
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V9"
+ },
+ {
+  "id": "vehicle.goldengoose.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 172,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    0,
+    394,
+    212,
+    172
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "V10"
+ },
+ {
+  "id": "vehicle.kite.fly",
+  "file": "common/common.vehicles.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 203,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vehicles",
+  "rects": [
+   [
+    384,
+    0,
+    212,
+    203
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "extra",
+  "notes": "spare ride skin (fits ukiyo/lacquer)"
+ },
+ {
+  "id": "icon.cur.acorn",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 105,
+  "h": 116,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    148,
+    720,
+    105,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.cur.gem",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 84,
+  "h": 116,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    253,
+    720,
+    84,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.cur.acornpile",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 129,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    268,
+    572,
+    148,
+    129
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.cur.gempile",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 140,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    120,
+    572,
+    148,
+    140
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.cur.acornheap",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 120,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    0,
+    720,
+    148,
+    120
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.cur.gemheap",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 110,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    337,
+    720,
+    148,
+    110
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.boost.ridetoken",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 145,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    0,
+    424,
+    145,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.drop.seedpod",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 138,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    145,
+    424,
+    138,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.drop.knothollow",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 2,
+  "fps": 0,
+  "w": 202,
+  "h": 212,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    0,
+    0,
+    202,
+    212
+   ],
+   [
+    202,
+    0,
+    202,
+    212
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "anim": "closed,open"
+ },
+ {
+  "id": "icon.drop.chest",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 2,
+  "fps": 0,
+  "w": 193,
+  "h": 212,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    0,
+    212,
+    193,
+    212
+   ],
+   [
+    193,
+    212,
+    193,
+    212
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "anim": "closed,open"
+ },
+ {
+  "id": "icon.boost.magnet",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 143,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    283,
+    424,
+    143,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.boost.headstart",
+  "file": "common/common.currency.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 120,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.currency",
+  "rects": [
+   [
+    0,
+    572,
+    120,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "icon.skill.sparrow",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    0,
+    0,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S1"
+ },
+ {
+  "id": "icon.skill.squirrel",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    144,
+    0,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S2"
+ },
+ {
+  "id": "icon.skill.owl",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    288,
+    0,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S3"
+ },
+ {
+  "id": "icon.skill.fox",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    0,
+    148,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S4"
+ },
+ {
+  "id": "icon.skill.snail",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    144,
+    148,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S5"
+ },
+ {
+  "id": "icon.skill.moth",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    288,
+    148,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S6"
+ },
+ {
+  "id": "icon.skill.frog",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    0,
+    296,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S7"
+ },
+ {
+  "id": "icon.skill.beetle",
+  "file": "common/common.skills.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 144,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.skills",
+  "rects": [
+   [
+    144,
+    296,
+    144,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "S8"
+ },
+ {
+  "id": "icon.ring.deepsap",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 147,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    233,
+    0,
+    147,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R1"
+ },
+ {
+  "id": "icon.ring.quickmerge",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    380,
+    0,
+    148,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R2"
+ },
+ {
+  "id": "icon.ring.magnetroots",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    528,
+    0,
+    148,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R3"
+ },
+ {
+  "id": "icon.ring.thickbark",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    676,
+    0,
+    148,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R4"
+ },
+ {
+  "id": "icon.ring.luckyclover",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    824,
+    0,
+    148,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R5"
+ },
+ {
+  "id": "icon.ring.ridecraft",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    564,
+    276,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R6"
+ },
+ {
+  "id": "icon.ring.emberheart",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    712,
+    276,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R7"
+ },
+ {
+  "id": "icon.ring.echofork",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    860,
+    276,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R8"
+ },
+ {
+  "id": "icon.ring.sunwise",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    0,
+    424,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R9"
+ },
+ {
+  "id": "icon.ring.acornsense",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    148,
+    424,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R10"
+ },
+ {
+  "id": "icon.ring.thorndancer",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    296,
+    424,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R11"
+ },
+ {
+  "id": "icon.ring.crowfriend",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    444,
+    424,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "R12"
+ },
+ {
+  "id": "icon.ring.dewring",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    592,
+    424,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "filler"
+ },
+ {
+  "id": "icon.ring.graft",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 148,
+  "h": 147,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    740,
+    424,
+    148,
+    147
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "graft"
+ },
+ {
+  "id": "icon.knot.brittlebark",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 141,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    0,
+    276,
+    141,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "K1"
+ },
+ {
+  "id": "icon.knot.thirst",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 141,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    141,
+    276,
+    141,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "K2"
+ },
+ {
+  "id": "icon.knot.restlesscrow",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 141,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    282,
+    276,
+    141,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "K3"
+ },
+ {
+  "id": "icon.knot.thornfall",
+  "file": "common/common.rings.webp",
+  "type": "icon",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 141,
+  "h": 148,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    423,
+    276,
+    141,
+    148
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "K4"
+ },
+ {
+  "id": "ui.ring.card",
+  "file": "common/common.rings.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 233,
+  "h": 276,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    0,
+    0,
+    233,
+    276
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "ring offer card; medallion socket centre at (0.5,0.2)"
+ },
+ {
+  "id": "ui.ring.pip",
+  "file": "common/common.rings.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 3,
+  "fps": 0,
+  "w": 68,
+  "h": 67,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.rings",
+  "rects": [
+   [
+    888,
+    424,
+    68,
+    67
+   ],
+   [
+    956,
+    424,
+    68,
+    67
+   ],
+   [
+    0,
+    571,
+    68,
+    67
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "anim": "I,II,III"
+ },
+ {
+  "id": "meadow.boss.crowking",
+  "file": "meadow/meadow.boss.webp",
+  "type": "anim",
+  "world": "meadow",
+  "frames": 2,
+  "fps": 0,
+  "w": 532,
+  "h": 434,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.boss",
+  "rects": [
+   [
+    0,
+    0,
+    532,
+    434
+   ],
+   [
+    0,
+    434,
+    532,
+    434
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "The Crow King. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+  "anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+ },
+ {
+  "id": "starry.boss.mistral",
+  "file": "starry/starry.boss.webp",
+  "type": "anim",
+  "world": "starry",
+  "frames": 2,
+  "fps": 0,
+  "w": 532,
+  "h": 510,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.boss",
+  "rects": [
+   [
+    0,
+    0,
+    532,
+    510
+   ],
+   [
+    0,
+    510,
+    532,
+    510
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "The Night Mistral. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+  "anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+ },
+ {
+  "id": "fresco.boss.stonecherub",
+  "file": "fresco/fresco.boss.webp",
+  "type": "anim",
+  "world": "fresco",
+  "frames": 2,
+  "fps": 0,
+  "w": 532,
+  "h": 493,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.boss",
+  "rects": [
+   [
+    0,
+    0,
+    532,
+    493
+   ],
+   [
+    0,
+    493,
+    532,
+    493
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "The Stone Cherub. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+  "anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+ },
+ {
+  "id": "ukiyo.boss.onikite",
+  "file": "ukiyo/ukiyo.boss.webp",
+  "type": "anim",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 532,
+  "h": 461,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.boss",
+  "rects": [
+   [
+    0,
+    0,
+    532,
+    461
+   ],
+   [
+    0,
+    461,
+    532,
+    461
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "The Oni Kite. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+  "anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+ },
+ {
+  "id": "ukiyo.boss.fx.wavearc",
+  "file": "ukiyo/ukiyo.boss.webp",
+  "type": "fx",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 212,
+  "h": 167,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.boss",
+  "rects": [
+   [
+    532,
+    461,
+    212,
+    167
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "lilies.boss.heron",
+  "file": "lilies/lilies.boss.webp",
+  "type": "anim",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 532,
+  "h": 486,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.boss",
+  "rects": [
+   [
+    0,
+    0,
+    532,
+    486
+   ],
+   [
+    0,
+    486,
+    532,
+    486
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "The Heron Matriarch. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+  "anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+ },
+ {
+  "id": "gilded.boss.peacock",
+  "file": "gilded/gilded.boss.webp",
+  "type": "anim",
+  "world": "gilded",
+  "frames": 2,
+  "fps": 0,
+  "w": 532,
+  "h": 469,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.boss",
+  "rects": [
+   [
+    0,
+    0,
+    532,
+    469
+   ],
+   [
+    0,
+    469,
+    532,
+    469
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "The Golden Peacock. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+  "anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+ },
+ {
+  "id": "gilded.boss.fx.shard",
+  "file": "gilded/gilded.boss.webp",
+  "type": "fx",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 68,
+  "h": 116,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.boss",
+  "rects": [
+   [
+    532,
+    469,
+    68,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "lacquer.boss.carpdragon",
+  "file": "lacquer/lacquer.boss.webp",
+  "type": "anim",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 532,
+  "h": 226,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.boss",
+  "rects": [
+   [
+    384,
+    0,
+    532,
+    226
+   ],
+   [
+    0,
+    371,
+    532,
+    226
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "The Carp Dragon. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+  "anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+ },
+ {
+  "id": "lacquer.boss.fx.coil",
+  "file": "lacquer/lacquer.boss.webp",
+  "type": "fx",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 384,
+  "h": 371,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.boss",
+  "rects": [
+   [
+    0,
+    0,
+    384,
+    371
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)"
+ },
+ {
+  "id": "vine.skin.cel.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    343,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "default skin of meadow; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.cel.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 114,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    0,
+    114,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.cel.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 115,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    114,
+    116,
+    116,
+    115
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.impasto.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    512,
+    343,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "default skin of starry; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.impasto.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 110,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    114,
+    0,
+    110,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.impasto.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 115,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    230,
+    116,
+    116,
+    115
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.frescochalk.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    411,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "default skin of fresco; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.frescochalk.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 107,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    232,
+    232,
+    116,
+    107
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.frescochalk.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 96,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    580,
+    232,
+    116,
+    96
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.sumi.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    512,
+    411,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "default skin of ukiyo; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.sumi.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 109,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    224,
+    0,
+    109,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.sumi.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 111,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    694,
+    116,
+    116,
+    111
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.dabs.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    479,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "default skin of lilies; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.dabs.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 107,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    333,
+    0,
+    107,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.dabs.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 105,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    348,
+    232,
+    116,
+    105
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.goldleaf.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 204,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    512,
+    479,
+    204,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "default skin of gilded; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.goldleaf.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 104,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    440,
+    0,
+    104,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.goldleaf.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 115,
+  "h": 116,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    544,
+    0,
+    115,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.lacquer.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    547,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "default skin of lacquer; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.lacquer.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 112,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    659,
+    0,
+    112,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.lacquer.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 108,
+  "h": 116,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    771,
+    0,
+    108,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.watercolour.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    512,
+    547,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.watercolour.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 111,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    879,
+    0,
+    111,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.watercolour.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 113,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    462,
+    116,
+    116,
+    113
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.sakura.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 405,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    615,
+    405,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.sakura.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 114,
+  "h": 116,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    116,
+    114,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.sakura.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 112,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    578,
+    116,
+    116,
+    112
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.maple.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 344,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    405,
+    615,
+    344,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.maple.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 109,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    116,
+    232,
+    116,
+    109
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.maple.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 82,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    696,
+    232,
+    116,
+    82
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.moonsilver.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 512,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    683,
+    512,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.moonsilver.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 111,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    810,
+    116,
+    116,
+    111
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.moonsilver.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 114,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    346,
+    116,
+    116,
+    114
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "vine.skin.chudau.stem",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 427,
+  "h": 68,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    512,
+    683,
+    427,
+    68
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+  "tile": "x"
+ },
+ {
+  "id": "vine.skin.chudau.leaf",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 111,
+  "anchor": [
+   0.1,
+   0.9
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    0,
+    232,
+    116,
+    111
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "anchor = leaf base (rotate around it)"
+ },
+ {
+  "id": "vine.skin.chudau.flower",
+  "file": "common/common.vines.webp",
+  "type": "sprite",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 116,
+  "h": 98,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "common.vines",
+  "rects": [
+   [
+    464,
+    232,
+    116,
+    98
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "notes": "bud/flower at forks and merges"
+ },
+ {
+  "id": "ui.frame.meadow",
+  "file": "common/ui/ui.frame.meadow.webp",
+  "type": "ui",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 653,
+  "h": 352,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.frame.starry",
+  "file": "common/ui/ui.frame.starry.webp",
+  "type": "ui",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 653,
+  "h": 352,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.frame.fresco",
+  "file": "common/ui/ui.frame.fresco.webp",
+  "type": "ui",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 653,
+  "h": 351,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.frame.ukiyo",
+  "file": "common/ui/ui.frame.ukiyo.webp",
+  "type": "ui",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 654,
+  "h": 349,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.frame.lilies",
+  "file": "common/ui/ui.frame.lilies.webp",
+  "type": "ui",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 668,
+  "h": 351,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.frame.gilded",
+  "file": "common/ui/ui.frame.gilded.webp",
+  "type": "ui",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 668,
+  "h": 353,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.frame.lacquer",
+  "file": "common/ui/ui.frame.lacquer.webp",
+  "type": "ui",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 670,
+  "h": 353,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.frame.default",
+  "file": "common/ui/ui.frame.default.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 669,
+  "h": 352,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+ },
+ {
+  "id": "ui.button.primary",
+  "file": "common/ui/ui.button.primary.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 479,
+  "h": 207,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   86,
+   86,
+   86,
+   86
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "ui.button.primary.pressed",
+  "file": "common/ui/ui.button.primary.pressed.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 448,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   82,
+   82,
+   82,
+   82
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "ui.panel.parchment",
+  "file": "common/ui/ui.panel.parchment.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 332,
+  "h": 480,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   139,
+   139,
+   139,
+   139
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "ui.button.secondary",
+  "file": "common/ui/ui.button.secondary.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 574,
+  "h": 187,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   78,
+   78,
+   78,
+   78
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "ui.button.close",
+  "file": "common/ui/ui.button.close.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 158,
+  "h": 169,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   66,
+   66,
+   66,
+   66
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "ui.bar.track",
+  "file": "common/ui/ui.bar.track.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 650,
+  "h": 102,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   42,
+   42,
+   42,
+   42
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "ui.plaque",
+  "file": "common/ui/ui.plaque.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 250,
+  "h": 97,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   40,
+   40,
+   40,
+   40
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "ui.locked.rope",
+  "file": "common/ui/ui.locked.rope.webp",
+  "type": "ui",
+  "world": null,
+  "frames": 1,
+  "fps": 0,
+  "w": 310,
+  "h": 166,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "slice9": [
+   69,
+   69,
+   69,
+   69
+  ],
+  "notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+ },
+ {
+  "id": "meadow.ui.painting",
+  "file": "meadow/ui/meadow.ui.painting.webp",
+  "type": "ui",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 504,
+  "h": 896,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+ },
+ {
+  "id": "meadow.ui.painting.s",
+  "file": "meadow/ui/meadow.ui.painting.s.webp",
+  "type": "ui",
+  "world": "meadow",
+  "frames": 1,
+  "fps": 0,
+  "w": 180,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+ },
+ {
+  "id": "starry.ui.painting",
+  "file": "starry/ui/starry.ui.painting.webp",
+  "type": "ui",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 504,
+  "h": 896,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+ },
+ {
+  "id": "starry.ui.painting.s",
+  "file": "starry/ui/starry.ui.painting.s.webp",
+  "type": "ui",
+  "world": "starry",
+  "frames": 1,
+  "fps": 0,
+  "w": 180,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+ },
+ {
+  "id": "fresco.ui.painting",
+  "file": "fresco/ui/fresco.ui.painting.webp",
+  "type": "ui",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 504,
+  "h": 896,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+ },
+ {
+  "id": "fresco.ui.painting.s",
+  "file": "fresco/ui/fresco.ui.painting.s.webp",
+  "type": "ui",
+  "world": "fresco",
+  "frames": 1,
+  "fps": 0,
+  "w": 180,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+ },
+ {
+  "id": "ukiyo.ui.painting",
+  "file": "ukiyo/ui/ukiyo.ui.painting.webp",
+  "type": "ui",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 504,
+  "h": 896,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+ },
+ {
+  "id": "ukiyo.ui.painting.s",
+  "file": "ukiyo/ui/ukiyo.ui.painting.s.webp",
+  "type": "ui",
+  "world": "ukiyo",
+  "frames": 1,
+  "fps": 0,
+  "w": 180,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+ },
+ {
+  "id": "lilies.ui.painting",
+  "file": "lilies/ui/lilies.ui.painting.webp",
+  "type": "ui",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 504,
+  "h": 896,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+ },
+ {
+  "id": "lilies.ui.painting.s",
+  "file": "lilies/ui/lilies.ui.painting.s.webp",
+  "type": "ui",
+  "world": "lilies",
+  "frames": 1,
+  "fps": 0,
+  "w": 180,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+ },
+ {
+  "id": "gilded.ui.painting",
+  "file": "gilded/ui/gilded.ui.painting.webp",
+  "type": "ui",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 504,
+  "h": 896,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+ },
+ {
+  "id": "gilded.ui.painting.s",
+  "file": "gilded/ui/gilded.ui.painting.s.webp",
+  "type": "ui",
+  "world": "gilded",
+  "frames": 1,
+  "fps": 0,
+  "w": 180,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+ },
+ {
+  "id": "lacquer.ui.painting",
+  "file": "lacquer/ui/lacquer.ui.painting.webp",
+  "type": "ui",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 504,
+  "h": 896,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+ },
+ {
+  "id": "lacquer.ui.painting.s",
+  "file": "lacquer/ui/lacquer.ui.painting.s.webp",
+  "type": "ui",
+  "world": "lacquer",
+  "frames": 1,
+  "fps": 0,
+  "w": 180,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": null,
+  "notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+ },
+ {
+  "id": "meadow.trap.dewweb",
+  "file": "meadow/meadow.traps2.webp",
+  "type": "sprite",
+  "world": "meadow",
+  "frames": 2,
+  "fps": 0,
+  "w": 189,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.traps2",
+  "rects": [
+   [
+    0,
+    0,
+    189,
+    196
+   ],
+   [
+    189,
+    0,
+    189,
+    196
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "web",
+  "notes": "dew orb web; tear = split along threads",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "meadow.trap.squirrel",
+  "file": "meadow/meadow.traps2.webp",
+  "type": "sprite",
+  "world": "meadow",
+  "frames": 2,
+  "fps": 0,
+  "w": 175,
+  "h": 180,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.traps2",
+  "rects": [
+   [
+    0,
+    196,
+    175,
+    180
+   ],
+   [
+    175,
+    196,
+    175,
+    180
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "cone",
+  "notes": "throws an acorn at the locked circle",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "meadow.trap.seesaw",
+  "file": "meadow/meadow.traps2.webp",
+  "type": "sprite",
+  "world": "meadow",
+  "frames": 2,
+  "fps": 0,
+  "w": 340,
+  "h": 111,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "meadow.traps2",
+  "rects": [
+   [
+    0,
+    376,
+    340,
+    111
+   ],
+   [
+    0,
+    487,
+    340,
+    111
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "seesaw",
+  "notes": "fallen branch rope bridge (replaces the off-theme railway crossing); drawn stretched over the solid span",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "starry.trap.swallows",
+  "file": "starry/starry.traps2.webp",
+  "type": "sprite",
+  "world": "starry",
+  "frames": 2,
+  "fps": 0,
+  "w": 179,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.traps2",
+  "rects": [
+   [
+    0,
+    0,
+    179,
+    196
+   ],
+   [
+    179,
+    0,
+    179,
+    196
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "bats",
+  "notes": "swooping swallow",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "starry.trap.fallingstar",
+  "file": "starry/starry.traps2.webp",
+  "type": "sprite",
+  "world": "starry",
+  "frames": 2,
+  "fps": 0,
+  "w": 165,
+  "h": 180,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "starry.traps2",
+  "rects": [
+   [
+    0,
+    196,
+    165,
+    180
+   ],
+   [
+    165,
+    196,
+    165,
+    180
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "icicle",
+  "notes": "haloed impasto star falling (tail up)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "fresco.trap.censer",
+  "file": "fresco/fresco.traps2.webp",
+  "type": "sprite",
+  "world": "fresco",
+  "frames": 2,
+  "fps": 0,
+  "w": 121,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.traps2",
+  "rects": [
+   [
+    0,
+    0,
+    121,
+    196
+   ],
+   [
+    121,
+    0,
+    121,
+    196
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pendulum",
+  "notes": "swinging thurible",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "fresco.trap.belfrybats",
+  "file": "fresco/fresco.traps2.webp",
+  "type": "sprite",
+  "world": "fresco",
+  "frames": 2,
+  "fps": 0,
+  "w": 196,
+  "h": 99,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "fresco.traps2",
+  "rects": [
+   [
+    0,
+    196,
+    196,
+    99
+   ],
+   [
+    0,
+    295,
+    196,
+    99
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "bats",
+  "notes": "belfry bat",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "ukiyo.trap.pinebough",
+  "file": "ukiyo/ukiyo.traps2.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 340,
+  "h": 116,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.traps2",
+  "rects": [
+   [
+    0,
+    0,
+    340,
+    116
+   ],
+   [
+    0,
+    116,
+    340,
+    116
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "seesaw",
+  "notes": "pine bough",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "ukiyo.trap.oarsweep",
+  "file": "ukiyo/ukiyo.traps2.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 320,
+  "h": 75,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.traps2",
+  "rects": [
+   [
+    0,
+    444,
+    320,
+    75
+   ],
+   [
+    0,
+    519,
+    320,
+    75
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pecker",
+  "notes": "sweeping oar (tiled along the span)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "ukiyo.trap.rocks",
+  "file": "ukiyo/ukiyo.traps2.webp",
+  "type": "sprite",
+  "world": "ukiyo",
+  "frames": 2,
+  "fps": 0,
+  "w": 280,
+  "h": 106,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "ukiyo.traps2",
+  "rects": [
+   [
+    0,
+    232,
+    280,
+    106
+   ],
+   [
+    0,
+    338,
+    280,
+    106
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "jaws",
+  "notes": "closing sea rocks",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lilies.trap.reedweb",
+  "file": "lilies/lilies.traps2.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 196,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps2",
+  "rects": [
+   [
+    0,
+    0,
+    196,
+    196
+   ],
+   [
+    196,
+    0,
+    196,
+    196
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "web",
+  "notes": "reed web",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lilies.trap.turtle",
+  "file": "lilies/lilies.traps2.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 153,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps2",
+  "rects": [
+   [
+    0,
+    196,
+    153,
+    196
+   ],
+   [
+    153,
+    196,
+    153,
+    196
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "jaws",
+  "notes": "snapping turtle",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lilies.trap.pollen",
+  "file": "lilies/lilies.traps2.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 180,
+  "h": 172,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps2",
+  "rects": [
+   [
+    306,
+    196,
+    180,
+    172
+   ],
+   [
+    0,
+    392,
+    180,
+    172
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "spores",
+  "notes": "pollen puff (spins in code)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lilies.trap.weeds",
+  "file": "lilies/lilies.traps2.webp",
+  "type": "sprite",
+  "world": "lilies",
+  "frames": 2,
+  "fps": 0,
+  "w": 320,
+  "h": 139,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lilies.traps2",
+  "rects": [
+   [
+    180,
+    392,
+    320,
+    139
+   ],
+   [
+    0,
+    564,
+    320,
+    139
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "strangle",
+  "notes": "pondweed tendrils (tiled along the span)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "gilded.trap.glare",
+  "file": "gilded/gilded.traps2.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 2,
+  "fps": 0,
+  "w": 62,
+  "h": 320,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps2",
+  "rects": [
+   [
+    0,
+    0,
+    62,
+    320
+   ],
+   [
+    62,
+    0,
+    62,
+    320
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "beam",
+  "notes": "gold glare shaft (stretched to the beam)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "gilded.trap.birchbough",
+  "file": "gilded/gilded.traps2.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 2,
+  "fps": 0,
+  "w": 340,
+  "h": 94,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps2",
+  "rects": [
+   [
+    0,
+    538,
+    340,
+    94
+   ],
+   [
+    0,
+    632,
+    340,
+    94
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "seesaw",
+  "notes": "birch bough",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "gilded.trap.tendrils",
+  "file": "gilded/gilded.traps2.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 2,
+  "fps": 0,
+  "w": 320,
+  "h": 109,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps2",
+  "rects": [
+   [
+    0,
+    320,
+    320,
+    109
+   ],
+   [
+    0,
+    429,
+    320,
+    109
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "strangle",
+  "notes": "gold spiral tendrils (tiled)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "gilded.trap.flakes",
+  "file": "gilded/gilded.traps2.webp",
+  "type": "sprite",
+  "world": "gilded",
+  "frames": 2,
+  "fps": 0,
+  "w": 189,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "gilded.traps2",
+  "rects": [
+   [
+    124,
+    0,
+    189,
+    196
+   ],
+   [
+    313,
+    0,
+    189,
+    196
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "embers",
+  "notes": "gold flake cluster with ember core",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lacquer.trap.mosquitonet",
+  "file": "lacquer/lacquer.traps2.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 217,
+  "h": 250,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps2",
+  "rects": [
+   [
+    188,
+    0,
+    217,
+    250
+   ],
+   [
+    0,
+    280,
+    217,
+    250
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "web",
+  "notes": "mosquito net in a lacquer bamboo frame (readable mesh)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lacquer.trap.lanternswing",
+  "file": "lacquer/lacquer.traps2.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 151,
+  "h": 196,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps2",
+  "rects": [
+   [
+    217,
+    280,
+    151,
+    196
+   ],
+   [
+    0,
+    530,
+    151,
+    196
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "pendulum",
+  "notes": "swinging paper lantern",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lacquer.trap.firecracker",
+  "file": "lacquer/lacquer.traps2.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 88,
+  "h": 180,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps2",
+  "rects": [
+   [
+    151,
+    530,
+    88,
+    180
+   ],
+   [
+    239,
+    530,
+    88,
+    180
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "cone",
+  "notes": "firecracker string",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ },
+ {
+  "id": "lacquer.trap.screen",
+  "file": "lacquer/lacquer.traps2.webp",
+  "type": "sprite",
+  "world": "lacquer",
+  "frames": 2,
+  "fps": 0,
+  "w": 94,
+  "h": 280,
+  "anchor": [
+   0.5,
+   0.5
+  ],
+  "atlas": "lacquer.traps2",
+  "rects": [
+   [
+    0,
+    0,
+    94,
+    280
+   ],
+   [
+    94,
+    0,
+    94,
+    280
+   ]
+  ],
+  "scale": "@2x (draw at w/2 x h/2 CSS px)",
+  "mech": "candy",
+  "notes": "folding screen panel (drawn on both sides of the candy box)",
+  "anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+  "warnFrames": [
+   1
+  ]
+ }
+]

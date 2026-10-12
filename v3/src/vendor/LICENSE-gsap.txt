@@ -1,0 +1,4 @@
+GSAP 3.15 (gsap-core + CSSPlugin; one copy shared by the engine and the DOM menus), (c) GreenSock / Webflow.
+Used under the GSAP "Standard 'no charge' license": https://gsap.com/standard-license
+(free for commercial use; not usable inside no-code visual builders that compete with Webflow).
+Bundled from npm gsap@3 (gsap/gsap-core.js) by tools/build-vendor.mjs.
