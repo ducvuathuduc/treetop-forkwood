@@ -886,14 +886,16 @@ export class Renderer {
     if (fr >= 0.5) return;
     const low = fr < 0.25, beat = low ? 0.5 + 0.5 * Math.sin(now * 9) : 0;
     for (const tip of s.tips) {
-      const x = tip.x, y = s.cy, R = 26;
-      ctx.lineWidth = 4; ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(20,16,12,0.30)';
+      const x = tip.x, y = s.cy, R = 34 + beat * 3;
+      ctx.lineWidth = 9; ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(20,16,12,0.45)';
+      ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.stroke();
+      ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(255,246,230,0.25)';
       ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.stroke();
       ctx.strokeStyle = low ? `rgba(236,${Math.round(70 + 40 * beat)},60,0.95)` : 'rgba(250,200,80,0.92)';
       ctx.beginPath(); ctx.arc(x, y, R, -Math.PI / 2, -Math.PI / 2 + TAU * fr); ctx.stroke();
     }
-    if (fr >= 0.35) return;
+    if (fr >= 0.4) return;
     let best = null, bd = Infinity;
     for (const o of s.motes) {
       if (o.taken || o.kind !== 'sun' || o.y > s.cy + 10 || o.y < s.cy - 620) continue;
@@ -901,8 +903,8 @@ export class Renderer {
     }
     if (!best || bd < 60) return;
     const { o, tip } = best, ang = Math.atan2(o.y - s.cy, o.x - tip.x);
-    const k = (now * 2.2) % 1, off = 40 + k * 18, cx = tip.x + Math.cos(ang) * off, cy = s.cy + Math.sin(ang) * off;
-    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang);
+    const k = (now * 2.2) % 1, off = 56 + k * 22, cx = tip.x + Math.cos(ang) * off, cy = s.cy + Math.sin(ang) * off;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang); ctx.scale(1.7, 1.7);
     ctx.globalAlpha = 0.95 * (1 - k * 0.6);
     ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.strokeStyle = 'rgba(30,22,10,0.55)';
