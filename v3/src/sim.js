@@ -159,6 +159,7 @@ export function createSim(opts = {}) {
     seed,
     rng: mulberry32(seed),
     tutorial: !!opts.tutorial,
+    mercy: !!opts.mercy, // P0-FTUE: the very first run (set by main.js only) forgives the sap meter while it teaches
     demo: !!opts.demo,
     pure: !!opts.pure,
     R: makeRules(opts.rules),
@@ -1057,6 +1058,7 @@ export function step(s, dt, input = {}) {
   drain *= (hasGraft(s, 'taproot') ? 0.85 : 1) * (s.storm ? 0.7 : 1) * s.R.drain;
   drain *= (RM ? RM.drain : 1) * (s.pu.amber > 0 ? 0.7 : 1) * (s.knots.includes('thirst') ? 1.12 : 1); // V2-MECH
   if (s.feelS) drain *= s.feelS.drainK; // V3-FEEL balance knob
+  if (s.mercy) drain *= s.merges < 1 && m < 200 ? 0 : m < 150 ? 0.5 : 1; // P0-FTUE: no drain until the first merge, half drain to 150 m
   if (s.webT > 0) drain += 6;
   if (!s.demo && !rush) s.sap -= drain * dt * (s.golden > 0 ? 0.4 : s.still > 0 ? 0.6 : 1);
 
