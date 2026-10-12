@@ -1,7 +1,9 @@
 // Forkwood v3 HOME: type pairings (display + UI), self-hosted OFL subsets (latin + vietnamese,
 // split by unicode-range so Vietnamese text pulls only the small VI file).
 //   ?font=1|2|3 (persisted in localStorage 'forkwood.font'; Settings > Dev also switches it)
-//   1  Baloo 2 800 + Nunito 700/900       (default: warm, rounded, casual-mobile)
+//   4  Grandstander 600/800 + Nunito 700/900 (V3.2 default: organic, hand-cut, still very legible);
+//      the Home logo additionally uses Sansita Swashed 900 ('FW Logo', declared in home.css)
+//   1  Baloo 2 800 + Nunito 700/900       (V3.0/3.1 default: warm, rounded, casual-mobile)
 //   2  Lexend 700 + Be Vietnam Pro 600/800 (clean, very legible, Vietnamese-native)
 //   3  Bricolage Grotesque 800 + Plus Jakarta Sans 600/800 (studio / editorial)
 // Applies to the DOM (CSS vars --display / --ui via :root[data-font]) AND to canvas text: the
@@ -17,7 +19,9 @@ export const PAIRINGS = {
   1: { name: 'Baloo 2 + Nunito', display: ['baloo2', [800]], ui: ['nunito', [700, 900]] },
   2: { name: 'Lexend + Be Vietnam Pro', display: ['lexend', [700]], ui: ['bevn', [600, 800]] },
   3: { name: 'Bricolage Grotesque + Plus Jakarta Sans', display: ['bricolage', [800]], ui: ['pjs', [600, 800]] },
+  4: { name: 'Grandstander + Nunito', display: ['grandstander', [600, 800]], ui: ['nunito', [700, 900]] },
 };
+export const DEFAULT_FONT = 4;
 const KEY = 'forkwood.font';
 const BASE = 'assets/fonts/v3/';
 const FALLBACK_UI = '"Segoe UI", system-ui, -apple-system, sans-serif';
@@ -29,7 +33,7 @@ export function readFont() {
     const s = localStorage.getItem(KEY);
     if (PAIRINGS[s]) return +s;
   } catch { /* private mode */ }
-  return 1;
+  return DEFAULT_FONT;
 }
 
 // weight ranges so 400–650 requests use the lighter file and 650–1000 the heavier one
@@ -42,8 +46,8 @@ function faces(family, [stem, ws]) {
 
 let current = 0;
 export function applyFont(n = readFont()) {
-  const P = PAIRINGS[n] || PAIRINGS[1];
-  current = PAIRINGS[n] ? n : 1;
+  const P = PAIRINGS[n] || PAIRINGS[DEFAULT_FONT];
+  current = PAIRINGS[n] ? n : DEFAULT_FONT;
   if (typeof document === 'undefined') return current;
   document.documentElement.dataset.font = String(current);
   let st = document.getElementById('fw-fonts');

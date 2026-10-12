@@ -31,6 +31,7 @@ function glow(ctx, col, x, y, r, a) {
 import { backdrop } from './backdrop.js'; // P6-ART
 import quality from './quality.js'; // v1.0.1 PERF
 import { drawFeelWorld, drawFeelScreen, drawFeelHud } from './render-feel.js'; // V3-FEEL
+import { drawPlay32World, drawSlideArrows } from './render-play32.js'; // V3.2 gameplay
 import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud, drawRingIcon, drawBrambleArt, drawColumnArt } from './render-traps.js'; import { RINGS } from './rings.js'; // P6-TRAPS / P8-FX
 
 const TAU = Math.PI * 2;
@@ -528,6 +529,7 @@ export class Renderer {
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
+    this.safe(ctx, () => drawPlay32World(ctx, s, now, topY, botY, ui)); // V3.2: sun shafts, fork-choice lanes
     // V2-INT fix: trap/ART drawing is isolated (own save/restore, errors contained) so one bad sprite or
     // state can neither leak a transform/lineWidth into the hit FX nor stop the frame loop
     if (!ui.reveal) this.safe(ctx, () => drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui)); // P6-TRAPS (P8: + fx events)
@@ -605,6 +607,7 @@ export class Renderer {
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
+    this.safe(ctx, () => drawPlay32World(ctx, s, now, topY, botY, ui)); // V3.2: sun shafts, fork-choice lanes
     // V2-INT fix: trap/ART drawing is isolated (own save/restore, errors contained) so one bad sprite or
     // state can neither leak a transform/lineWidth into the hit FX nor stop the frame loop
     if (!ui.reveal) this.safe(ctx, () => drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui));
@@ -1063,17 +1066,8 @@ export class Renderer {
 
   drawBramble(ctx, b) {
     if (b.kind === 'slide') {
-      // the gap's path, printed as a dotted rule with arrow heads: you can read it from afar
-      const lo = b.base - b.amp, hi = b.base + b.amp, y = b.y + 20;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(30,26,22,0.55)'; ctx.lineWidth = 3; ctx.setLineDash([2, 9]);
-      ctx.beginPath(); ctx.moveTo(lo, y); ctx.lineTo(hi, y); ctx.stroke(); ctx.setLineDash([]);
-      for (const [x, d] of [[lo, -1], [hi, 1]]) {
-        ctx.beginPath(); ctx.moveTo(x - d * 2, y - 7); ctx.lineTo(x + d * 6, y); ctx.lineTo(x - d * 2, y + 7);
-        ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = PAPER; ctx.lineWidth = 2.5; ctx.stroke();
-      }
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(b.cx, y, 5, 0, TAU); ctx.fill();
-      ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(b.cx, y, 3, 0, TAU); ctx.fill();
+      // the gap's path, printed as a dotted rule with arrow heads: you can read it from afar (V3.2: 1.6x, glowing)
+      drawSlideArrows(ctx, b, performance.now() / 1000, this.artSim, INK, PAPER, OCHRE);
     }
     // V2-INT fix: on the WebGL path the rows are the world's painted barrier (ART), not v1 ink stems
     if (this.gl && this.artSim && drawBrambleArt(ctx, this.artSim, b)) return;
@@ -1566,15 +1560,18 @@ export class Renderer {
     const low = fr < 0.28;
     const pulse = fx.sapPulse || 0;
     this.sapTarget.x = bx + Math.max(6, bw * fx.shownSap / SAP_MAX); this.sapTarget.y = by + bh / 2;
-    ctx.fillStyle = 'rgba(8,11,28,0.35)'; roundRect(ctx, bx - 1, by - 1, bw + 2, bh + 2, 3); ctx.fill();
-    ctx.fillStyle = 'rgba(255,246,230,0.16)'; roundRect(ctx, bx, by, bw, bh, 2); ctx.fill();
+    // V3.2: the vine itself is the sap bar now (it browns and wilts); this bar stays for accessibility, quieter
+    const quiet = low || s.golden > 0 ? 1 : 0.55;
+    ctx.globalAlpha = quiet;
+    ctx.fillStyle = 'rgba(8,11,28,0.3)'; roundRect(ctx, bx - 1, by - 1, bw + 2, bh + 2, 3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,246,230,0.12)'; roundRect(ctx, bx, by, bw, bh, 2); ctx.fill();
     const wob = low ? (Math.sin(now * 10) > 0 ? 1 : 0.6) : 1;
     const sapW = Math.max(0, bw * fx.shownSap / SAP_MAX);
-    ctx.globalAlpha = wob;
+    ctx.globalAlpha = wob * quiet;
     ctx.fillStyle = s.golden > 0 ? SEED : low ? DANGER : VINE;
     roundRect(ctx, bx, by, sapW, bh, 2); ctx.fill();
     ctx.globalAlpha = 1;
-    if (sapW > 2) glow(ctx, s.golden > 0 ? SEED : low ? DANGER : VINE, bx + sapW, by + bh / 2, 9 + pulse * 10, 0.5 + pulse * 0.4);
+    if (sapW > 2) glow(ctx, s.golden > 0 ? SEED : low ? DANGER : VINE, bx + sapW, by + bh / 2, 9 + pulse * 10, (0.5 + pulse * 0.4) * quiet);
     // sap status only when it means something
     const st = s.golden > 0 ? `Golden hour · ${Math.ceil(s.golden)}` : (s.pu && s.pu.rush > 0) ? 'Sap rush' : low ? 'Sap low · grab sunlight' : s.storm ? 'Rain · sap drains slower' : '';
     if (st) {

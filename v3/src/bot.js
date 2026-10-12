@@ -50,6 +50,10 @@ export function botInput(bot, s) {
   let aim = s.cx;
   if (br) {
     if (forked && br.kind === 'split') aim = br.px;
+    else if (br.lanes) { // V3.2 fork-choice gate / hedge: commit to one lane (a sharp bot takes the rich one)
+      if (bot.lane == null || bot.laneFor !== br.y) { bot.laneFor = br.y; if (bot.laneGate == null || Math.abs(bot.laneGate - br.y) > 400) { bot.laneGate = br.y; bot.lane = r() < sk * 0.8 ? 'rich' : 'safe'; } }
+      aim = forked ? (br.lanes.safe + br.lanes.rich) / 2 : br.lanes[bot.lane];
+    }
     else if (br.kind === 'slide' && sk > 0.45) {
       // lead the drifting gap: where will it be when we get there?
       const t = (y - br.y) / Math.max(80, s.speed);

@@ -73,7 +73,10 @@ export class LegacySound {
       this.master.gain.value = this.muted ? 0 : 0.85;
       const comp = c.createDynamicsCompressor();
       comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
-      this.master.connect(comp); comp.connect(c.destination);
+      // V3.2: a fast brick-wall limiter after the glue compressor (the swells and lift never clip)
+      const lim = c.createDynamicsCompressor();
+      lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
+      this.master.connect(comp); comp.connect(lim); lim.connect(c.destination); this.comp = comp; this.limiter = lim;
       // music bus with a low-pass that closes when sap is low
       this.musicLP = c.createBiquadFilter(); this.musicLP.type = 'lowpass'; this.musicLP.frequency.value = 16000; this.musicLP.Q.value = 0.7;
       this.musicBus = c.createGain(); this.musicBus.gain.value = 0.5;
@@ -203,7 +206,7 @@ export class LegacySound {
     return true;
   }
 
-  _key() { return ROOTS[this.stage % ROOTS.length]; }
+  _key() { return ROOTS[this.stage % ROOTS.length] + (this.keyLift || 0); } // V3.2: golden hour lift
   _note(deg, oct = 0) {
     const o = Math.floor(deg / 5);
     return mtof(this._key() + 12 * (oct + o) + SCALE[((deg % 5) + 5) % 5]);
@@ -590,6 +593,7 @@ export class Sound extends LegacySound {
     this.playing = false;
     this.menu = false;
     this.golden = false;
+    if (this._gitLift) { this._gitLift(false); this._gitRelease(0.4); } // V3.2
     this.setIntensity('calm');
     this.menuLevel = 0.6;
     this._applyVolumes(0.6);
@@ -601,6 +605,7 @@ export class Sound extends LegacySound {
 
 
   update(intensity, mult) {
+    if (this._gitTick) this._gitTick(); // V3.2: tips → pans, heartbeat, sunlight
     if (this.v2 === false && this.padGain) super.update(intensity, mult);
   }
 
