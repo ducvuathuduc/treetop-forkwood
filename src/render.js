@@ -30,7 +30,9 @@ function glow(ctx, col, x, y, r, a) {
 }
 import { backdrop } from './backdrop.js'; // P6-ART
 import quality from './quality.js'; // v1.0.1 PERF
-import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud } from './render-traps.js'; // P6-TRAPS / P8-FX
+import { drawFeelWorld, drawFeelScreen, drawFeelHud } from './render-feel.js'; // V3-FEEL
+import { drawPlay32World, drawSlideArrows } from './render-play32.js'; // V3.2 gameplay
+import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud, drawRingIcon, drawBrambleArt, drawColumnArt } from './render-traps.js'; import { RINGS } from './rings.js'; // P6-TRAPS / P8-FX
 
 const TAU = Math.PI * 2;
 export const INK = '#1e1a16';
@@ -378,9 +380,12 @@ function drawLeaves(ctx, x, y, seed, now, pop, color, kind, px) {
 
 // ---------------------------------------------------------------- renderer
 export class Renderer {
-  constructor(canvas) {
+  constructor(canvas, opts = {}) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d', { alpha: false });
+    // v2 ENGINE: with a WebGL layer underneath, this canvas is a transparent overlay (traps, HUD, text)
+    this.overlay = !!opts.overlay;
+    this.gl = null;
+    this.ctx = canvas.getContext('2d', { alpha: this.overlay });
     this.dpr = 1;
     this.cw = 0; this.ch = 0;
     this.grainCv = makeGrain(); // v1.0.1 PERF: tile canvas; baked into the post overlay
@@ -398,6 +403,16 @@ export class Renderer {
     this.canvas.height = Math.round(ch * dpr);
     this.canvas.style.width = cw + 'px';
     this.canvas.style.height = ch + 'px';
+  }
+
+  /** v2 ENGINE: the WebGL layer draws world/vine/entities/FX; this canvas keeps the overlay. */
+  attachGL(gl) { this.gl = gl; this.glWhy = null; this.layout.renderer = 'webgl'; }
+  glFailed(why) {
+    // automatic fallback: the full Canvas2D renderer takes over again
+    if (this.gl) { try { this.gl.r.canvas.style.display = 'none'; } catch { /* gone */ } }
+    this.gl = null; this.glWhy = why || 'failed'; this.layout.renderer = 'canvas2d';
+    if (this.onFallback) { const f = this.onFallback; this.onFallback = null; f(); }
+    if (typeof console !== 'undefined') console.info('[forkwood] WebGL layer off, Canvas2D fallback:', why);
   }
 
   /** world scale that fits the playfield */
@@ -418,8 +433,10 @@ export class Renderer {
     // trauma shake: offset and a little roll, both from smooth noise
     const tr = ui.calm ? 0 : Math.min(1, cam.trauma || 0);
     const k = tr * tr, tt = performance.now() / 1000 * 9;
-    const shx = 22 * k * snoise(tt, 1), shy = 22 * k * snoise(tt, 7);
-    this.roll = 0.035 * k * snoise(tt, 13);
+    const GL = this.gl && this.gl.ready && !this.gl.failed ? this.gl : null;
+    const amp = GL ? GL.shakePx(tr) : 22 * k; // v2: shake budget (phones <= 4 px)
+    const shx = amp * snoise(tt, 1), shy = amp * snoise(tt, 7);
+    this.roll = (GL ? 0.012 : 0.035) * k * snoise(tt, 13);
     this.sc = sc;
     this.ox = cw / 2 - cam.x * sc + shx;
     this.oy = ch * cam.anchor - cam.y * sc + shy;
@@ -435,6 +452,19 @@ export class Renderer {
     const night = Math.min(1, Math.max(0, (camM - 520) / 300));
     const gold = Math.min(1, (s.golden || 0) / 0.6) * (ui.reveal ? 0 : 1);
 
+    if (GL) {
+      // v2 ENGINE: GPU layer draws the painted world, vine, pickups, beetles and particles
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.plated = true;
+      GL.draw(s, cam, fx, ui, { ox: this.ox, oy: this.oy, sc, roll: this.roll, camM, camPx: -cam.y * sc, camX: cam.x * sc, topY, botY, leftX, rightX, now, px, gold, night, frozen: !!ui.frozen });
+      setTreeNight(Math.min(1, Math.max(0, (camM - 1000) / 250)));
+      return this.drawOverlay(s, cam, fx, ui, { ctx, cw, ch, topY, botY, leftX, rightX, now, camM, px, gold, pad });
+    }
+    if (this.overlay && !this.glWhy) {
+      // v2: the WebGL layer is still starting (a few frames): plain night instead of fetching v1 plates
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0b1029'; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
+    }
     // ---- sky: stepped world-space bands (only when the backdrop is off)
     this._world(ctx);
     if (ui.noArt) {
@@ -499,7 +529,10 @@ export class Renderer {
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
-    if (!ui.reveal) drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui); // P6-TRAPS (P8: + fx events)
+    this.safe(ctx, () => drawPlay32World(ctx, s, now, topY, botY, ui)); // V3.2: sun shafts, fork-choice lanes
+    // V2-INT fix: trap/ART drawing is isolated (own save/restore, errors contained) so one bad sprite or
+    // state can neither leak a transform/lineWidth into the hit FX nor stop the frame loop
+    if (!ui.reveal) this.safe(ctx, () => drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui)); // P6-TRAPS (P8: + fx events)
     if (!ui.reveal) for (const g of s.tokens) if (!g.taken && g.y > topY - 60 && g.y < botY + 60) this.drawToken(ctx, g, now, s);
     drawTree(ctx, s, now, topY, botY, px);
     if (!ui.reveal) {
@@ -509,7 +542,8 @@ export class Renderer {
       if (ui.ghostM != null) this.drawGhost(ctx, s, ui.ghostM, now);
       if (ui.raceDraw) ui.raceDraw(ctx, s, now); // P6-RACE: live rival branch
       this.drawTips(ctx, s, now, fx, gold);
-      drawTrapFx(this, ctx, s, now, px, ui); // P8-FX: boosts, hit / avoid / pickup effects
+      this.safe(ctx, () => drawTrapFx(this, ctx, s, now, px, ui)); // P8-FX: boosts, hit / avoid / pickup effects
+      this.safe(ctx, () => drawFeelWorld(ctx, s, now, topY, botY, fx, ui.calm)); // V3-FEEL
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
     }
     this.drawParticles(ctx, fx, px);
@@ -553,12 +587,72 @@ export class Renderer {
     ctx.globalAlpha = 1;
     if (plated) backdrop.drawPost(ctx, cw, ch, camM, { grain: this.grainCv, grainA: 0.55 });
     else { ctx.globalAlpha = 0.55; ctx.fillStyle = this.grain; ctx.fillRect(0, 0, cw, ch); ctx.globalAlpha = 1; }
+    this.safe(ctx, () => drawFeelScreen(ctx, cw, ch, s, fx, ui, now)); // V3-FEEL
     if (ui.hud) this.drawHud(ctx, s, fx, ui, now);
+    if (ui.hud) this.safe(ctx, () => drawFeelHud(ctx, cw, ch, s, fx, now)); // V3-FEEL
     drawTrapFxHud(this, ctx, ui); // P8-FX: sap streaks into the meter
     if (ui.hud && !ui.finishM) backdrop.drawZoneBar(ctx, cw, camM, f(600, cw < 520 ? 12 : 13)); // P6-ART
     this.drawSparks(ctx, fx);
   }
 
+  /** v2 ENGINE: the Canvas2D parts that stay on top of the WebGL layer. */
+  drawOverlay(s, cam, fx, ui, o) {
+    const { ctx, cw, ch, topY, botY, leftX, rightX, now, camM, px, gold, pad } = o;
+    this.artSim = s; // V2-INT: which world's painted hazards to use
+    this._world(ctx);
+    for (const w of s.winds) this.drawWind(ctx, w, now, topY, botY);
+    if (ui.bestM > 3) this.drawBestLine(ctx, -ui.bestM * PX_PER_M, topY, botY, s.newBest, now, ui.bestLabel);
+    if (ui.bestM > 3) this.drawRecordFlag(ctx, s, -ui.bestM * PX_PER_M, topY, botY, ui);
+    if (ui.finishM) this.drawFinish(ctx, -ui.finishM * PX_PER_M, topY, botY, now);
+    for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
+    for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
+    for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
+    this.safe(ctx, () => drawPlay32World(ctx, s, now, topY, botY, ui)); // V3.2: sun shafts, fork-choice lanes
+    // V2-INT fix: trap/ART drawing is isolated (own save/restore, errors contained) so one bad sprite or
+    // state can neither leak a transform/lineWidth into the hit FX nor stop the frame loop
+    if (!ui.reveal) this.safe(ctx, () => drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui));
+    if (!ui.reveal) for (const g of s.tokens) if (!g.taken && g.y > topY - 60 && g.y < botY + 60) this.drawToken(ctx, g, now, s);
+    if (!ui.reveal) {
+      for (const m of s.motes) if (m.kind === 'acorn' && m.letter && m.y > topY - 30 && m.y < botY + 30) this.drawMote(ctx, m, now, gold);
+      if (ui.hud || ui.trail) this.drawTrail(ctx, s, now);
+      if (ui.ghostM != null) this.drawGhost(ctx, s, ui.ghostM, now);
+      if (ui.raceDraw) ui.raceDraw(ctx, s, now);
+      if (s.tips.length === 2) {
+        ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(184,255,214,0.55)';
+        ctx.beginPath(); ctx.moveTo(s.tips[0].x, s.cy); ctx.quadraticCurveTo(s.cx, s.cy - 34, s.tips[1].x, s.cy); ctx.stroke(); ctx.setLineDash([]);
+      }
+      this.safe(ctx, () => drawTrapFx(this, ctx, s, now, px, ui));
+      this.safe(ctx, () => drawFeelWorld(ctx, s, now, topY, botY, fx, ui.calm)); // V3-FEEL
+      if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
+    }
+    this.drawParticles(ctx, fx, px, true);
+    this._screen(ctx);
+    const storm = this.stormAmount(s, topY, botY);
+    if (storm > 0) this.drawStorm(ctx, cw, ch, now, storm, ui.calm);
+    if (s.pu && s.pu.rush > 0 && !ui.reveal) this.drawRush(ctx, cw, ch, now, Math.min(1, s.pu.rush / 0.4), ui.calm);
+    if (gold > 0) this.drawGolden(ctx, cw, ch, now, gold, s.golden);
+    if (s.inFrost && !ui.reveal) { for (let i = 0; i < 3; i++) { ctx.strokeStyle = 'rgba(214,238,255,0.35)'; ctx.lineWidth = 26 + i * 26; ctx.strokeRect(0, 0, cw, ch); } }
+    if (ui.hud && !s.dead && s.sap < SAP_MAX * 0.28) {
+      const beat = Math.pow(Math.max(0, Math.sin(now * 7.5)), 6);
+      const a = (0.18 + 0.22 * beat) * (1 - s.sap / (SAP_MAX * 0.28) * 0.6);
+      for (let i = 0; i < 3; i++) { ctx.strokeStyle = `rgba(122,26,20,${(a * (1 - i * 0.28)).toFixed(3)})`; ctx.lineWidth = 18 + i * 22; ctx.strokeRect(0, 0, cw, ch); }
+    }
+    drawTrapFxScreen(this, ctx, cw, ch, ui);
+    this.safe(ctx, () => drawFeelScreen(ctx, cw, ch, s, fx, ui, now)); // V3-FEEL
+    if (ui.hud) this.drawHud(ctx, s, fx, ui, now);
+    if (ui.hud) this.safe(ctx, () => drawFeelHud(ctx, cw, ch, s, fx, now)); // V3-FEEL
+    drawTrapFxHud(this, ctx, ui);
+    if (ui.hud && !ui.finishM) backdrop.drawZoneBar(ctx, cw, camM, f(600, cw < 520 ? 12 : 13));
+    this.drawSparks(ctx, fx);
+  }
+
+  /** Run a draw step with its own canvas state; an exception is reported once and the frame goes on. */
+  safe(ctx, fn) {
+    ctx.save();
+    try { fn(); } catch (e) { if (!this.safeErr) { this.safeErr = 1; if (typeof console !== 'undefined') console.warn('[forkwood] draw step failed, continuing:', e && e.message); } }
+    ctx.restore();
+    ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
   /** v1.0.1: dim the finished frame (frozen world behind a modal). */
   veil(a) { const ctx = this.ctx; this._screen(ctx); ctx.globalAlpha = 1; ctx.fillStyle = `rgba(8,11,20,${a})`; ctx.fillRect(0, 0, this.cw, this.ch); }
 
@@ -972,18 +1066,11 @@ export class Renderer {
 
   drawBramble(ctx, b) {
     if (b.kind === 'slide') {
-      // the gap's path, printed as a dotted rule with arrow heads: you can read it from afar
-      const lo = b.base - b.amp, hi = b.base + b.amp, y = b.y + 20;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(30,26,22,0.55)'; ctx.lineWidth = 3; ctx.setLineDash([2, 9]);
-      ctx.beginPath(); ctx.moveTo(lo, y); ctx.lineTo(hi, y); ctx.stroke(); ctx.setLineDash([]);
-      for (const [x, d] of [[lo, -1], [hi, 1]]) {
-        ctx.beginPath(); ctx.moveTo(x - d * 2, y - 7); ctx.lineTo(x + d * 6, y); ctx.lineTo(x - d * 2, y + 7);
-        ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = PAPER; ctx.lineWidth = 2.5; ctx.stroke();
-      }
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(b.cx, y, 5, 0, TAU); ctx.fill();
-      ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(b.cx, y, 3, 0, TAU); ctx.fill();
+      // the gap's path, printed as a dotted rule with arrow heads: you can read it from afar (V3.2: 1.6x, glowing)
+      drawSlideArrows(ctx, b, performance.now() / 1000, this.artSim, INK, PAPER, OCHRE);
     }
+    // V2-INT fix: on the WebGL path the rows are the world's painted barrier (ART), not v1 ink stems
+    if (this.gl && this.artSim && drawBrambleArt(ctx, this.artSim, b)) return;
     for (const [a, c] of b.solids) {
       if (c - a < 2) continue;
       const wy = (x) => b.y + Math.sin(x * 0.09 + b.seed) * 3;
@@ -1080,7 +1167,9 @@ export class Renderer {
       ctx.strokeStyle = '#ffe9e0'; ctx.lineWidth = 3; ctx.stroke();
       return;
     }
-    // thorn column: dark stem, coral-rimmed thorns both sides (no capsule)
+    // thorn column: on the WebGL path the world's painted barrier stood upright (V2-INT fix)
+    if (this.gl && this.artSim && drawColumnArt(ctx, this.artSim, c)) return;
+    // v1 / Canvas2D: dark stem, coral-rimmed thorns both sides (no capsule)
     const wx = (y) => x + Math.sin(y * 0.05 + c.seed) * 4;
     hazardStem(ctx, top, bot, wx, 'v', c.seed || 0);
     return;
@@ -1125,12 +1214,14 @@ export class Renderer {
     const owned = s.grafts.includes(g.id);
     ctx.restore(); glow(ctx, '#fff1c4', g.x, g.y + bob, r * 2.6, 0.35); ctx.save(); ctx.translate(g.x, g.y + bob);
     ctx.rotate(Math.sin(now * 1.3 + g.x) * 0.08);
-    ctx.fillStyle = 'rgba(16,32,27,0.7)'; ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, TAU); ctx.fill();
-    ctx.fillStyle = owned ? 'rgba(255,246,230,0.6)' : '#fff1c4'; ctx.beginPath(); ctx.arc(0, 0, r + 2, 0, TAU); ctx.fill();
-    ctx.fillStyle = CREAM; ctx.beginPath(); ctx.arc(0, 0, r - 2, 0, TAU); ctx.fill();
-    drawGraftIcon(ctx, g.id, r * 1.25);
+    if (!(g.ring && drawRingIcon(ctx, g.ring, 0, 0, r * 3.1))) { // V2-INT: ART growth-ring medallion when loaded
+      ctx.fillStyle = 'rgba(16,32,27,0.7)'; ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, TAU); ctx.fill();
+      ctx.fillStyle = owned ? 'rgba(255,246,230,0.6)' : '#fff1c4'; ctx.beginPath(); ctx.arc(0, 0, r + 2, 0, TAU); ctx.fill();
+      ctx.fillStyle = CREAM; ctx.beginPath(); ctx.arc(0, 0, r - 2, 0, TAU); ctx.fill();
+      drawGraftIcon(ctx, g.id, r * 1.25);
+    }
     ctx.restore();
-    const name = GRAFTS[g.id].name + (owned ? ' +' : '');
+    const name = (GRAFTS[g.id] ? GRAFTS[g.id].name : RINGS[g.ring] ? RINGS[g.ring].name : String(g.ring || g.id).toUpperCase()) + (owned ? ' +' : ''); // V2-MECH / V2-INT: ring medallions
     ctx.font = f(600, 13); ctx.textAlign = 'center';
     const tw = ctx.measureText(name).width + 16, ty = g.y + bob + r + 18;
     ctx.fillStyle = 'rgba(10,16,22,0.55)'; roundRect(ctx, g.x - tw / 2, ty - 13, tw, 19, 9.5); ctx.fill();
@@ -1139,7 +1230,7 @@ export class Renderer {
     if (g.x < W / 2) {
       // one caption for the pair, above them
       ctx.font = f(600, 13); ctx.textAlign = 'center';
-      const cap = 'Graft · steer into one · fork for both';
+      const cap = g.ring ? 'Growth ring · steer into one · fork through two' : 'Graft · steer into one · fork for both'; // V2-INT
       ctx.fillStyle = 'rgba(8,11,28,0.5)'; ctx.fillText(cap, W / 2, g.y - r - 20.5);
       ctx.fillStyle = CREAM; ctx.fillText(cap, W / 2, g.y - r - 22);
       ctx.textAlign = 'left';
@@ -1361,8 +1452,8 @@ export class Renderer {
     ctx.textAlign = 'left';
   }
 
-  drawParticles(ctx, fx, px) {
-    for (const p of fx.particles) {
+  drawParticles(ctx, fx, px, floatersOnly = false) {
+    if (!floatersOnly) for (const p of fx.particles) {
       const a = Math.max(0, p.life / p.max);
       if (p.kind === 'leaf') {
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = Math.min(1, a * 2);
@@ -1469,15 +1560,18 @@ export class Renderer {
     const low = fr < 0.28;
     const pulse = fx.sapPulse || 0;
     this.sapTarget.x = bx + Math.max(6, bw * fx.shownSap / SAP_MAX); this.sapTarget.y = by + bh / 2;
-    ctx.fillStyle = 'rgba(8,11,28,0.35)'; roundRect(ctx, bx - 1, by - 1, bw + 2, bh + 2, 3); ctx.fill();
-    ctx.fillStyle = 'rgba(255,246,230,0.16)'; roundRect(ctx, bx, by, bw, bh, 2); ctx.fill();
+    // V3.2: the vine itself is the sap bar now (it browns and wilts); this bar stays for accessibility, quieter
+    const quiet = low || s.golden > 0 ? 1 : 0.55;
+    ctx.globalAlpha = quiet;
+    ctx.fillStyle = 'rgba(8,11,28,0.3)'; roundRect(ctx, bx - 1, by - 1, bw + 2, bh + 2, 3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,246,230,0.12)'; roundRect(ctx, bx, by, bw, bh, 2); ctx.fill();
     const wob = low ? (Math.sin(now * 10) > 0 ? 1 : 0.6) : 1;
     const sapW = Math.max(0, bw * fx.shownSap / SAP_MAX);
-    ctx.globalAlpha = wob;
+    ctx.globalAlpha = wob * quiet;
     ctx.fillStyle = s.golden > 0 ? SEED : low ? DANGER : VINE;
     roundRect(ctx, bx, by, sapW, bh, 2); ctx.fill();
     ctx.globalAlpha = 1;
-    if (sapW > 2) glow(ctx, s.golden > 0 ? SEED : low ? DANGER : VINE, bx + sapW, by + bh / 2, 9 + pulse * 10, 0.5 + pulse * 0.4);
+    if (sapW > 2) glow(ctx, s.golden > 0 ? SEED : low ? DANGER : VINE, bx + sapW, by + bh / 2, 9 + pulse * 10, (0.5 + pulse * 0.4) * quiet);
     // sap status only when it means something
     const st = s.golden > 0 ? `Golden hour · ${Math.ceil(s.golden)}` : (s.pu && s.pu.rush > 0) ? 'Sap rush' : low ? 'Sap low · grab sunlight' : s.storm ? 'Rain · sap drains slower' : '';
     if (st) {

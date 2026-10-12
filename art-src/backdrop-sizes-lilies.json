@@ -1,0 +1,56 @@
+{
+ "lilies": {
+  "sky.p": [
+   "lilies.layer.sky.p.webp",
+   235580,
+   40,
+   1080,
+   1920
+  ],
+  "sky.p.avif": [
+   "lilies.layer.sky.p.avif",
+   123593,
+   38
+  ],
+  "sky.d": [
+   "lilies.layer.sky.d.webp",
+   326860,
+   40,
+   2560,
+   1440
+  ],
+  "sky.d.avif": [
+   "lilies.layer.sky.d.avif",
+   187080,
+   38
+  ],
+  "far.p": [
+   "lilies.layer.far.p.webp",
+   67438,
+   40,
+   1080,
+   1216
+  ],
+  "far.d": [
+   "lilies.layer.far.d.webp",
+   152356,
+   40,
+   2560,
+   1216
+  ],
+  "side.p": [
+   "lilies.layer.side.p.webp",
+   123112,
+   40,
+   1080,
+   1060
+  ],
+  "side.d": [
+   "lilies.layer.side.d.webp",
+   162298,
+   72,
+   2560,
+   1156
+  ]
+ }
+}

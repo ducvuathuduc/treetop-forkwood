@@ -24,6 +24,15 @@ import { backdrop } from './backdrop.js'; // P6-ART x P6-SEASONS: season palette
 import * as EC from './economy.js'; import { revive as reviveSim } from './sim.js'; import { createRevive, createMapBuy, armed as armedBoosts } from './ui-econ.js'; // P8-ECON
 import { selectedId as mapId, maps as MAPS_API } from './maps.js'; // P8-MAPS
 import { createMapsUI, loadCss } from './ui-maps.js'; // P8-MAPS
+import { createHub } from './ui-hub.js'; // META-V2: museum hub, rooms, store
+import { WORLD_IDS, worldForSeed } from './world-mech.js'; // V2-INT: world per run
+import { updateFeelFx } from './render-feel.js'; import { FT as FEEL_T } from './feel.js'; // V3-FEEL
+let hub = null; // META-V2
+import { CONTEST, EARLY_PARAM } from './flags.js'; import { initContest, nearestGoal, showGoal } from './ui-play32.js'; import { EARLY_BEST } from './setpieces.js'; // V3.2 gameplay
+import { applyFont } from './fonts.js'; applyFont(); initContest(); // V3.2: contest build hides League / Pass / Shop / offers // v3 HOME: type pairing (?font=1|2|3) for DOM + canvas text
+// v3 HOME: the title demo run (bot growing the vine behind the menu): slowed, 30 fps, camera + fork driven by the home layout
+const DEMO_SPEED = 0.6, DEMO_PREROLL = 5; const DEMO_60 = typeof location !== 'undefined' && /[?&]demo60\b/.test(location.search); // ?demo60 paints the demo every frame
+const demoCam = { scale: 0.9, anchor: 0.62 }; let demoFork = false, demoTick = 0, demoSnap = true;
 const ICON_STAR = ICON.star, ICON_STAR_OFF = ICON.starOff;
 // P6-SEASONS: the season clock is the player's local time. ?season=<ISO local time> pins it (tests,
 // previews); automated browsers without ?season= get no seasons so older tests stay deterministic.
@@ -37,6 +46,8 @@ let runSeasons = []; // seasons whose gameplay modifiers are on in the current r
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
+// V3-FEEL: ?feel=v2 plays the v2.0 game feel (free play only; fair modes always use the default)
+const FEEL = params.get('feel') === 'v2' ? 'v2' : 'v3';
 const BOT_MODE = params.has('bot');           // let the bot play the real game (testing)
 const FIXED_SEED = params.has('seed') ? (Number(params.get('seed')) >>> 0) : null;
 // challenge links: ?seed=<course>&beat=<metres> ("beat my tree")
@@ -59,10 +70,44 @@ let raceUI = null, raceLoading = null, raceSeed = null, raceRules = null;
 // P6-RACE end
 const canvas = $('game');
 quality.init(); // v1.0.1 PERF: tier before the first resize
-const renderer = new Renderer(canvas);
-quality.onChange(() => { renderer.resize(); frozen = false; });
-preloadArt();
+// v2 ENGINE: PixiJS WebGL layer under a transparent 2D overlay; ?gfx=2d (or ?renderer=canvas) forces Canvas2D.
+// Automatic fallback to the full Canvas2D renderer if WebGL is missing, init fails or the context is lost.
+const GFX = params.get('gfx') || params.get('renderer') || 'gl';
+// Software-only WebGL (blocklisted GPU, SwiftShader) is slower than Canvas2D: by default it counts as
+// "no WebGL" (failIfMajorPerformanceCaveat). An explicit ?gfx=gl opts into it (tests, perf harness).
+const GL_SOFT_OK = params.has('gfx') || params.has('renderer');
+const hasWebGL = (() => { try { const c = document.createElement('canvas'), o = { failIfMajorPerformanceCaveat: !GL_SOFT_OK }; return !!(c.getContext('webgl2', o) || c.getContext('webgl', o)); } catch { return false; } })();
+const glWanted = !['2d', 'canvas', 'canvas2d'].includes(GFX) && hasWebGL;
+const renderer = new Renderer(canvas, { overlay: glWanted });
+if (glWanted) {
+  import('./gfx/gl.js').then((m) => m.GLLayer.create(renderer, { webgpu: GFX === 'webgpu', allowSoftware: GL_SOFT_OK }))
+    .then((gl) => { renderer.attachGL(gl); frozen = false; applySkin(); if (shownWorld && gl.worldId !== shownWorld) gl.setWorld(shownWorld); })
+    .catch((e) => renderer.glFailed(String(e && e.message || e)));
+} else renderer.layout.renderer = 'canvas2d';
+quality.onChange(() => { renderer.resize(); if (renderer.gl) renderer.gl.resize(); frozen = false; applyLowMem(); });
+// v1 painted plates are only needed by the Canvas2D renderer (fallback): skip them on the WebGL path
+if (!glWanted) preloadArt(); else renderer.onFallback = () => preloadArt();
 const sound = new Sound();
+// V2-INT: which painted world is on screen. Free play climbs the world chosen on Home (or ?world=);
+// fair modes (daily, weekly, quest, challenge, duel, race) use worldForSeed(seed) so everyone gets the
+// same trap set. A gallery "try once" trial overrides the next free-play run only.
+let trialWorld = null, shownWorld = null;
+const WORLD_PARAM = WORLD_IDS.includes(params.get('world')) ? params.get('world') : null;
+function selectedWorld() {
+  if (WORLD_PARAM) return WORLD_PARAM;
+  try { if (hub) return hub.currentWorld(); } catch { /* hub not ready */ }
+  return EC.LEGACY_MAP_WORLD[MAPS_API.selectedId()] || 'meadow';
+}
+function showWorld(id) {
+  if (!WORLD_IDS.includes(id)) id = 'meadow';
+  if (renderer.gl && renderer.gl.worldId !== id) renderer.gl.setWorld(id); // GL may not be up yet: it reads currentWorld() on init
+  import('./worlds.js').then((m) => m.setWorld(id)).catch(() => {});
+  if (shownWorld !== id) { shownWorld = id; sound.music(id); }
+}
+// V2-INT: equipped vine skin (META store) wins over the world's default skin
+const equippedSkin = () => (S && S.store && S.store.vineSkin) || null;
+function applySkin() { const g = renderer.gl; if (g && g.setSkinOverride) g.setSkinOverride(equippedSkin()); }
+const applyLowMem = () => { sound.lowMemory = quality.tier >= 3; };
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -71,6 +116,9 @@ const store = {
 
 // one save object for everything (meta.js migrates the first build's keys)
 let S = M.loadSave((k) => store.get(k, null));
+// V2-INT fix: unlocks a grower already had before the quest block existed are marked seen once, so the
+// first quest clear doesn't announce Zen, Sprint, Hardcore, Looking-glass, Weekly ... all at once
+try { if (S && S.quest && !S.quest.primed) { Q.primeSeen(S); S.quest.primed = 1; } } catch { /* old save shape */ }
 const persist = (apply = true) => { if (!BOT_MODE) store.set(M.SAVE_KEY, S); if (apply) applyLoadout(S.loadout); };
 // session start: comeback gift, last week's league result, season rollover; a duel answer settles here
 const SESSION = R.startSession(S);
@@ -91,6 +139,7 @@ let bot = createBot(0.8, 7);
 let botSkill = 0.8;
 let lastSum = null;
 let cardCanvas = null;
+let lastCardMeta = {}, lastCardSim = null; // V3.2-CARD: the wide card re-renders from the same run
 let deathShown = false;
 let autoplay = false; // trailer capture: the bot plays a normal (saved) run in real time
 // what is being played: endless (with a stake), a mode, a quest level or the weekly tree
@@ -98,11 +147,13 @@ let run = { mode: 'classic', stake: 'sapling', level: null, week: null };
 let lastQuest = null;
 
 const cam = { x: W / 2, y: -200, scale: 1, anchor: 0.7, trauma: 0, punch: 0 };
+// V3.1: at the start of a run the tip rides low so the ground is a thin painted strip, not half the screen
+const playAnchor = (sm) => 0.7 + 0.14 * Math.max(0, Math.min(1, 1 + sm.cy / 360));
 const fx = { particles: [], floaters: [], sparks: [], flash: 0, flashColor: '255,80,80', banner: null, shownScore: 0, shownSap: SAP_MAX, multPulse: 0, sapPulse: 0, squash: 0, hitStop: 0 };
 const input = { targetX: null, dir: 0, toggle: false, keys: new Set(), pointerId: null, downT: 0, downX: 0, downY: 0, moved: 0, anchor: W / 2, kind: window.matchMedia && matchMedia('(pointer: coarse)').matches ? 'touch' : 'mouse' };
 // first-run coach: steer -> fork -> merge, taught by doing (screen-space, never overlaps the world)
 const coach = { step: null, t: 0, collects: 0, retry: false, slow: false };
-const rv = createRevive({ getSave: () => S, sound, isCalm }); let reviveAsked = false; // P8-ECON
+const rv = createRevive({ getSave: () => S, sound, isCalm, ads: { allowed: () => !!hub && hub.adReady('revive'), watch: () => hub.rewarded('revive') } }); let reviveAsked = false; // P8-ECON, META-V2: ad continue
 const ui = createMetaUI({ getSave: () => S, persist, sound, isCalm, onOpen: () => { $('title').classList.remove('show'); }, onClose: () => { if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } else ui.refreshBar(mode); } });
 // the quest map UI loads on first open (keeps the first load small)
 let questUI = null, questLoading = null;
@@ -143,11 +194,24 @@ function refreshGroveChip() {
   $('av-chip').innerHTML = R.avatarHTML(A.portrait, A.frame, 30);
   $('streak-n').textContent = S.streak.count;
 }
-function replayStory() {
-  import('./intro.js').then(({ playIntro }) => {
+function replayStory() { // Forkwood 1.0: the Story gallery (prologue + 7 episodes, all open)
+  S.ret.eps = S.ret.eps || {};
+  import('./episodes.js').then(({ openStoryGallery }) => {
     $('title').classList.remove('show'); document.body.classList.add('intro-hold');
-    playIntro({ calm: isCalm(), sound, onDone: () => { document.body.classList.remove('intro-hold'); if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } } });
+    openStoryGallery({ seen: S.ret.eps, calm: isCalm(), sound, onClose: () => { persist(false); document.body.classList.remove('intro-hold'); if (mode === 'title') { $('title').classList.add('show'); refreshTitle(); } } });
   });
+}
+function showHowToPlay() {
+  import('./howto.js').then(({ showHowTo }) => showHowTo({ sound, calm: isCalm(), last: 'Got it' }));
+}
+// Forkwood 1.0: episode N plays the first time a free-play run starts in that world (not on the tutorial run)
+let epBusy = false;
+function episodeFor(isDaily) {
+  if (BOT_MODE || autoplay || isDaily || CHALLENGE || run.level || run.mode !== 'classic' || !S.stats.runs) return null;
+  if (navigator.webdriver && params.get('ep') !== '1') return null;
+  const w = trialWorld || selectedWorld();
+  S.ret.eps = S.ret.eps || {};
+  return S.ret.eps[w] ? null : w;
 }
 if (CHALLENGE) run = CHALLENGE.lvl ? { mode: 'classic', stake: 'sapling', level: CHALLENGE.lvl, week: null }
   : CHALLENGE.week ? { mode: 'weekly', stake: 'oak', level: null, week: CHALLENGE.week }
@@ -169,12 +233,18 @@ function setMode(m) {
   $('pause').classList.remove('show');
   paused = false;
   if (m !== 'title') ui.hide();
+  if (hub && m !== 'title') hub.closeRoom(); // META-V2
   ui.refreshBar(m);
+  if (hub) hub.refresh(m); // META-V2
 }
 
 function startDemo() {
-  sim = createSim({ seed: (Math.random() * 1e9) | 0, demo: true });
+  const world = selectedWorld(); // V2-INT
+  sim = createSim({ seed: (Math.random() * 1e9) | 0, demo: true, world });
+  showWorld(world);
   bot = createBot(0.85, (Math.random() * 1000) | 0);
+  // v3 HOME: pre-roll a few seconds so Home never opens on a bare seed (sim only, no drawing, no events)
+  for (let i = 0; i < DEMO_PREROLL * 60 && !sim.dead; i++) { step(sim, 1 / 60, botInput(bot, sim)); sim.events.length = 0; }
   cam.y = sim.cy - 120;
   resetFx();
 }
@@ -217,6 +287,15 @@ function startMode(id) {
 
 function startRun(isDaily = daily) {
   sound.unlock();
+  if (epBusy) return;
+  const epWorld = episodeFor(isDaily);
+  if (epWorld) {
+    epBusy = true; S.ret.eps[epWorld] = 1; persist(false);
+    $('title').classList.remove('show'); document.body.classList.add('intro-hold');
+    import('./episodes.js').then(({ playEpisode }) => playEpisode(epWorld, { calm: isCalm(), sound }))
+      .catch(() => {}).then(() => { epBusy = false; document.body.classList.remove('intro-hold'); startRun(isDaily); });
+    return;
+  }
   daily = isDaily;
   if (qui.isOpen) qui.hide();
   const lv = run.level && !daily ? LEVEL[run.level] : null;
@@ -243,13 +322,23 @@ function startRun(isDaily = daily) {
   const econ = BOT_MODE || autoplay ? null : EC.runOptions(S, { pure, race: isRace, level: !!lv, tutorial }, armedBoosts(S));
   if (econ) { S.econ.armed = []; persist(false); }
   reviveAsked = false;
-  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director, econ });
+  // V2-INT: world (fair modes: one world per seed for everyone), critter skill and curses (free play only)
+  const world = pure || isRace ? worldForSeed(seed) : (trialWorld || selectedWorld());
+  trialWorld = null;
+  const mech = BOT_MODE || autoplay ? null : EC.mechOptions(S, { pure, race: isRace, level: !!lv, tutorial });
+  // V3.2 early showcase: personal classic runs while the player's record is under EARLY_BEST m
+  const early = EARLY_PARAM ?? (!pure && !isRace && !lv && !challenge && run.mode === 'classic' && Math.max(S.best.height || 0, bestM || 0) < EARLY_BEST);
+  const md = MODE[run.mode], stakeId = md && md.stake ? md.stake : md && md.stakes ? run.stake : 'sapling';
+  const choices = !daily && !lv && !isRace && STAKE[stakeId] && stakeId !== 'sapling' && !early; // V3.2: fork-choice gates off on Sapling + early showcase
+  sim = createSim({ seed, tutorial, bestM, pure, charm: pure ? null : S.charm, rules, director, econ, world, ...(mech || {}), feel: FEEL, early, choices });
+  replay.n = 0; replay.at = 0; // V3-FEEL: last-moment frames
+  showWorld(world);
   // /P8-ECON
   // /P6-TRAPS
   coach.step = sim.tutorial ? 'steer' : null; coach.t = 0; coach.collects = 0; coach.retry = false; coach.slow = false;
   timeScale = 1;
   bot = createBot(botSkill, seed & 0xffff);
-  cam.y = sim.cy - 60; cam.scale = renderer.baseScale() * (isCalm() ? 1 : 0.86); cam.anchor = 0.7;
+  cam.y = sim.cy - 60; cam.scale = renderer.baseScale() * (isCalm() ? 1 : 0.86); cam.anchor = playAnchor(sim);
   resetFx();
   deathShown = false;
   input.toggle = false;
@@ -292,6 +381,7 @@ function toMenu() {
   setMode('title');
   refreshTitle();
   startDemo();
+  if (hub && !CONTEST) hub.onHome(); // META-V2: at most one offer, never mid-run (V3.2: none in the contest build)
 }
 
 function refreshTitle() {
@@ -332,6 +422,7 @@ function refreshTitle() {
   $('daily-best').textContent = d ? `· today ${d.height} m` : `· ${dailyLabel()}`;
   refreshGroveChip();
   refreshSeasons(); // P6-SEASONS
+  if (hub) hub.refresh(mode); // META-V2
 }
 
 // P6-SEASONS: title cards with "open until …" countdowns, the tint layer, the overlay particles
@@ -393,9 +484,10 @@ function coachView(s) {
   if (!coach.step || mode !== 'play' || s.dead) return null;
   const tap = input.kind === 'touch' ? 'TAP' : input.kind === 'key' ? 'SPACE' : 'CLICK';
   const steer = input.kind === 'touch' ? 'Drag anywhere to steer' : input.kind === 'key' ? '← → to steer' : 'Move the mouse to steer';
+  const tapHow = input.kind === 'touch' ? 'a quick tap, no drag' : input.kind === 'key' ? 'or ↑' : 'a quick click'; // V3.2: drag steers, tap forks
   switch (coach.step) {
-    case 'steer': return { title: steer, sub: 'Catch sunlight to refill your sap', n: 1 };
-    case 'fork': return { title: `${tap} to fork`, sub: coach.retry === 'emptymerge' ? 'Grab sunlight on both branches before merging' : coach.retry === 'revert' ? 'A hit reverts a branch. Fork again!' : 'Split into two branches: one per gap', n: 2, urgent: coach.slow, cue: coach.slow };
+    case 'steer': return { title: steer, sub: input.kind === 'touch' ? 'Dragging only steers · catch sunlight to refill your sap' : 'Catch sunlight to refill your sap', n: 1 };
+    case 'fork': return { title: `${tap} to fork`, sub: coach.retry === 'emptymerge' ? 'Grab sunlight on both branches before merging' : coach.retry === 'revert' ? 'A hit reverts a branch. Fork again!' : `${tapHow[0].toUpperCase() + tapHow.slice(1)} · split into two branches, one per gap`, n: 2, urgent: coach.slow, cue: coach.slow };
     case 'merge': {
       const staged = s.tips.length === 2 ? s.tips[0].staged + s.tips[1].staged : 0;
       const ready = staged >= 2 && s.forkTime > 0.9;
@@ -424,11 +516,25 @@ function updateCoach(s, dt) {
 
 function handleEvents(s, quiet) {
   for (const e of s.events) {
+    if (renderer.gl) renderer.gl.event(e, fx, cam, quiet); // v2 ENGINE: FX/juice subscribers
     switch (e.type) {
       case 'collect':
         if (!quiet) coachEvent('collect', e, s);
         burst(e.x, e.y, 6, '#ffe08a', 170, 7, 0.45, 'spark');
+        if (sim && sim.feelS) { fx.chainPts = fx.chainPts || []; fx.chainPts.push({ x: e.x, y: e.y, age: 0 }); if (fx.chainPts.length > 10) fx.chainPts.shift(); } // V3-FEEL sparkle chain
         if (!quiet) { sound.collect(e.chain, e.forked); spark(e.x, e.y); floater(e.x + (e.chain % 2 ? 26 : -26), e.y - 10, `+${e.pts}`, '#fbe3a4', 15 + Math.min(7, e.chain), 0.6); }
+        break;
+      // V3.2 gameplay events (see work/v3/V32-EVENTS.md)
+      case 'vine.revive': // the wilted vine greens up again: a burst of fresh leaves along the tip
+        for (const t of s.tips) { burst(t.x, s.cy + 10, 10 + Math.round((1 - e.from) * 10), '#7fe08a', 210, 8, 0.8, 'leaf'); ring(t.x, s.cy, '#b8ffb0', 64, 0.55); }
+        if (!quiet && e.from < 0.25) floater(e.x, e.y - 52, 'revived!', '#b8ffb0', 20, 0.8);
+        break;
+      case 'choice.pick':
+        if (!quiet && e.lane !== 'safe') floater(e.x, e.y - 60, e.lane === 'both' ? 'both lanes!' : 'brave lane', e.lane === 'both' ? '#8fd0e6' : '#ffd36a', 20, 0.9);
+        break;
+      case 'setpiece.start':
+        if (!quiet) fx.banner = e.mini ? { text: `MINI-BOSS · ${e.name}`, sub: 'dodge 3 attacks · watch the red warnings', t: 0, max: 2.6, small: true }
+          : { text: e.name, sub: e.kind === 'calm' ? 'free sunlight · ride the bloom' : e.kind === 'chase' ? 'keep climbing · it is right behind you' : 'boss · watch the warnings', t: 0, max: 2.4, small: true };
         break;
       case 'fork':
         for (const t of s.tips) { ring(t.x, s.cy, '#8fd0e6', 50); burst(t.x, s.cy, 5, '#a9cf5a', 130, 6, 0.6, 'leaf'); }
@@ -521,7 +627,7 @@ function handleEvents(s, quiet) {
       }
       case 'synergy': {
         ring(e.x, e.y, '#ffe08a', 200, 0.9); burst(e.x, e.y, 26, '#ffe08a', 420, 9, 1.0, 'spark');
-        if (!quiet) { sound.synergy(); flash('255,215,106', 0.45); shake(6); fx.banner = { text: SYNERGIES[e.id].name.toUpperCase(), sub: SYNERGIES[e.id].text, t: 0, max: 3, gold: true }; }
+        if (!quiet) { sound.synergy(); flash('255,215,106', 0.45); shake(6); const SY = SYNERGIES[e.id] || { name: e.name || e.id, text: e.text || '' }; fx.banner = { text: SY.name.toUpperCase(), sub: SY.text, t: 0, max: 3, gold: true }; } // V2-MECH: ring synergies
         break;
       }
       case 'storm':
@@ -609,6 +715,65 @@ function handleEvents(s, quiet) {
       case 'newbest':
         if (!quiet) { sound.newBest(); floater(s.cx, s.cy - 60, isChallengeRun() ? 'friend beaten' : 'new best', '#f2b33d', 28, 1.4); flash('255,215,106', 0.35); }
         break;
+      // V3-FEEL: combo, flow, graze, signature currents, choice lanes, last gasp, finisher
+      case 'feel.tier':
+        ring(e.x, e.y, e.tier >= 4 ? '#ffd76a' : '#ffe9a8', 90 + e.tier * 16, 0.6); burst(e.x, e.y, 8 + e.tier * 3, '#ffe08a', 240, 7, 0.7, 'spark');
+        if (!quiet) { fx.tierPulse = 1; sound.bloom(4 + e.tier); floater(e.x, e.y - 66, `combo ×${e.k}`, e.tier >= 4 ? '#ffd76a' : '#ffe9a8', 22 + e.tier * 2, 1.0); shake(2 + e.tier); cam.punch = Math.max(cam.punch, 0.025 + 0.008 * e.tier); vibrate(e.tier >= 4 ? [18, 30, 18] : 15); if (e.tier >= 3) hitStop(0.03); }
+        break;
+      case 'feel.break':
+        if (!quiet && e.combo >= 10) floater(e.x, e.y - 90, `combo lost (${e.combo})`, '#ff9a86', 16, 0.9);
+        break;
+      case 'feel.flow':
+        ring(e.x, e.y, '#b8ffd6', 160, 0.9); burst(e.x, e.y, 18, '#b8ffd6', 300, 8, 1.0, 'leaf');
+        if (!quiet) { sound.goldenStart(); floater(e.x, e.y - 80, 'FLOW', '#b8ffd6', 34, 1.3); vibrate([12, 40, 12]); cam.punch = Math.max(cam.punch, 0.05); }
+        break;
+      case 'feel.flowend':
+        if (!quiet) floater(e.x, e.y - 60, 'flow broken', '#e8dcc0', 15, 0.8);
+        break;
+      case 'feel.signode':
+        burst(e.x, e.y, 4, '#fff3c4', 160, 6, 0.4, 'spark');
+        if (!quiet && e.n % 4 === 0) { floater(e.x + 30, e.y - 30, `${e.n}/${e.of}`, '#fff3c4', 16, 0.6); vibrate(8); }
+        break;
+      case 'feel.sigstart':
+        if (!quiet) { fx.banner = { text: e.name, sub: e.sub, t: 0, max: 2.2, small: true }; cam.punch = Math.max(cam.punch, 0.06); sound.pickup('rush'); vibrate(20); }
+        break;
+      case 'feel.sig':
+        ring(e.x, e.y, '#fff3c4', 200, 0.9); ring(e.x, e.y, '#ffd76a', 120, 0.6); burst(e.x, e.y, 26, '#ffe08a', 380, 9, 1.0, 'spark'); burst(e.x, e.y, 14, STAGES[s.stageIdx].leaf, 260, 8, 1.3, 'leaf');
+        if (!quiet) { hitStop(0.08); flash('255,236,170', 0.5); shake(8); vibrate([25, 40, 40]); sound.goldenStart(); cam.punch = Math.max(cam.punch, 0.08); fx.banner = { text: e.perfect ? 'PERFECT RIDE' : 'CURRENT RIDDEN', sub: `${e.got}/${e.of} · +${e.bonus} · +sap`, t: 0, max: 1.8, gold: true, small: true }; }
+        break;
+      case 'feel.sigmiss':
+        if (!quiet) floater(e.x, e.y - 60, `current ${e.got}/${e.of}`, '#e8dcc0', 16, 0.9);
+        break;
+      case 'feel.lane':
+        if (!quiet) { floater(e.x, e.y - 30, 'gold ×3', '#ffd76a', 18, 0.7); sound.collect(9, true); }
+        break;
+      case 'feel.gasp':
+        if (!quiet) { sound.revert(); shake(6); flash('120,20,20', 0.5); vibrate([40, 60, 40, 60, 40]); }
+        break;
+      case 'feel.clutch':
+        ring(e.x, e.y, '#ffe9a8', 180, 0.8); burst(e.x, e.y, 22, '#ffe08a', 340, 9, 0.9, 'spark');
+        if (!quiet) { hitStop(0.1); flash('255,236,170', 0.7); shake(10); vibrate([30, 30, 60]); sound.goldenStart(); fx.banner = { text: 'CLUTCH!', sub: `back from the brink · +${e.bonus}`, t: 0, max: 1.6, gold: true, small: true }; }
+        break;
+      case 'feel.finready':
+        if (!quiet) floater(e.x, e.y + 60, 'the weak point glows', '#ffe08a', 18, 1.4);
+        break;
+      case 'feel.finisher':
+        for (let k = 0; k < 4; k++) ring(e.x, e.y, k % 2 ? '#fff3c4' : '#ffd76a', 120 + k * 70, 0.6 + k * 0.15);
+        burst(e.x, e.y, 34, '#ffe08a', 460, 10, 1.2, 'spark'); burst(e.x, e.y, 18, STAGES[s.stageIdx].leaf, 320, 9, 1.4, 'leaf');
+        if (!quiet) { hitStop(0.18); flash('255,246,210', 0.9); shake(16); vibrate([40, 30, 80, 30, 120]); sound.stageUp(); cam.punch = Math.max(cam.punch, 0.12); fx.banner = { text: 'FINISHER!', sub: `the boss falls · +${e.bonus}`, t: 0, max: 2.2, gold: true }; }
+        break;
+      case 'feel.coyote':
+        if (!quiet) floater(e.x, e.y - 110, 'just made it', '#c4e88a', 14, 0.7);
+        break;
+      case 'vehicle.mount':
+        if (!quiet && sim.feelS) { cam.punch = Math.max(cam.punch, 0.09); hitStop(0.06); vibrate([20, 30, 20]); }
+        break;
+      case 'ring.pick':
+        if (!quiet && sim.feelS) { cam.punch = Math.max(cam.punch, 0.07); hitStop(0.05); vibrate(25); }
+        break;
+      case 'trapWarn':
+        if (!quiet && sim.feelS && e.t != null && e.t < 1.6) { const dx = e.x - s.cx; fx.danger = { side: Math.abs(dx) < 90 ? 0 : Math.sign(dx), a: 1 }; }
+        break;
       case 'death':
         for (const t of s.tips) burst(t.x, s.cy, 14, STAGES[s.stageIdx].leaf, 140, 7, 1.6, 'leaf');
         if (!quiet) { sound.death(); sound.stop(); shake(6); vibrate(120); if (e.why === 'hit') fx.banner = { text: 'ONE HIT', sub: 'hardcore: the tree is done', t: 0, max: 1.6, small: true }; }
@@ -655,6 +820,52 @@ function updateFx(dt) {
 }
 
 // ------------------------------------------------------------------ game over
+// V3-FEEL: the last moment, as a flipbook on the card (12 small frames, 5 per second)
+const replay = { frames: [], n: 0, at: 0, w: 168, h: 0, raf: 0 };
+function captureReplay(nowMs) {
+  if (nowMs - replay.at < 200) return;
+  replay.at = nowMs;
+  try {
+    const gl = document.getElementById('game-gl');
+    const src = canvas; const W0 = src.width, H0 = src.height; if (!W0 || !H0) return;
+    const h = Math.round(replay.w * H0 / W0); replay.h = h;
+    let c = replay.frames[replay.n % 12];
+    if (!c) { c = document.createElement('canvas'); replay.frames[replay.n % 12] = c; }
+    if (c.width !== replay.w || c.height !== h) { c.width = replay.w; c.height = h; }
+    const g = c.getContext('2d');
+    g.fillStyle = '#0b1029'; g.fillRect(0, 0, c.width, h);
+    if (gl && gl.style.display !== 'none' && gl.width) g.drawImage(gl, 0, 0, c.width, h);
+    g.drawImage(src, 0, 0, c.width, h);
+    c._t = sim ? sim.t : 0;
+    replay.n++;
+  } catch { /* tainted or lost context: no replay */ }
+}
+function showReplay() {
+  let box = $('feel-replay');
+  const d = sim && sim.feelS && sim.feelS.death;
+  if (!d || sim.won || replay.n < 3) { if (box) box.hidden = true; return; }
+  if (!box) {
+    box = document.createElement('div'); box.id = 'feel-replay';
+    box.style.cssText = 'display:flex;gap:10px;align-items:center;margin:6px 0 8px;padding:6px;border-radius:12px;background:rgba(8,11,28,.35)';
+    box.innerHTML = '<canvas width="168" height="300" style="width:84px;height:auto;border-radius:8px;flex:none"></canvas><div style="text-align:left;min-width:0"><div class="fr-k" style="font:800 11px/1.2 Nunito,system-ui;letter-spacing:.08em;opacity:.7">LAST MOMENT</div><div class="fr-c" style="font:800 15px/1.25 Nunito,system-ui;color:#ffb39e"></div><div class="fr-t" style="font:600 12px/1.3 Nunito,system-ui;opacity:.85"></div><div class="fr-s" style="font:700 11px/1.3 Nunito,system-ui;opacity:.75;margin-top:3px"></div></div>';
+    const tip = $('over-tip'); tip.parentNode.insertBefore(box, tip);
+  }
+  box.hidden = false;
+  box.querySelector('.fr-c').textContent = d.cause;
+  box.querySelector('.fr-t').textContent = d.tip;
+  box.querySelector('.fr-s').textContent = [d.bestCombo >= 10 ? `best combo ${d.bestCombo}` : '', d.sigs ? `${d.sigs} current${d.sigs > 1 ? 's' : ''} ridden` : '', d.clutches ? `${d.clutches} clutch` : '', d.flows ? `flow ×${d.flows}` : ''].filter(Boolean).join(' · ');
+  const cv = box.querySelector('canvas'), g = cv.getContext('2d');
+  const n = Math.min(12, replay.n), first = replay.n - n;
+  cv.width = replay.w; cv.height = replay.h || 300;
+  let i = 0, last = 0;
+  cancelAnimationFrame(replay.raf);
+  const tick = (now) => {
+    if (mode !== 'over') return;
+    if (now - last > (i % n === n - 1 ? 700 : 160)) { last = now; const f = replay.frames[(first + (i % n)) % 12]; if (f) { g.drawImage(f, 0, 0); if (i % n === n - 1) { g.fillStyle = 'rgba(255,90,70,.25)'; g.fillRect(0, 0, cv.width, cv.height); } } i++; }
+    replay.raf = requestAnimationFrame(tick);
+  };
+  replay.raf = requestAnimationFrame(tick);
+}
 function showGameOver() {
   deathShown = true;
   // P6-RACE: a live race shows its own finish card (no rewards, nothing saved)
@@ -701,7 +912,8 @@ function showGameOver() {
   const challenge = challengeRun ? { m: CHALLENGE.m, won: CHALLENGE.lvl ? sum.won && sum.score > CHALLENGE.m : sum.height > CHALLENGE.m, pts: !!CHALLENGE.lvl } : null;
   const modeLine = lv ? `Quest ${lv.id} · ${lv.name}${sum.won ? '' : ' · not finished'}` : run.mode === 'weekly' ? `Weekly tree ${weekCode(run.week)} · Oak` : run.mode !== 'classic' && !daily ? MODE[run.mode].name : (!daily && run.stake !== 'sapling' ? `${STAKE[run.stake].name} stake ×${STAKE[run.stake].mult}` : '');
   const cardStars = lv && lastQuest ? { run: lastQuest.runStars || 0, best: lastQuest.stars || 0 } : null;
-  const cardMeta = { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '', map: mapId() }; // P8-MAPS: map
+  const cardMeta = { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '', map: mapId(), world: shownWorld || (sim && sim.world) || selectedWorld() }; // P8-MAPS: map; V2-INT fix: the card is from the v2 world
+  lastCardMeta = cardMeta; lastCardSim = sim; // V3.2-CARD
   const paintCard = (SH, cs) => {
     try {
       cardCanvas = SH.renderCard(cs, sum, cardMeta);
@@ -711,8 +923,7 @@ function showGameOver() {
     }
   };
   cardCanvas = null;
-  if (SHARE) paintCard(SHARE, sim);
-  else { const cs = sim; loadShare().then((SH) => paintCard(SH, cs)).catch((e) => console.warn('card module failed', e)); }
+  { const cs = sim; (SHARE ? Promise.resolve(SHARE) : loadShare()).then((SH) => (SH.preloadPainting ? SH.preloadPainting(cardMeta.world).then(() => SH) : SH)).then((SH) => { paintCard(SH, cs); if (SH.poetize) SH.poetize(cs, sum, cardMeta).then((p) => { if (p && lastSum === sum) paintCard(SH, cs); }); }).catch((e) => console.warn('card module failed', e)); } // V3.2-CARD: optional AI commit line (2 s, offline fallback)
   const toGo = STAGES[TREETOP_IDX].m - sum.height;
   const why = { hit: 'one hit', time: "time's up", sap: 'out of sap', finish: 'finished' }[sum.end] || '';
   $('over-kicker').textContent = challenge ? (challenge.won ? `★ CHALLENGE BEATEN (${challenge.pts ? challenge.m.toLocaleString('en-US') + ' pts' : challenge.m + ' m'})` : challenge.pts ? `CHALLENGE: friend scored ${challenge.m.toLocaleString('en-US')}` : `CHALLENGE: ${challenge.m - sum.height + 1} m short`)
@@ -737,6 +948,13 @@ function showGameOver() {
     rec.hidden = !rec.textContent;
   }
   // P6-ART end
+  // V3.2 "one more run": the nearest goal (record, next rank) as one big line, the next world blurred behind
+  {
+    const prior = lv ? 0 : (sim.bestM || 0);
+    const g = lv ? null : nearestGoal(sum.height, prior);
+    showGoal(g, { world: shownWorld || sim.world, height: sum.height, headline: g && sum.height > prior && prior > 0 ? 'New record!' : '' });
+    const rec = $('over-record'); if (rec && g) rec.hidden = true; // the goal line says it bigger
+  }
   document.querySelector('.over-panel').classList.toggle('lvl', !!lv);
   // stars for quest levels: this run's stars light up, newly earned ones stamp in
   const os = $('over-stars');
@@ -758,10 +976,11 @@ function showGameOver() {
   $('over-kicker').classList.toggle('gold', !!(newBest || (challenge && challenge.won)));
   $('over-score').textContent = lv ? (sum.won ? `${sum.height} m in ${Math.round(sum.time)} s · best ${(S.quest.best[lv.id] || sum.score).toLocaleString('en-US')} pts` : `${sum.height} of ${sum.finishM} m · ${sum.score.toLocaleString('en-US')} pts`)
     : `${sum.score.toLocaleString('en-US')} pts · best ${Math.max(run.mode === 'classic' && run.stake === 'sapling' || daily ? S.best.score : ((run.mode === 'classic' ? 0 : (S.quest.modeBest[run.mode] || {}).s) || 0), sum.score).toLocaleString('en-US')}`;
-  $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}${sum.grafts ? ` · grafts: ${sum.graftIds.map((g) => GRAFTS[g].name).join(', ')}` : ''}`;
+  $('over-hash').textContent = `tree ${sum.hash} · ${sum.commits} commits · ${sum.merges} merges · ${sum.reverts} reverts · max ×${sum.maxMult}${sum.grafts ? ` · grafts: ${sum.graftIds.map((g) => (GRAFTS[g] || { name: g }).name).join(', ')}` : ''}`;
   $('share-msg').textContent = '';
-  setMode('over');
+  setMode('over'); showReplay(); // V3-FEEL
   ui.showRewards(rewards, { before });
+  if (hub && rewards) { hub.afterRun({ lost: !newBest }); if (!CONTEST) hub.offerDouble({ gained: S.acorns - before, fair: !!lv || daily || challengeRun || run.mode === 'weekly' }); } // META-V2
   refreshGroveChip();
   if (input.kind !== 'touch') $('btn-again').focus({ preventScroll: true });
 }
@@ -835,7 +1054,8 @@ function shareText() {
     return `Forkwood quest ${lv.id} "${lv.name}" ${'★'.repeat(n)}${'☆'.repeat(3 - n)} · ${s.score.toLocaleString('en-US')} pts\n${Q.mapGrid(S)}\nBeat my score: ${challengeUrl()}`;
   }
   const what = run.mode === 'weekly' && !daily ? ` on the weekly tree ${weekCode(run.week)}` : run.mode !== 'classic' && !daily ? ` in ${MODE[run.mode].name}` : run.stake !== 'sapling' && !daily ? ` on ${STAKE[run.stake].name} stake` : '';
-  return `I grew a ${s.height} m tree in Forkwood${what} (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
+  const cl = lastCardSim && lastCardSim.__card ? `${lastCardSim.__card.poem.text}\n` : ''; // V3.2-CARD: the tree's commit line
+  return `${cl}I grew a ${s.height} m tree in Forkwood${what} (tree ${s.hash} · ${s.commits} commits · ${s.merges} merges${daily ? ` · daily ${dailyLabel()}` : ''}). Same course, can you beat it? ${challengeUrl()}`;
 }
 
 // ------------------------------------------------------------------ input
@@ -844,7 +1064,12 @@ function worldX(clientX) {
   return (clientX - (renderer.cw / 2 - cam.x * sc)) / sc;
 }
 
-function toggleFork() { if (mode === 'play' && !paused) input.toggle = true; }
+function toggleFork() {
+  if (mode === 'play' && !paused && quickRetryOk()) { startRun(daily); return; } // V3-FEEL: one tap to grow again
+  if (mode === 'play' && !paused) input.toggle = true;
+}
+// V3-FEEL: after a death the next tap restarts at once (the card follows if you wait)
+function quickRetryOk() { return !!(sim && sim.feelS && sim.dead && !sim.won && sim.deathT > 0.45 && !deathShown && !rv.open && !(raceUI && raceUI.active) && !run.level); }
 
 // Mouse steers absolutely (the tip follows the cursor). Touch steers relatively:
 // drag anywhere and the tip moves with your finger, so a tap to fork never yanks
@@ -853,6 +1078,16 @@ const TOUCH_GAIN = 1.5;
 // Looking-glass mode: steering is mirrored (the course is not)
 const mirrored = () => mode === 'play' && !daily && !run.level && run.mode === 'mirror';
 const mirrorX = (x) => (mirrored() ? W - x : x);
+// V3.2 control split: moving / dragging only ever steers; a quick tap or click with no drag forks or
+// merges (on release). TAP: < TAP_MS and < TAP_PX of travel; a press held still a little longer
+// (< HOLD_MS, < STILL_PX) still counts, so a slow tap is never dead. Every pointer is tracked, so a
+// second finger can tap to fork while the first keeps steering. Keyboard is unchanged.
+// Mouse: hover already steers, so a click made while the hand is moving is not a drag; it gets a looser
+// travel limit (MOUSE_PX) so clicks on the move are never dead.
+export const TAP = { ms: 220, px: 10, holdMs: 450, stillPx: 5, mouseMs: 300, mousePx: 26 };
+const isTap = (dt, moved, mouse) => mouse ? moved < TAP.mousePx && dt < TAP.holdMs && (dt < TAP.mouseMs || moved < TAP.stillPx)
+  : moved < TAP.px && (dt < TAP.ms || (dt < TAP.holdMs && moved < TAP.stillPx));
+const taps = new Map(); // pointerId -> { t, x, y, moved }
 canvas.addEventListener('pointerdown', (e) => {
   sound.unlock();
   input.kind = e.pointerType === 'mouse' ? 'mouse' : 'touch';
@@ -861,12 +1096,16 @@ canvas.addEventListener('pointerdown', (e) => {
   else if (mode === 'play' && paused) { resume(); return; }
   const cz = renderer.layout.charm;
   if (mode === 'play' && cz && Math.hypot(e.clientX - cz.x, e.clientY - cz.y) < cz.r) { input.charm = true; return; }
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  taps.set(e.pointerId, { t: performance.now(), x: e.clientX, y: e.clientY, moved: 0, mouse: e.pointerType === 'mouse' });
+  if (input.pointerId != null && e.pointerType !== 'mouse') return; // a second finger: tap only, the first keeps steering
   input.pointerId = e.pointerId; input.downT = performance.now(); input.downX = e.clientX; input.downY = e.clientY; input.moved = 0;
   if (e.pointerType === 'mouse') input.targetX = mirrorX(worldX(e.clientX));
   else input.anchor = input.targetX ?? (sim ? sim.cx : W / 2);
-  if (e.pointerType === 'mouse' && mode === 'play' && e.button === 0) toggleFork();
 });
 window.addEventListener('pointermove', (e) => {
+  const tp = taps.get(e.pointerId);
+  if (tp) tp.moved = Math.max(tp.moved, Math.hypot(e.clientX - tp.x, e.clientY - tp.y));
   if (e.pointerType === 'mouse') {
     if (input.dir !== 0) return;
     if (input.kind === 'key' && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) < 3) return;
@@ -878,11 +1117,11 @@ window.addEventListener('pointermove', (e) => {
   }
 });
 window.addEventListener('pointerup', (e) => {
-  if (e.pointerId !== input.pointerId) return;
-  if (e.pointerType !== 'mouse' && mode === 'play' && performance.now() - input.downT < 260 && input.moved < 16) toggleFork();
-  input.pointerId = null;
+  const tp = taps.get(e.pointerId); taps.delete(e.pointerId);
+  if (tp && mode === 'play' && isTap(performance.now() - tp.t, tp.moved, tp.mouse)) toggleFork();
+  if (e.pointerId === input.pointerId) input.pointerId = null;
 });
-window.addEventListener('pointercancel', () => { input.pointerId = null; });
+window.addEventListener('pointercancel', (e) => { taps.delete(e.pointerId); if (e.pointerId === input.pointerId) input.pointerId = null; });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 window.addEventListener('keydown', (e) => {
@@ -891,6 +1130,7 @@ window.addEventListener('keydown', (e) => {
   if (e.repeat && (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W')) return;
   sound.unlock();
   if (['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D', ' ', 'ArrowUp', 'w', 'W'].includes(k)) input.kind = 'key';
+  if (hub && hub.isOpen) return; // META-V2: rooms and sheets own the keys
   if (ui.isOpen) { if (k === 'Escape') ui.hide(); return; }
   if (qui.isOpen) { if (k === 'Escape') qui.hide(); return; }
   if (gui.isOpen) { if (k === 'Escape') gui.hide(); return; }
@@ -966,8 +1206,11 @@ $('btn-challenge').addEventListener('click', async () => {
 });
 $('btn-resume').addEventListener('click', resume);
 $('pause').addEventListener('pointerdown', (e) => { if (e.target === $('pause')) resume(); });
-$('btn-save').addEventListener('click', () => {
+const saveWide = () => { if (!cardCanvas || !SHARE.renderCard || !lastCardSim) return; SHARE.downloadCard(SHARE.renderCard(lastCardSim, lastSum, { ...lastCardMeta, size: 'wide' }), `forkwood-${lastSum.hash}-${lastSum.height}m-1200x630.png`); }; // V3.2-CARD: link-preview size
+if ($('btn-save-wide')) $('btn-save-wide').addEventListener('click', saveWide);
+$('btn-save').addEventListener('click', (e) => {
   if (!cardCanvas) return;
+  if (e.shiftKey) { saveWide(); return; } // V3.2-CARD
   SHARE.downloadCard(cardCanvas, `forkwood-${lastSum.hash}-${lastSum.height}m.png`);
   $('share-msg').textContent = 'Saved your tree as a PNG.';
 });
@@ -981,11 +1224,18 @@ $('btn-share').addEventListener('click', async () => {
   $('share-msg').textContent = { shared: 'Shared!', copied: 'Image copied: paste it into your post.', downloaded: copiedText ? 'Image saved and caption copied.' : 'Image saved.', cancelled: '', failed: 'Could not share on this browser.' }[r] || '';
 });
 // title screen: clicking empty space starts the game too
-$('title').addEventListener('pointerdown', (e) => {
-  if (e.target.closest('button')) return;
-  sound.unlock();
-  playMain();
-});
+// v3 HOME: a tap on empty space plays; a horizontal swipe anywhere changes world (the demo crossfades live)
+{ let p0 = null;
+  $('title').addEventListener('pointerdown', (e) => { p0 = e.target.closest('button, .rail, .tabbar, .home-pick, .wtree') ? { x: e.clientX, y: e.clientY, ui: true } : { x: e.clientX, y: e.clientY, ui: false }; }, { passive: true });
+  $('title').addEventListener('pointerup', (e) => {
+    if (!p0) return; const dx = e.clientX - p0.x, dy = e.clientY - p0.y, ui = p0.ui; p0 = null;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.3) { if (hub) { hub.swipe(dx < 0 ? 1 : -1); $('title').dataset.swiped = '1'; setTimeout(() => delete $('title').dataset.swiped, 60); } return; }
+    if (ui || Math.hypot(dx, dy) > 12) return;
+    sound.unlock();
+    playMain();
+  });
+  $('title').addEventListener('click', (e) => { if ($('title').dataset.swiped) { e.stopPropagation(); e.preventDefault(); } }, true);
+}
 
 window.addEventListener('resize', () => { renderer.resize(); frozen = false; });
 // iOS only unlocks WebAudio inside touchend/click, so listen there as well
@@ -1004,17 +1254,25 @@ function playTick(dt, inp) {
   if (inp.toggle || inp.charm) sdt = Math.max(sdt, 1 / 240); // never swallow a tap during a freeze
   step(sim, sdt, inp);
   handleEvents(sim, false);
+  sound.onEvents(sim.events); // V2-INT: v2 sim events (rides, rings, set pieces, bosses, world traps) -> SFX/music
 }
 
 let last = performance.now();
 let fpsAcc = 0, fpsN = 0, fpsVal = 60, frameMs = 0;
+// v2 ENGINE: frame-interval telemetry (p50/p95 over the last 240 frames) + ?debug overlay
+const frameRing = new Float32Array(240); let frameRingN = 0;
+function framePct(q) { const n = Math.min(frameRingN, frameRing.length); if (!n) return 0; const a = Array.from(frameRing.subarray(0, n)).sort((x, y) => x - y); return a[Math.min(n - 1, Math.floor(q * n))]; }
+const debugEl = params.has('debug') ? (() => { const d = document.createElement('div'); d.id = 'fw-debug'; d.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:99999;font:11px/1.35 ui-monospace,monospace;color:#d8ffe8;background:rgba(6,10,14,.78);padding:5px 7px;border-radius:6px;pointer-events:none;white-space:pre'; document.body.appendChild(d); return d; })() : null;
+let debugT = 0;
 
 let introUp = false, frozen = false; // v1.0.1 PERF: the story covers the screen; don't paint the world under it
 function frame(nowMs) {
   const t0 = performance.now();
   // feed the quality governor real frame intervals while the world is what's on screen
-  if (!introUp && !paused && (mode === 'play' || mode === 'title') && document.visibilityState === 'visible') quality.sample(nowMs - last);
+  if (!introUp && !paused && mode === 'play' && document.visibilityState === 'visible') quality.sample(nowMs - last); // v3 HOME: the 30 fps demo must not drag the tier down
   let dt = (nowMs - last) / 1000;
+  if (nowMs - last > 0 && nowMs - last < 1000) { frameRing[frameRingN % frameRing.length] = nowMs - last; frameRingN++; }
+  if (debugEl && nowMs - debugT > 250) { debugT = nowMs; const g = renderer.gl, P = window.forkwood.perf; debugEl.textContent = `${P.renderer} ${Math.round(fpsVal)} fps  p50 ${P.p50.toFixed(1)}  p95 ${P.p95.toFixed(1)} ms\nframe ${frameMs.toFixed(1)} ms  gl ${g ? (g.stats.renderMs || 0).toFixed(1) : '-'} ms\ndraw calls ${P.drawCalls}  tex ${P.texMB} MB  q ${quality.mode}:${quality.tier} dpr ${renderer.dpr}\nworld ${P.world}  parts ${P.particles}`; }
   last = nowMs;
   if (!(dt > 0)) dt = 0;
   dt = Math.min(dt, 1 / 30);
@@ -1024,7 +1282,7 @@ function frame(nowMs) {
   const base = renderer.baseScale();
   // v1.0.1: a modal over the title (maps, shop/goals, quests, grove) freezes the demo world:
   // one clean frame (no traps, coins or banners), dimmed, then no redraws until it closes
-  const modal = mode === 'title' && !introUp && !!document.querySelector('#maps.show, #meta.show, #questmap.show, #grove.show');
+  const modal = mode === 'title' && !introUp && !!document.querySelector('#maps.show, #meta.show, #questmap.show, #grove.show, #room.show, #sheet.show, #settings.show'); // v3 HOME: the demo runs behind Home; rooms and sheets freeze it
   if (modal) {
     if (!frozen) { frozen = true; renderer.draw(sim, cam, fx, { hud: false, hints: false, coach: null, bestM: 0, reveal: true, calm: true, mirror: mirrored(), finishM: 0, clock: null }); renderer.veil(0.45); }
     frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
@@ -1034,14 +1292,17 @@ function frame(nowMs) {
   frozen = false;
   if (mode === 'title') {
     const inp = botInput(bot, sim);
-    step(sim, dt, inp);
+    if (demoFork) { inp.toggle = true; demoFork = false; } // v3 HOME: a seed tap forks the demo vine
+    step(sim, dt * DEMO_SPEED, inp);
     handleEvents(sim, true);
+    if (fx.particles.length > 80) fx.particles.length = 80; // v3 HOME: demo particle cap
     if (sim.dead || sim.t > 70) startDemo();
     if (sound.menu) sound.update(0, 1);
-    cam.scale += (base * 0.92 - cam.scale) * Math.min(1, dt * 3);
-    cam.anchor = 0.72;
-    cam.y += (sim.cy - cam.y) * Math.min(1, dt * 4);
-  } else if (mode === 'play' && !paused) {
+    if (demoSnap) { demoSnap = false; cam.scale = base * demoCam.scale; cam.anchor = demoCam.anchor; cam.y = sim.cy; }
+    cam.scale += (base * demoCam.scale - cam.scale) * Math.min(1, dt * 1.6);
+    cam.anchor += (demoCam.anchor - cam.anchor) * Math.min(1, dt * 1.6);
+    cam.y += (sim.cy - cam.y) * Math.min(1, dt * 3);
+  } else if (mode === 'play' && !paused && !window.__fwHold) { // V3.2 test hook: __fwHold freezes the sim (screenshots step it with forkwood.advance)
     let inp;
     if (BOT_MODE || autoplay) inp = botInput(bot, sim);
     else inp = { targetX: input.dir !== 0 ? null : input.targetX, dir: mirrored() ? -input.dir : input.dir, toggle: input.toggle, charm: input.charm };
@@ -1051,9 +1312,10 @@ function frame(nowMs) {
     sound.setFrost(sim.inFrost && !sim.dead);
     sound.setLowSap(sim.dead ? 1 : sim.sap / SAP_MAX);
     sound.update(Math.min(1, heightM(sim) / 600) * 0.8 + (sim.mult / 8) * 0.2, sim.mult);
+    if (sound.setFeelLift) sound.setFeelLift(sim.feelS && !sim.dead ? Math.min(0.55, sim.feelS.tier * 0.09 + (sim.feelS.flow ? 0.12 : 0)) : 0); // V3-FEEL: the music rises with the combo
     if (!sim.dead) {
       cam.scale += (base * (1 + (cam.punch || 0)) - cam.scale) * Math.min(1, dt * 4);
-      cam.anchor += (0.7 - cam.anchor) * Math.min(1, dt * 4);
+      cam.anchor += (playAnchor(sim) - cam.anchor) * Math.min(1, dt * 4);
       cam.y += (sim.cy - cam.y) * Math.min(1, dt * 9);
     } else {
       // gentle pull-back that shows off the tree before the card appears
@@ -1061,11 +1323,11 @@ function frame(nowMs) {
       cam.anchor += (0.32 - cam.anchor) * Math.min(1, dt * 2.2);
       cam.y += (sim.cy - cam.y) * Math.min(1, dt * 3);
       // P8-ECON: second chance (gems, cost doubles each time in a run)
-      if (sim.deathT > 0.5 && !deathShown && !reviveAsked && sim.econ && sim.end === 'sap') {
+      if (sim.deathT > 0.5 && !deathShown && !reviveAsked && sim.econ && sim.end === 'sap' && !CONTEST) { // V3.2: no gem/ad continue in the contest build
         reviveAsked = true;
-        rv.offer(sim.revives, (yes) => { if (yes && EC.payRevive(S, sim.revives) !== false && reviveSim(sim)) { persist(false); reviveAsked = false; fx.banner = { text: 'SECOND CHANCE', sub: 'sap refilled · the way ahead is clear', t: 0, max: 1.6, small: true }; sound.sprout(); } });
+        rv.offer(sim.revives, (yes, via) => { if (yes && (via === 'ad' || EC.payRevive(S, sim.revives) !== false) && reviveSim(sim)) { persist(false); reviveAsked = false; fx.banner = { text: 'SECOND CHANCE', sub: 'sap refilled · the way ahead is clear', t: 0, max: 1.6, small: true }; sound.sprout(); } });
       }
-      if (sim.deathT > 1.1 && !deathShown && !rv.open && (sim.dead)) showGameOver();
+      if (sim.deathT > (sim.feelS && !sim.won && !run.level ? 2.4 : 1.1) && !deathShown && !rv.open && (sim.dead)) showGameOver(); // V3-FEEL: a short window for the one-tap retry
     }
   } else if (mode === 'over') {
     step(sim, dt, {});
@@ -1073,9 +1335,19 @@ function frame(nowMs) {
     cam.scale += (base * 0.42 - cam.scale) * Math.min(1, dt * 2);
     cam.anchor += (0.32 - cam.anchor) * Math.min(1, dt * 2);
   }
-  if (!paused) updateFx(dt);
+  if (!paused) { updateFx(dt); updateFeelFx(fx, sim, dt); }
   introUp = document.body.classList.contains('intro-hold');
-  if (!introUp) renderer.draw(sim, cam, fx, {
+  // v3 HOME: the title demo paints at 30 fps (calm, slowed motion; halves GPU work behind the menu)
+  skipDemo = mode === 'title' && !DEMO_60 && (++demoTick & 1) === 1;
+  // V2-INT fix: the next frame is booked before drawing, so a draw error can never freeze the game
+  requestAnimationFrame(frame);
+  try { drawFrame(dt); } catch (e) { if (!frameErr) { frameErr = 1; console.warn('[forkwood] frame draw failed, continuing:', e && e.message); } }
+  if (mode === 'play' && !paused && sim.feelS && (!sim.dead || sim.deathT < 0.35)) captureReplay(nowMs); // V3-FEEL
+  frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
+}
+let frameErr = 0, skipDemo = false;
+function drawFrame(dt) {
+  if (!introUp && !skipDemo) renderer.draw(sim, cam, fx, {
     hud: mode === 'play',
     hints: false,
     coach: coachView(sim),
@@ -1091,15 +1363,15 @@ function frame(nowMs) {
     acornPulse: fx.acornPulse || 0,
     touch: input.kind === 'touch',
     raceDraw: raceUI && raceUI.racing && run.mode === 'race' ? raceUI.draw : null, // P6-RACE
+    quickRetry: mode === 'play' && quickRetryOk(), // V3-FEEL
+    stake: !daily && run.mode === 'classic' ? run.stake : 'sapling', // V3.2: the sun shaft is weaker on Ancient
     ghostM: mode === 'play' && CHALLENGE && CHALLENGE.duel && isChallengeRun() ? R.ghostHeight(CHALLENGE.duel, sim.t) : null,
   });
-  if (!introUp) SEA.drawOverlay(renderer, sim, SEASON.theme, paused ? 0 : dt, isCalm()); // P6-SEASONS
-  frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
-  requestAnimationFrame(frame);
+  if (!introUp && !skipDemo) SEA.drawOverlay(renderer, sim, SEASON.theme, paused ? 0 : dt, isCalm()); // P6-SEASONS
 }
 
 // testing hooks (used by tests/smoke.mjs)
-export const VERSION = '1.0.1';
+export const VERSION = '1.0.0';
 window.forkwood = {
   version: VERSION,
   get mode() { return mode; },
@@ -1107,6 +1379,11 @@ window.forkwood = {
   get sim() { return sim; },
   get fps() { return fpsVal; },
   get frameMs() { return frameMs; },
+  // v2 ENGINE telemetry: rAF interval percentiles, GPU draw calls, texture MB, renderer in use
+  get perf() { const g = renderer.gl; return { renderer: g ? g.backend : 'canvas2d', glWhy: renderer.glWhy || null, fps: fpsVal, frameMs, p50: framePct(0.5), p95: framePct(0.95), drawCalls: g ? g.stats.drawCalls : null, texMB: g ? g.stats.texMB : null, renderMs: g ? g.stats.renderMs : null, world: g ? g.worldId : null, particles: g ? g.flow.length + g.amb.length + (g.fxDrawn || 0) : fx.particles.length }; },
+  resetPerf() { frameRingN = 0; },
+  get gfx() { return renderer.gl; },
+  setWorld: (id) => import('./worlds.js').then((m) => m.setWorld(id)),
   get quality() { return { mode: quality.mode, tier: quality.tier, dpr: renderer.dpr, blur: quality.blur, frozen, log: quality.log }; },
   setQuality: (m) => { quality.setMode(m); refreshTitle(); return quality.mode; },
   get coach() { return coach.step; },
@@ -1147,7 +1424,7 @@ window.forkwood = {
   startMode: (id) => startMode(id),
   start: (d = false) => startRun(d),
   setBotSkill: (k) => { botSkill = k; },
-  killNow: () => { if (sim) sim.sap = 0.001; },
+  killNow: () => { if (sim) { sim.sap = 0.001; if (sim.feelS) { sim.feelS.gasp = 0; sim.feelS.gaspCd = 999; } } }, // V3-INT: a test kill skips the last-gasp clutch
   // play N seconds through the real gameplay path (coach, hit-stop, events) synchronously
   advance: (sec, inp = {}) => {
     const n = Math.round(sec * 60);
@@ -1204,6 +1481,8 @@ if (RACE_ROOM) {
 if (params.get('fb') === 'race') setTimeout(() => ui.toast('Live race could not connect. Grow this course, then tap Duel to send your friend the same tree.', 'gift'), 1700);
 // P6-RACE end
 $('btn-story').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); replayStory(); });
+$('btn-episodes').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); replayStory(); });
+$('btn-howto').addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); showHowToPlay(); });
 // P8-MAPS: map chip + carousel on the title; the chosen map themes the backdrop and the postcard
 // v1.0: maps are owned through the save (S.econ.maps), bought with acorns
 { const E0 = EC.ensureEcon(S), legacy = MAPS_API.takeLegacyOwned(); if (legacy.length) { for (const id of legacy) if (EC.MAP_PRICE[id] && !E0.maps.includes(id)) E0.maps.push(id); persist(false); } }
@@ -1215,17 +1494,47 @@ const mapBuy = createMapBuy({ getSave: () => S, sound, maps: MAPS_API, toast: (t
 window.addEventListener('forkwood:map-unlock', (e) => { const d = (e && e.detail) || {}; if (d.id) mapBuy.offer(d.id); });
 const mapsUI = createMapsUI({ sound, onPlay: () => $('btn-play').click() });
 if (window.forkwood) window.forkwood.maps = mapsUI;
+// META-V2: museum hub (home painting, rails, 5 tabs, rooms, store sheets)
+hub = createHub({ getSave: () => S, persist, sound, isCalm, getMode: () => mode,
+  selectWorld: (id, legacy) => { try { if (MAPS_API.isUnlocked(legacy)) MAPS_API.select(legacy); } catch { /* v1 slot carry-over only */ } },
+  onPlay: () => playMain(), toast: (t, k) => ui.toast(t, k), openGoals: (t) => ui.show(t), openOldShop: (v) => ui.showShop(v), openGrove: (t) => gui.show(t),
+  refreshBar: () => ui.refreshBar(mode),
+  demo: { fork: () => { demoFork = true; }, cam: (c, snap) => { if (c) Object.assign(demoCam, c); if (snap) demoSnap = true; } } }); // v3 HOME
+window.forkwood.hub = hub; Object.defineProperty(window.forkwood, 'store', { get: () => hub.ST, configurable: true }); // store.js loads on idle (first-load budget)
+hub.refresh(mode);
+// V2-INT: menu events -> engine, economy, audio
+window.addEventListener('forkwood:world-select', (e) => { const id = e && e.detail && e.detail.id; if (!WORLD_IDS.includes(id)) return; showWorld(id); }); // v3 HOME: on Home the demo keeps growing while the world crossfades (GL layer fade)
+window.addEventListener('forkwood:vine-skin', () => applySkin());
+window.addEventListener('forkwood:next-world', (e) => { const id = e && e.detail && e.detail.id; if (!WORLD_IDS.includes(id)) return; try { hub.chooseWorld(id); } catch { /* hub */ } trialWorld = id; showWorld(id); run = { ...run, level: null, mode: 'classic', week: null }; startRun(false); }); // Forkwood 1.0: results lure
+window.addEventListener('forkwood:world-trial', (e) => { const id = e && e.detail && e.detail.id; if (!WORLD_IDS.includes(id)) return; trialWorld = id; if (hub) hub.closeRoom(); startMode('classic'); });
+applyLowMem();
+if (mode === 'title') showWorld(selectedWorld());
 if (FIRST_LAUNCH) {
-  // the story, then straight into the first (tutorial) run; the menu appears only after it
+  // Forkwood 1.0: title gate (one tap, unlocks audio) -> skippable prologue -> how to play -> first (coached) run
   document.body.classList.add('intro-hold');
   $('title').classList.remove('show');
   $('press').classList.add('done');
-  import('./intro.js').then(({ playIntro }) => playIntro({ calm: isCalm(), sound, onDone: (why) => {
-    S.ret.introSeen = true; persist(false);
-    document.body.classList.remove('intro-hold');
-    window.forkwood.introEnd = why;
-    startMode('classic');
-  } })).catch(() => { document.body.classList.remove('intro-hold'); $('title').classList.add('show'); });
+  const gate = document.createElement('section');
+  gate.className = 'fw-gate'; gate.setAttribute('aria-label', 'Forkwood');
+  gate.innerHTML = '<div class="fw-gate-in"><h1 class="logo">Forkwood</h1><p class="fw-git">git checkout -b sprout</p><p class="fw-tag">Git you can play. Fork your vine,<br>merge for combos, grow to the treetop.</p><button class="btn primary play-xl fw-begin" type="button">Tap to begin</button><p class="fw-ver">Forkwood 1.0 \u00B7 free, no account</p></div>';
+  document.body.appendChild(gate);
+  window.forkwood.gate = gate;
+  const begin = (e) => {
+    if (e) e.stopPropagation();
+    if (!gate.isConnected) return;
+    sound.unlock(); gate.remove();
+    import('./intro.js').then(({ playIntro }) => playIntro({ calm: isCalm(), sound, onDone: (why) => {
+      S.ret.introSeen = true; persist(false);
+      window.forkwood.introEnd = why;
+      import('./howto.js').then(({ showHowTo }) => showHowTo({ sound, calm: isCalm() })).catch(() => {}).then(() => {
+        document.body.classList.remove('intro-hold');
+        startMode('classic');
+      });
+    } })).catch(() => { document.body.classList.remove('intro-hold'); $('title').classList.add('show'); });
+  };
+  gate.addEventListener('pointerdown', (e) => e.stopPropagation());
+  gate.addEventListener('click', begin);
+  addEventListener('keydown', (e) => { if (gate.isConnected && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); begin(); } }, true);
 } else {
   // the print pull: the paper sheet lifts off the first frame (skipped in calm mode)
   setTimeout(() => $('press').classList.add('done'), BOT_MODE || isCalm() ? 0 : 1400);

@@ -163,7 +163,7 @@ export function finishQuest(S, sum, ctx = {}) {
 /** Mark unlocks the player already has as seen (first load, so old saves are not spammed). */
 export function primeSeen(S) { repairQuest(S); for (const u of unlockState(S)) if (!S.quest.seen.includes(u)) S.quest.seen.push(u); }
 
-/** Spoiler-free text grid of the quest map for sharing (like a Wordle grid). */
+/** Spoiler-free text grid of the quest map for sharing (an emoji grid). */
 export function mapGrid(S) {
   const rows = WORLDS.map((w) => {
     if (!worldUnlocked(S, w.id)) return `${w.id} · locked`;

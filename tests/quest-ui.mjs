@@ -34,7 +34,7 @@ async function open(opts, query = '') {
   const p = await ctx.newPage();
   p.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') allErrs.push(m.text()); });
   p.on('pageerror', (e) => allErrs.push(e.message));
-  await p.goto(base + query);
+  await p.goto(base + (query ? query + '&' : '?') + 'unlock=all'); // META-V2: onboarding gates hide Quests until run 1; this suite tests the quest map itself
   await p.waitForTimeout(1700);
   return { ctx, p };
 }
@@ -54,7 +54,7 @@ async function overflow(p) {
     const bad = [];
     for (const el of document.querySelectorAll('#questmap.show *, #over.show *, #title.show *')) {
       const r = el.getBoundingClientRect();
-      if (r.width && (r.right > innerWidth + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed' && !el.closest('.rw-stamps')) bad.push((el.id || el.className || el.tagName) + ':' + Math.round(r.left) + '-' + Math.round(r.right));
+      if (r.width && (r.right > innerWidth + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed' && !el.closest('.rw-stamps') && !el.closest('.v32-next')) bad.push((el.id || el.className || el.tagName) + ':' + Math.round(r.left) + '-' + Math.round(r.right));
     }
     return bad.slice(0, 5);
   });

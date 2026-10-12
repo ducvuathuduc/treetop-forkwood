@@ -1,0 +1,56 @@
+{
+ "gilded": {
+  "sky.p": [
+   "gilded.layer.sky.p.webp",
+   288210,
+   40,
+   1080,
+   1920
+  ],
+  "sky.p.avif": [
+   "gilded.layer.sky.p.avif",
+   125111,
+   32
+  ],
+  "sky.d": [
+   "gilded.layer.sky.d.webp",
+   442702,
+   40,
+   2560,
+   1440
+  ],
+  "sky.d.avif": [
+   "gilded.layer.sky.d.avif",
+   195297,
+   32
+  ],
+  "far.p": [
+   "gilded.layer.far.p.webp",
+   94302,
+   40,
+   1080,
+   1216
+  ],
+  "far.d": [
+   "gilded.layer.far.d.webp",
+   227944,
+   40,
+   2560,
+   1216
+  ],
+  "side.p": [
+   "gilded.layer.side.p.webp",
+   106000,
+   40,
+   1080,
+   1053
+  ],
+  "side.d": [
+   "gilded.layer.side.d.webp",
+   168790,
+   84,
+   2560,
+   1156
+  ]
+ }
+}

@@ -158,7 +158,10 @@ export function drawStamp(ctx, map, cx, cy, W, H, o = {}) {
   const g = c.getContext('2d');
   g.fillStyle = paperS; g.fillRect(0, 0, W, H);
   const pad = 16, ix = pad, iy = pad, iw = W - pad * 2, ih = H - pad * 2 - 46;
-  g.save(); g.beginPath(); g.rect(ix, iy, iw, ih); g.clip(); drawMotif(g, st, ix, iy, iw, ih); g.restore();
+  g.save(); g.beginPath(); g.rect(ix, iy, iw, ih); g.clip();
+  if (map.painting) { const im = map.painting, k = Math.max(iw / im.naturalWidth, ih / im.naturalHeight); g.drawImage(im, ix + (iw - im.naturalWidth * k) / 2, iy + (ih - im.naturalHeight * k) / 2, im.naturalWidth * k, im.naturalHeight * k); } // V2-INT: world painting
+  else drawMotif(g, st, ix, iy, iw, ih);
+  g.restore();
   g.strokeStyle = rgba(st.ink, 0.85); g.lineWidth = 2; g.strokeRect(ix + 1, iy + 1, iw - 2, ih - 2);
   // value: the height reached
   const val = `${o.height != null ? o.height : 0}`;

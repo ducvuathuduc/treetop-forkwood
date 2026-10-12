@@ -1,0 +1,677 @@
+[
+{
+"id": "icon.pickup.lantern",
+"atlas": "common.pickups",
+"A1_halo": 0.0722,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0458,
+"A4_inkring": 0.401
+},
+{
+"id": "icon.pickup.dewbubble",
+"atlas": "common.pickups",
+"A1_halo": 0.2157,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.064,
+"A4_inkring": 0.245
+},
+{
+"id": "icon.pickup.shears",
+"atlas": "common.pickups",
+"A1_halo": 0.2425,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.061,
+"A4_inkring": 0.579
+},
+{
+"id": "icon.pickup.prism",
+"atlas": "common.pickups",
+"A1_halo": 0.0807,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0389,
+"A4_inkring": 0.304
+},
+{
+"id": "icon.pickup.twinseed",
+"atlas": "common.pickups",
+"A1_halo": 0.2274,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1372,
+"A4_inkring": 0.388
+},
+{
+"id": "icon.pickup.hourglass",
+"atlas": "common.pickups",
+"A1_halo": 0.2478,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0805,
+"A4_inkring": 0.48
+},
+{
+"id": "icon.pickup.acornrain",
+"atlas": "common.pickups",
+"A1_halo": 0.0145,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0955,
+"A4_inkring": 0.113
+},
+{
+"id": "icon.pickup.goldenleaf",
+"atlas": "common.pickups",
+"A1_halo": 0.0019,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0963,
+"A4_inkring": 0.085
+},
+{
+"id": "icon.pickup.leafsail",
+"atlas": "common.pickups",
+"A1_halo": 0.0081,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1121,
+"A4_inkring": 0.146
+},
+{
+"id": "icon.pickup.sunlight",
+"atlas": "common.pickups",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0281,
+"A4_inkring": 0.0
+},
+{
+"id": "icon.pickup.ink2",
+"atlas": "common.pickups",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1142,
+"A4_inkring": 0.357
+},
+{
+"id": "icon.pickup.saprush",
+"atlas": "common.pickups",
+"A1_halo": 0.0096,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0689,
+"A4_inkring": 0.022
+},
+{
+"id": "fx.dewdrop",
+"atlas": "common.pickups",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0791,
+"A4_inkring": 0.0
+},
+{
+"id": "ATLAS common.pickups",
+"atlas": "common.pickups",
+"A9_bytesRGBA": 1146880,
+"file_bytes": 52790,
+"dims": "512x560"
+},
+{
+"id": "vehicle.hummingbird.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0242,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0153,
+"A4_inkring": 0.73
+},
+{
+"id": "vehicle.bamboorocket.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0331,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0417,
+"A4_inkring": 0.738
+},
+{
+"id": "vehicle.dandelion.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.033,
+"A4_inkring": 0.504
+},
+{
+"id": "vehicle.mushroom.bounce",
+"atlas": "common.vehicles",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0246,
+"A4_inkring": 0.933
+},
+{
+"id": "vehicle.stagstrider.walk",
+"atlas": "common.vehicles",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0313,
+"A4_inkring": 0.918
+},
+{
+"id": "vehicle.papercrane.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0643,
+"A4_inkring": 0.735
+},
+{
+"id": "vehicle.beanstalk.ride",
+"atlas": "common.vehicles",
+"A1_halo": 0.0014,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0316,
+"A4_inkring": 0.859
+},
+{
+"id": "vehicle.swiftlet.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0212,
+"A4_inkring": 0.913
+},
+{
+"id": "vehicle.morpho.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0011,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0237,
+"A4_inkring": 0.991
+},
+{
+"id": "vehicle.goldengoose.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0516,
+"A4_inkring": 0.332
+},
+{
+"id": "vehicle.kite.fly",
+"atlas": "common.vehicles",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0353,
+"A4_inkring": 0.687
+},
+{
+"id": "ATLAS common.vehicles",
+"atlas": "common.vehicles",
+"A9_bytesRGBA": 2326528,
+"file_bytes": 79260,
+"dims": "1024x568"
+},
+{
+"id": "icon.cur.acorn",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0144,
+"A4_inkring": 1.0
+},
+{
+"id": "icon.cur.gem",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0285,
+"A4_inkring": 0.898
+},
+{
+"id": "icon.cur.acornpile",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0182,
+"A4_inkring": 1.0
+},
+{
+"id": "icon.cur.gempile",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0314,
+"A4_inkring": 1.0
+},
+{
+"id": "icon.cur.acornheap",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0232,
+"A4_inkring": 0.988
+},
+{
+"id": "icon.cur.gemheap",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0462,
+"A4_inkring": 0.925
+},
+{
+"id": "icon.boost.ridetoken",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0355,
+"A4_inkring": 1.0
+},
+{
+"id": "icon.drop.seedpod",
+"atlas": "common.currency",
+"A1_halo": 0.0127,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.027,
+"A4_inkring": 0.977
+},
+{
+"id": "icon.drop.knothollow",
+"atlas": "common.currency",
+"A1_halo": 0.0097,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0263,
+"A4_inkring": 0.815
+},
+{
+"id": "icon.drop.chest",
+"atlas": "common.currency",
+"A1_halo": 0.0055,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0434,
+"A4_inkring": 0.91
+},
+{
+"id": "icon.boost.magnet",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.043,
+"A4_inkring": 0.729
+},
+{
+"id": "icon.boost.headstart",
+"atlas": "common.currency",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0456,
+"A4_inkring": 0.977
+},
+{
+"id": "ATLAS common.currency",
+"atlas": "common.currency",
+"A9_bytesRGBA": 1720320,
+"file_bytes": 68884,
+"dims": "512x840"
+},
+{
+"id": "icon.skill.sparrow",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1,
+"A4_inkring": 0.657
+},
+{
+"id": "icon.skill.squirrel",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1007,
+"A4_inkring": 0.677
+},
+{
+"id": "icon.skill.owl",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0955,
+"A4_inkring": 0.673
+},
+{
+"id": "icon.skill.fox",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0754,
+"A4_inkring": 0.669
+},
+{
+"id": "icon.skill.snail",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0987,
+"A4_inkring": 0.669
+},
+{
+"id": "icon.skill.moth",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1048,
+"A4_inkring": 0.698
+},
+{
+"id": "icon.skill.frog",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1132,
+"A4_inkring": 0.69
+},
+{
+"id": "icon.skill.beetle",
+"atlas": "common.skills",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1342,
+"A4_inkring": 0.622
+},
+{
+"id": "ATLAS common.skills",
+"atlas": "common.skills",
+"A9_bytesRGBA": 909312,
+"file_bytes": 42790,
+"dims": "512x444"
+},
+{
+"id": "icon.ring.deepsap",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0593,
+"A4_inkring": 0.668
+},
+{
+"id": "icon.ring.quickmerge",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0922,
+"A4_inkring": 0.647
+},
+{
+"id": "icon.ring.magnetroots",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1003,
+"A4_inkring": 0.647
+},
+{
+"id": "icon.ring.thickbark",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0784,
+"A4_inkring": 0.663
+},
+{
+"id": "icon.ring.luckyclover",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0906,
+"A4_inkring": 0.643
+},
+{
+"id": "icon.ring.ridecraft",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0669,
+"A4_inkring": 0.712
+},
+{
+"id": "icon.ring.emberheart",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0563,
+"A4_inkring": 0.732
+},
+{
+"id": "icon.ring.echofork",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0708,
+"A4_inkring": 0.72
+},
+{
+"id": "icon.ring.sunwise",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0875,
+"A4_inkring": 0.692
+},
+{
+"id": "icon.ring.acornsense",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0647,
+"A4_inkring": 0.684
+},
+{
+"id": "icon.ring.thorndancer",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0811,
+"A4_inkring": 0.728
+},
+{
+"id": "icon.ring.crowfriend",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0637,
+"A4_inkring": 0.716
+},
+{
+"id": "icon.ring.dewring",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0685,
+"A4_inkring": 0.7
+},
+{
+"id": "icon.ring.graft",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0582,
+"A4_inkring": 0.712
+},
+{
+"id": "icon.knot.brittlebark",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0329,
+"A4_inkring": 0.879
+},
+{
+"id": "icon.knot.thirst",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0308,
+"A4_inkring": 0.88
+},
+{
+"id": "icon.knot.restlesscrow",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0291,
+"A4_inkring": 0.875
+},
+{
+"id": "icon.knot.thornfall",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0317,
+"A4_inkring": 0.872
+},
+{
+"id": "ui.ring.card",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0282,
+"A4_inkring": 0.994
+},
+{
+"id": "ui.ring.pip",
+"atlas": "common.rings",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0273,
+"A4_inkring": 0.511
+},
+{
+"id": "ATLAS common.rings",
+"atlas": "common.rings",
+"A9_bytesRGBA": 2621440,
+"file_bytes": 98664,
+"dims": "1024x640"
+}
+]

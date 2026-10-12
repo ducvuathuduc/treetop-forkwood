@@ -1,0 +1,162 @@
+[
+{
+"id": "ui.frame.meadow",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0346,
+"A4_inkring": 0.639
+},
+{
+"id": "ui.frame.starry",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0379,
+"A4_inkring": 0.355
+},
+{
+"id": "ui.frame.fresco",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0433,
+"A4_inkring": 0.0
+},
+{
+"id": "ui.frame.ukiyo",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0164,
+"A4_inkring": 0.571
+},
+{
+"id": "ui.frame.lilies",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0417,
+"A4_inkring": 0.0
+},
+{
+"id": "ui.frame.gilded",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.077,
+"A4_inkring": 0.373
+},
+{
+"id": "ui.frame.lacquer",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0255,
+"A4_inkring": 0.514
+},
+{
+"id": "ui.frame.default",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0107,
+"A4_inkring": 0.551
+},
+{
+"id": "ui.button.primary",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0246,
+"A4_inkring": 1.0
+},
+{
+"id": "ui.button.primary.pressed",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0114,
+"A4_inkring": 1.0
+},
+{
+"id": "ui.panel.parchment",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0275,
+"A4_inkring": 1.0
+},
+{
+"id": "ui.button.secondary",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.015,
+"A4_inkring": 1.0
+},
+{
+"id": "ui.button.close",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0294,
+"A4_inkring": 1.0
+},
+{
+"id": "ui.bar.track",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0387,
+"A4_inkring": 1.0
+},
+{
+"id": "ui.plaque",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0354,
+"A4_inkring": 1.0
+},
+{
+"id": "ui.locked.rope",
+"atlas": null,
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 4,
+"A7_sharp1x": 0.0124,
+"A4_inkring": 1.0
+}
+]

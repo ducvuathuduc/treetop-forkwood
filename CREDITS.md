@@ -12,6 +12,8 @@ The tree, leaves, blossoms, skins, effects and interface icons are drawn in code
 
 `assets/story/` holds the eight manga panels of the opening story (`tree`, `sky`, `dark`, `eyes`, `crow`, `hero`, `reach`, `resolve`). They were made for Forkwood with an AI image model from our own prompts (manga style), then cropped and compressed to WebP by us (about 245 KB together, loaded only when the story plays). The captions, speech bubbles, speed and focus lines, sound words and panel frames are drawn in code (`src/intro.js`, `style.css`). They depict no existing characters, logos or brands, and are released with the game under its MIT licence.
 
+`assets/story/ep/` holds the 21 panels (plus 8 thumbnails) of the seven story episodes, one episode per world (Forkwood 1.0, 12 Oct 2026). They were made for Forkwood with an AI image model from our own prompts, using our own prologue art as the character reference (Sprout and the crow are our characters); the world backgrounds emulate public-domain painting techniques (Van Gogh, Monet, Hokusai, Klimt, Renaissance fresco, Vietnamese sơn mài) and copy no specific composition. Cropped and compressed to WebP by us, lazy-loaded per episode. No existing characters, logos or brands. Released with the game under its MIT licence.
+
 ## Trap effects (v1.0, made for Forkwood)
 
 `assets/art/fx-crow.webp` (25 KB atlas: six flight frames and five perched poses of the crow trap) was generated for Forkwood with an AI image model from our own prompt (flat dark silhouette with a coral rim, art-bible direction A), then keyed, cut, aligned and packed to WebP by us. It is loaded only once a crow trap spawns. Every other trap, pickup and boost effect is drawn in code (`src/render-traps-fx.js`). Released with the game under its MIT licence.
@@ -51,6 +53,12 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
+## Music and sound, Forkwood 2.0 (own work, MIT)
+
+Everything under `assets/v2/*/audio/` (seven adaptive world loops with calm / chase / boss stems, and 249 sound cues in nine sprites) was composed and synthesised for Forkwood by our own code in `tools/audio/` (Python + NumPy/SciPy: additive and modal instrument models, a generated reverb, our own loudness measurement), then encoded with FFmpeg (libopus for `.ogg`, FFmpeg's native AAC encoder for `.m4a`). No samples, soundfonts, loops or third-party recordings are used; the melodies and harmonies are original. The idioms are only styles (anime-film piano, a celesta waltz, choir and organ, koto and end-blown flute in the miyako-bushi scale, impressionist piano, harp, đàn tranh / sáo trúc / đàn bầu in the điệu Bắc pentatonic); no existing piece is quoted. Released with the game under its MIT licence. The build tools used (NumPy BSD-3, SciPy BSD-3, soundfile BSD-3, Matplotlib PSF-style for the analysis plots, FFmpeg LGPL/GPL as a command-line tool) are not shipped.
+
+The v1 sprite below is kept only as the fallback when the v2 manifest cannot load.
+
 ## Sound effects (CC0 1.0, public domain)
 
 Nine clips, trimmed and packed into one 37 KB sprite (`assets/audio/sfx.mp3`), layered under synthesised tones:
@@ -72,11 +80,28 @@ Vendored as `src/vendor/zzfx.js` with one change, noted at the top of the file: 
 
 * Trauma-based screen shake: Squirrel Eiserloh, "Math for Game Programmers: Juicing Your Cameras With Math", GDC 2016.
 * Game feel: Martin Jonasson & Petri Purho, "Juice it or lose it" (2012); Jan Willem Nijman, "The Art of Screenshake" (2013).
-* Progression design: levels of three goals after Alto's Adventure (Snowman); cosmetic-only unlocks so scores stay comparable after Crossy Road (Hipster Whale, GDC 2015); quests as an "endless tutorial" after David Fox, "Don't Pass on Battle Pass" (GDC 2022); streak freeze after Duolingo. Ideas only, no assets.
-* Course and power-up design (pass 3): chunk tiers with costs and a growing budget after Tommy Thompson's write-up of *Sure Footing*; a sawtooth with designed rest beats after the build/peak/relax pacing of *Left 4 Dead*'s director; vehicles as pace breakers after *Jetpack Joyride* (Luke Muscat, GDC 2012); stackable timed power-ups after *Subway Surfers*; self-chosen risk for reward after *Downwell*'s combo; a guaranteed path first after *Spelunky*'s generator. Ideas only, no assets. The storm, lightning, thorn columns, sliding thorns, power-up tokens and graft medallions are drawn in code for Forkwood; the new sounds are synthesised in code (no new files).
+* Progression design: levels of three goals; cosmetic-only unlocks so scores stay comparable; quests as an "endless tutorial"; a streak freeze. Common genre ideas only, no third-party assets.
+* Course and power-up design (pass 3): chunk tiers with costs and a growing budget; a sawtooth with designed rest beats (build/peak/relax pacing); vehicles as pace breakers; stackable timed power-ups (a runner-genre standard); self-chosen risk for reward; a guaranteed path first. Common genre ideas only, no third-party assets. The storm, lightning, thorn columns, sliding thorns, power-up tokens and graft medallions are drawn in code for Forkwood; the new sounds are synthesised in code (no new files).
 
 ## Not shipped
 
 Playwright and Chromium are used only to test the game locally. Apart from ZzFX above, no libraries, trackers or third-party requests are included in the game. All skins, icons and the acorn are drawn in code or as inline SVG made for Forkwood.
 
-* Retention design (v0.7): streaks, up to two streak freezes and milestone celebrations after Duolingo's published experiments (blog.duolingo.com, "The habit-building research behind your Duolingo streak", 2022); weekly leagues with promotion and demotion after Duolingo Leagues; a free tiered season track after Subway Surfers' Season Hunt (sybo.helpshift.com); async challenge links after Wordle-style sharing. Ideas only, no assets. Forkwood's league rivals are simulated ghosts and say so.
+* Retention design (v0.7): streaks, up to two streak freezes and milestone celebrations; weekly leagues with promotion and demotion; a free tiered season track (a common free-to-play pattern); async challenge links. Common genre ideas only, no third-party assets. Forkwood's league rivals are simulated ghosts and say so.
+
+## Forkwood 2.0 "Living Masterpieces" art (assets/v2/, made for Forkwood)
+
+Everything under `assets/v2/` (7 worlds × sky/far/side layers for portrait and desktop, per-world trap and boss atlases, pickups, vehicles, currencies, drops, boosts, critter-skill badges, Growth Rings and Knots, 12 vine skins, gallery frames and UI kit) was generated for Forkwood with an AI image model (Hark `generate_image`) from our own prompts, then keyed, cleaned (despill, island removal, colour bleed, hole fill), sliced, made seamless, graded, textured at native resolution, packed and compressed by our own scripts in `art-src/tools/`. The prompt templates are recorded in `art-src/PROMPTS-V2.md`.
+
+- **Reference images used as style input:** the owner's uploads `files/uploads/image-7/8/9.webp` (style references only), and our own v13 concept paintings `work/v13-maps/map-*.png`. No third-party image was copied into an asset.
+- **Painters emulated in technique only (public domain):** Vincent van Gogh (d. 1890), Raphael and the Italian buon-fresco tradition (16th c.), the Edo ukiyo-e masters (Hokusai d. 1849), Claude Monet (d. 1926), Gustav Klimt (d. 1918), and traditional Vietnamese sơn mài lacquer technique and folk motifs (lotus, koi, bamboo, đình roofs, gold/silver leaf, eggshell inlay). All compositions are original: no Starry Night, School of Athens, Great Wave, Tree of Life or specific 20th-century lacquer work is reproduced.
+- **No third-party assets, fonts, textures or code** were added by the art stream. Python libraries used offline in the pipeline: OpenCV (Apache-2.0), NumPy (BSD), Pillow (MIT-CMU). They are not shipped.
+- **V3 anime meadow (2026-10-12):** the five meadow height zones (Sunset meadow, Shrine hill, Sea of clouds, Blue hour above the clouds, Milky Way night: sky, far and side layers in `assets/v2/meadow/`) are new paintings generated the same way (Hark `generate_image`, our own prompts, templates in `art-src/PROMPTS-V2.md` § V3 ANIME MEADOW), detail up-res by our own `art-src/tools/anime_upres.py` and composed by `art-src/tools/build_meadow_anime.py`. Generic "anime film background" style only; no film, studio or living artist is named or reproduced. Shrine-hill motifs (torii, stone lanterns, shimenawa rope) are traditional public-domain forms.
+- AI disclosure line for store pages: *"Paintings and sprites AI-assisted from our own prompts and art direction, post-processed by our own pipeline; masters emulated in technique only (public domain)."*
+
+## Forkwood 2.0 META (menus, store)
+- **Cormorant Garamond** (700 + Vietnamese subset) — SIL Open Font License 1.1, © The Cormorant Project Authors. `assets/fonts/v2/cormorant-*.woff2`, licence in `assets/fonts/v2/OFL-CormorantGaramond.txt`. Latin file subset with fontTools (OFL allows modification; the Reserved Font Name is not used for the subset file name).
+- **Be Vietnam Pro** (500, 800 + Vietnamese subset) — SIL Open Font License 1.1, © The Be Vietnam Pro Project Authors. `assets/fonts/v2/bevn-*.woff2`, licence in `assets/fonts/v2/OFL-BeVietnamPro.txt`.
+- **GSAP 3.15** (single copy: ENGINE's `src/vendor/gsap.mjs`) — GreenSock "Standard No-Charge License" (https://gsap.com/standard-license), free for commercial use but **not** an OSI licence (flagged against CONTRACT's CC0/MIT/OFL rule; approved in PIPELINE.md / owner brief). Loaded lazily; the menus fall back to the Web Animations API without it.
+- Placeholder gallery paintings `assets/meta/paintings/*.webp` — downscaled from the project's own v13 concept paintings (work/v13-maps, own-made, AI-assisted). Swappable through registry ids `<world>.ui.painting`.
+- Menu icons, gilt frame corners and all CSS art — own-made.

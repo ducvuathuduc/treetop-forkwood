@@ -1,0 +1,914 @@
+[
+{
+"id": "vine.skin.cel.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+343,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "default skin of meadow; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.cel.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 114,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+0,
+114,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.cel.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 115,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+114,
+116,
+116,
+115
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.impasto.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+512,
+343,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "default skin of starry; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.impasto.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 110,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+114,
+0,
+110,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.impasto.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 115,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+230,
+116,
+116,
+115
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.frescochalk.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+411,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "default skin of fresco; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.frescochalk.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 107,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+232,
+232,
+116,
+107
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.frescochalk.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 96,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+580,
+232,
+116,
+96
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.sumi.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+512,
+411,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "default skin of ukiyo; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.sumi.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 109,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+224,
+0,
+109,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.sumi.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 111,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+694,
+116,
+116,
+111
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.dabs.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+479,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "default skin of lilies; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.dabs.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 107,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+333,
+0,
+107,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.dabs.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 105,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+348,
+232,
+116,
+105
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.goldleaf.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 204,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+512,
+479,
+204,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "default skin of gilded; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.goldleaf.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 104,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+440,
+0,
+104,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.goldleaf.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 115,
+"h": 116,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+544,
+0,
+115,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.lacquer.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+547,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "default skin of lacquer; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.lacquer.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 112,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+659,
+0,
+112,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.lacquer.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 108,
+"h": 116,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+771,
+0,
+108,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.watercolour.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+512,
+547,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.watercolour.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 111,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+879,
+0,
+111,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.watercolour.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 113,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+462,
+116,
+116,
+113
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.sakura.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 405,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+615,
+405,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.sakura.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 114,
+"h": 116,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+116,
+114,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.sakura.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 112,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+578,
+116,
+116,
+112
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.maple.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 344,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+405,
+615,
+344,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.maple.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 109,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+116,
+232,
+116,
+109
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.maple.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 82,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+696,
+232,
+116,
+82
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.moonsilver.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 512,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+683,
+512,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.moonsilver.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 111,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+810,
+116,
+116,
+111
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.moonsilver.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 114,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+346,
+116,
+116,
+114
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+},
+{
+"id": "vine.skin.chudau.stem",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 427,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+512,
+683,
+427,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "shop skin; tileable stem strip along x, stretch/warp along the vine path; 48px core thickness @2x",
+"tile": "x"
+},
+{
+"id": "vine.skin.chudau.leaf",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 111,
+"anchor": [
+0.1,
+0.9
+],
+"atlas": "common.vines",
+"rects": [
+[
+0,
+232,
+116,
+111
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "anchor = leaf base (rotate around it)"
+},
+{
+"id": "vine.skin.chudau.flower",
+"file": "common/common.vines.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 98,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vines",
+"rects": [
+[
+464,
+232,
+116,
+98
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "bud/flower at forks and merges"
+}
+]

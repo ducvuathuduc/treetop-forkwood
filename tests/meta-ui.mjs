@@ -46,7 +46,7 @@ async function playRun(p, sec = 30, daily = false) {
 
 // 1. first visit: nothing extra on the title, the print pull lifts away
 const { ctx, p } = await open({ viewport: { width: 1280, height: 800 } });
-ok(await p.isHidden('#metabar') && await p.isHidden('#dock'), 'first visit: no wallet, dock or meta UI on the title (first 10 s untouched)');
+ok(await p.isVisible('#tabbar') && await p.isVisible('#btn-race'), 'first visit: tab bar and Live race are there from the start (Forkwood 1.0: nothing hidden)');
 ok(await fw(p, () => getComputedStyle(document.getElementById('press')).display === 'none'), 'print-pull intro is gone after load');
 await p.screenshot({ path: OUT + 'meta-01-first-title.png' });
 
@@ -66,7 +66,7 @@ await p.screenshot({ path: OUT + 'meta-02-gameover-rewards.png' });
 // 3. menu: gift, shop, buy and wear
 await p.click('#btn-menu');
 await p.waitForTimeout(600);
-ok(await p.isVisible('#dock') && await p.isVisible('#metabar'), 'after the first run the title shows the wallet and the dock');
+ok(await p.isVisible('#tabbar') && await p.isVisible('#metabar'), 'after the first run the title shows the wallet and the 5-tab bar');
 // pass 5: finishing a run counts for the streak, so the first run already opened today's gift
 const gs = await fw(p, () => ({ st: window.forkwood.save.streak, last: window.forkwood.save.streak.last }));
 ok(gs.st.count === 1 && await p.isHidden('#btn-gift'), `the first run opened day 1 of the gift streak (streak ${gs.st.count})`);
@@ -76,7 +76,7 @@ const afterGift = await fw(p, () => window.forkwood.save.acorns);
 ok(afterGift === before, `daily gift cannot be claimed twice (+${afterGift - before})`);
 await p.screenshot({ path: OUT + 'meta-03-title-after.png' });
 await fw(p, () => { window.forkwood.save.acorns += 3000; });
-await p.click('#dock [data-tab="shop"]');
+await fw(p, () => window.forkwood.ui.show('shop')); // META-V2: the v1 cosmetics book is the Grove's classic wardrobe
 await p.waitForTimeout(500);
 ok(await p.isVisible('#meta') && await p.isHidden('#title'), 'shop opens over the title');
 ok((await p.$$('#meta-body canvas.pv')).length >= 5, 'skin previews are drawn');
@@ -166,7 +166,7 @@ await ctx.close();
   ok(S.best.height === 455 && S.stats.runs === 12 && S.tutorial && S.acorns >= 156 && S.ach.treetop, 'old save migrated: best, runs, tutorial, acorns for metres, retro badges');
   await q.waitForTimeout(800);
   ok(/Welcome back/.test(await q.textContent('#toasts')), 'welcome-back toast explains the acorns');
-  ok(await q.isVisible('#dock'), 'returning players see the dock at once');
+  ok(await q.isVisible('#tabbar'), 'returning players see the tab bar at once');
   await q.screenshot({ path: OUT + 'meta-10-migrated.png' });
   await c2x.close();
 }
@@ -182,9 +182,9 @@ for (const [name, dev] of [['iphone13', devices['iPhone 13']], ['small', { viewp
     if (!sessionStorage.getItem('seeded')) { localStorage.clear(); localStorage.setItem('forkwood.stats', JSON.stringify({ runs: 3, meters: 900 })); localStorage.setItem('forkwood.tutorial', 'true'); sessionStorage.setItem('seeded', '1'); }
   });
   await q.screenshot({ path: OUT + `meta-11-${name}-title.png` });
-  const overlapDock = await fw(q, () => { const a = document.querySelector('#title .title-card').getBoundingClientRect(), b = document.getElementById('dock').getBoundingClientRect(); return a.bottom > b.top + 2 ? Math.round(a.bottom - b.top) : 0; });
-  ok(overlapDock === 0, `${name}: title card and dock do not overlap (${overlapDock}px)`);
-  await q.tap('#dock [data-tab="goals"]'); await q.waitForTimeout(500);
+  const overlapDock = await fw(q, () => { const a = document.getElementById('btn-play').getBoundingClientRect(), b = document.getElementById('tabbar').getBoundingClientRect(); if (b.width < b.height) return a.left < b.right - 2 ? Math.round(b.right - a.left) : 0; return a.bottom > b.top + 2 ? Math.round(a.bottom - b.top) : 0; });
+  ok(overlapDock === 0, `${name}: PLAY and the tab bar do not overlap (${overlapDock}px)`);
+  await fw(q, () => window.forkwood.ui.show('goals')); await q.waitForTimeout(500);
   const ov = await fw(q, () => { const b = document.getElementById('meta-body'); return b.scrollWidth - b.clientWidth; });
   ok(ov <= 1, `${name}: book has no sideways overflow (${ov}px)`);
   await q.screenshot({ path: OUT + `meta-12-${name}-goals.png` });

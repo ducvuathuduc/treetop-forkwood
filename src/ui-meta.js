@@ -7,7 +7,8 @@ import { ICON } from './icons.js';
 import * as M from './meta.js';
 import { SKINS, SKIN, SLOTS, THEME } from './skins.js';
 import { MAPS as MAP_LIST, MAP as MAP_BY_ID } from './maps.js'; // v1.0: shop filter by map
-const MAP_SHORT = { phongnha: 'Phong Nha', arashiyama: 'Kyoto', redwoods: 'Redwoods', blackforest: 'Black Forest', amazon: 'Amazon', beanstalk: 'Beanstalk' };
+// V2-INT fix: map chips name the v2 world that took over each legacy map slot
+const MAP_SHORT = { forkwood: 'Meadow', phongnha: 'Starry River', arashiyama: 'Fresco', redwoods: 'Great Wave', blackforest: 'Lily Garden', amazon: 'Gilded Grove', beanstalk: 'Lantern Village' };
 import { CHARMS } from './sim.js';
 import * as Q from './quest.js';
 import { MODE, STAKE } from './modes.js';
@@ -373,7 +374,9 @@ export function createMetaUI({ getSave, persist, sound, isCalm, onOpen, onClose 
       if (q.newStars) qs.push({ k: 'level', t: `+${q.newStars} star${q.newStars > 1 ? 's' : ''}`, s: `${q.stars}/3` });
       for (const c of q.chests) qs.push({ k: 'level', t: `Chest ${c.k}`, s: `+${c.acorns}` });
       for (const t of q.titles) qs.push({ k: 'badge', t: `Title: ${Q.TITLE[t].name}`, s: 'earned' });
-      for (const u of q.unlocks) { const [kind, id] = u.split(':'); qs.push({ k: 'charm', t: kind === 'mode' ? `${MODE[id].name} mode` : kind === 'stake' ? `${STAKE[id].name} stake` : `World ${id}: ${WORLDS[id - 1].name}`, s: 'unlocked' }); }
+      // V2-INT fix: at most 2 unlock chips; the rest roll into one '+N more unlocked'
+      q.unlocks.slice(0, 2).forEach((u) => { const [kind, id] = u.split(':'); qs.push({ k: 'charm', t: kind === 'mode' ? `${MODE[id].name} mode` : kind === 'stake' ? `${STAKE[id].name} stake` : `World ${id}: ${WORLDS[id - 1].name}`, s: 'unlocked' }); });
+      if (q.unlocks.length > 2) qs.push({ k: 'charm', t: `+${q.unlocks.length - 2} more`, s: 'unlocked' });
       if (q.stakeBest && q.stakeBestId) qs.push({ k: 'level', t: 'Stake best', s: '' });
       stamps.unshift(...qs);
     }

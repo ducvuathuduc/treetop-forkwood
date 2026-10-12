@@ -33,6 +33,8 @@ ok(BEATS.length >= 3 && BEATS.length * BEAT_MS <= 30000, `story is ${BEATS.lengt
 {
   const { ctx, p } = await ctxPage({ viewport: { width: 1280, height: 800 } }, 'first');
   await p.goto(base + '?intro=1'); await p.waitForTimeout(1200);
+  ok(await p.isVisible('.fw-gate') && !(await p.isVisible('#intro')), 'first launch opens on the title gate (Forkwood 1.0)');
+  await p.click('.fw-begin', { force: true }); await p.waitForTimeout(1200);
   ok(await p.isVisible('#intro'), 'first launch shows the story');
   ok(!(await p.isVisible('#title .title-card')) && !(await p.isVisible('#metabar')), 'no menu behind the story');
   const t1 = await p.textContent('.intro-text');
@@ -43,6 +45,8 @@ ok(BEATS.length >= 3 && BEATS.length * BEAT_MS <= 30000, `story is ${BEATS.lengt
   ok(loaded >= 2, `story plates load (${loaded}/${BEATS.length})`);
   await p.screenshot({ path: OUT + 'intro-01-desktop.png' });
   await p.click('.intro-skip'); await p.waitForTimeout(900);
+  ok(await p.isVisible('.howto'), 'after the story: How to play cards');
+  await p.click('.ht-skip'); await p.waitForTimeout(700);
   const st = await fw(p, () => ({ mode: window.forkwood.mode, coach: window.forkwood.coach, seen: window.forkwood.save.ret.introSeen, saved: JSON.parse(localStorage.getItem('forkwood.save.v2')).ret.introSeen, end: window.forkwood.introEnd }));
   ok(st.mode === 'play' && st.coach === 'steer', `skip flows straight into the first run with the coach (mode ${st.mode}, coach ${st.coach})`);
   ok(st.seen && st.saved && st.end === 'skip', 'story marked as seen and saved');
@@ -58,10 +62,14 @@ ok(BEATS.length >= 3 && BEATS.length * BEAT_MS <= 30000, `story is ${BEATS.lengt
   await p.goto(base + '?intro=1'); await p.waitForTimeout(1200);
   ok(!(await p.isVisible('#intro')) && (await fw(p, () => window.forkwood.mode)) === 'title', 'returning player goes to the menu, not the story');
   // replay from the title, Escape returns to the title
-  await p.click('#btn-story'); await p.waitForTimeout(700);
+  await p.click('#btn-settings'); await p.waitForTimeout(400); await p.click('#btn-story'); await p.waitForTimeout(900); // META-V2: Story lives in Settings (and on the Home rail)
+  ok(await p.isVisible('.ep-gallery') && (await p.$$('.ep-gallery .epg-ep')).length === 8, 'Story opens the episode gallery (prologue + 7)');
+  await p.click('.epg-ep[data-id="prologue"]'); await p.waitForTimeout(900);
   ok(await p.isVisible('#intro'), 'Story button replays the story');
   await p.keyboard.press('Escape'); await p.waitForTimeout(700);
-  ok(!(await p.isVisible('#intro')) && (await fw(p, () => window.forkwood.mode)) === 'title' && await p.isVisible('#title .title-card'), 'Escape skips the replay back to the menu');
+  ok(!(await p.isVisible('#intro')) && await p.isVisible('.ep-gallery'), 'Escape skips the replay back to the gallery');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(500);
+  ok((await fw(p, () => window.forkwood.mode)) === 'title' && await p.isVisible('#title .title-card'), 'Escape closes the gallery back to the menu');
   await ctx.close();
 }
 
@@ -80,6 +88,7 @@ ok(BEATS.length >= 3 && BEATS.length * BEAT_MS <= 30000, `story is ${BEATS.lengt
 {
   const { ctx, p } = await ctxPage({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' }, 'calm');
   await p.goto(base + '?intro=1'); await p.waitForTimeout(1000);
+  await p.click('.fw-begin', { force: true }); await p.waitForTimeout(900);
   const a = await fw(p, () => ({ calm: document.getElementById('intro').classList.contains('calm'), anim: getComputedStyle(document.querySelector('#intro .plate.on img')).animationName }));
   ok(a.calm && a.anim === 'none', `reduced motion: calm story, no zoom (animation ${a.anim})`);
   await ctx.close();

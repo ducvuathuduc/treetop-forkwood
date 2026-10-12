@@ -1,31 +1,34 @@
 <div align="center">
 
-<img src="v3/icon-180.png" width="88" height="88" alt="Forkwood icon">
+<img src="icon-180.png" width="88" height="88" alt="Forkwood icon">
 
-# Forkwood
+# Forkwood 1.0
 
-### Grow a vine through living masterpieces.
+### Git you can play: fork your vine, merge it back, grow through living masterpieces.
 
-A one-touch browser game: **fork** your vine in two, **merge** it back for combos, and climb through seven painted worlds, from twig to treetop.
+A one-touch browser game where your vine is a Git branch: **fork** it in two, **merge** it back for combos, and climb through seven painted worlds, from twig to treetop.
 
 [![Play live](https://img.shields.io/badge/play-live%20demo-2f6b33?style=flat-square&logo=github)](https://ducvuathuduc.github.io/treetop-forkwood/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PixiJS 8](https://img.shields.io/badge/PixiJS-v8-e91e63?style=flat-square)](https://pixijs.com/)
 [![WebGL + Canvas2D fallback](https://img.shields.io/badge/WebGL-Canvas2D%20fallback-990000?style=flat-square&logo=webgl)](#architecture)
-[![First load](https://img.shields.io/badge/first%20load-351%20KB%20gzip-success?style=flat-square)](#performance-budgets)
 [![No build step](https://img.shields.io/badge/build-none%20(vanilla%20ESM)-lightgrey?style=flat-square)](#getting-started)
 
 <br>
 
-<img src="v3/assets/v2/meadow/ui/meadow.ui.painting.s.webp" width="108" alt="Golden Hour Meadow: anime-film painting"><img src="v3/assets/v2/starry/ui/starry.ui.painting.s.webp" width="108" alt="Starry River: impasto night sky"><img src="v3/assets/v2/fresco/ui/fresco.ui.painting.s.webp" width="108" alt="Fresco Cathedral: Renaissance fresco"><img src="v3/assets/v2/ukiyo/ui/ukiyo.ui.painting.s.webp" width="108" alt="Great Wave Cliffs: ukiyo-e woodblock"><img src="v3/assets/v2/lilies/ui/lilies.ui.painting.s.webp" width="108" alt="Lily Garden: impressionist dabs"><img src="v3/assets/v2/gilded/ui/gilded.ui.painting.s.webp" width="108" alt="Gilded Grove: gold-leaf mosaic"><img src="v3/assets/v2/lacquer/ui/lacquer.ui.painting.s.webp" width="108" alt="Lantern Village: Vietnamese sơn mài lacquer">
+<img src="assets/v2/meadow/ui/meadow.ui.painting.s.webp" width="108" alt="Golden Hour Meadow: anime-film painting"><img src="assets/v2/starry/ui/starry.ui.painting.s.webp" width="108" alt="Starry River: impasto night sky"><img src="assets/v2/fresco/ui/fresco.ui.painting.s.webp" width="108" alt="Fresco Cathedral: Renaissance fresco"><img src="assets/v2/ukiyo/ui/ukiyo.ui.painting.s.webp" width="108" alt="Great Wave Cliffs: ukiyo-e woodblock"><img src="assets/v2/lilies/ui/lilies.ui.painting.s.webp" width="108" alt="Lily Garden: impressionist dabs"><img src="assets/v2/gilded/ui/gilded.ui.painting.s.webp" width="108" alt="Gilded Grove: gold-leaf mosaic"><img src="assets/v2/lacquer/ui/lacquer.ui.painting.s.webp" width="108" alt="Lantern Village: Vietnamese sơn mài lacquer">
 
 <sub>The seven worlds, as their in-game gallery paintings.</sub>
 
 <br><br>
 
-**[▶ Play now](https://ducvuathuduc.github.io/treetop-forkwood/)** · **[2.0 preview](https://ducvuathuduc.github.io/treetop-forkwood/v2/)** · **[v3 preview](https://ducvuathuduc.github.io/treetop-forkwood/v3/)** · [Tiếng Việt](#tiếng-việt)
+**[▶ Play now](https://ducvuathuduc.github.io/treetop-forkwood/)** · [Tiếng Việt](#tiếng-việt)
 
-<sub>No install, no account, no ads. Desktop and phone.</sub>
+<sub>No install, no account, no ads. Desktop and phone. Built for Twigpine Project Treetop, Round 01 (Games), 9–16 Oct 2026.</sub>
+
+<br>
+
+<img src="docs/home-phone.jpg" width="200" alt="Home on a phone: the live demo vine grows behind the menu"> <img src="docs/episode-phone.jpg" width="200" alt="Story episode: manga panels with dialogue"> <img src="docs/play-phone.jpg" width="200" alt="Playing in Starry River"> <img src="docs/results-phone.jpg" width="200" alt="Results: commit-graph postcard and the next-world goal">
 
 </div>
 
@@ -35,17 +38,41 @@ A one-touch browser game: **fork** your vine in two, **merge** it back for combo
 
 [Features](#features) · [Controls](#controls) · [Architecture](#architecture) · [Project structure](#project-structure) · [Getting started](#getting-started) · [Testing](#testing) · [Performance budgets](#performance-budgets) · [Fair modes](#deterministic-fair-modes) · [Roadmap](#roadmap) · [Contributing](#contributing) · [Credits](#credits--licenses) · [License](#license)
 
+## Why it is different: Git you can play
+
+Forkwood turns version control into a one-thumb arcade climb.
+
+- **Fork** (quick tap) splits your vine into two tips that sweep twice the sky; **merge** (tap again) braids them back and banks a ×2 combo. A hit on a forked branch is a **revert**: that branch un-grows to the fork, and you keep climbing on the other.
+- Every run ends as a **commit-graph postcard**: a `git log --graph` of your actual forks, merges and reverts, drawn beside your tree in the world's palette, with an offline-generated commit line and tree name (`2e4079 perf(bamboo): hit ×8 and caught the golden hour`). No server, no paid API.
+- **Git you can hear**: each branch gets its own voice panned to where its tip is, merges resolve as a chord, low sap filters the mix and brings in a heartbeat.
+- A seven-episode **manga story** follows Sprout through the seven paintings, one Git verb per episode: `init`, `checkout -b`, `merge`, `revert`, `stash`, `diff`, `push origin dawn`.
+
+## Story
+
+| Episode | World | Git verb | What happens |
+|---|---|---|---|
+| Prologue | the Great Tree | `git clone great-tree` | A crow steals the sun-seeds; one sprout is left |
+| 1 | Golden Hour Meadow | `git init sprout` | First light; every sun-seed is a commit |
+| 2 | Starry River | `git checkout -b starlight` | Safe sky or stars behind thorns? Fork and take both |
+| 3 | Fresco Cathedral | `git merge starlight` | Two branches braid into one to break the thorn gate |
+| 4 | Great Wave Cliffs | `git revert HEAD` | The wave takes a branch; revert and grow again |
+| 5 | Lily Garden | `git stash` | A quiet pond, and the crow's reflection |
+| 6 | Gilded Grove | `git diff gold..light` | Gold glitters; Sprout wants only the light |
+| 7 | Lantern Village | `git push origin dawn` | The last climb; dawn returns to the Great Tree |
+
+The prologue plays on first launch (Skip is always visible), then a four-card **How to play**. Each episode plays the first time you enter its world, and **Story** on Home replays any of them. Episode art is lazy-loaded, never on first load.
+
 ## Features
 
 ### One input, real decisions
 Your vine grows on its own; you steer it into sunlight. **Tap to fork** into two tips that sweep twice the sky. **Tap again to merge** and bank everything both tips caught, raising your combo. Get hit while forked and that branch is **reverted**: it un-grows back to the fork. Sap drains as you climb; sunlight refills it.
 
 ### Seven painterly worlds
-Each world has its own painted parallax layers (portrait and desktop), its own 8–9 traps, a signature ride, a calm set piece, a chase and a three-phase boss, plus its own adaptive music.
+All seven worlds are open to everyone from the first visit. Each has **living painted backdrops** (a flow-map shader moves the paint along its own brush strokes: drifting clouds, swaying grass, rippling water, twinkling stars; no GIFs or video loops), its own 8–9 traps, a signature ride, a calm set piece, a chase and a three-phase boss, plus its own adaptive music.
 
 | World | Medium | Boss |
 |---|---|---|
-| Golden Hour Meadow *(free)* | cinematic anime painting | Meadow Giant |
+| Golden Hour Meadow | cinematic anime painting | Meadow Giant |
 | Starry River | Van Gogh-style impasto, animated swirling sky | Crow King |
 | Fresco Cathedral | Renaissance buon fresco, plaster and gold | Gargoyle |
 | Great Wave Cliffs | ukiyo-e woodblock on washi | Kitsune |
@@ -62,9 +89,9 @@ Painters are emulated in technique only (public domain); every composition is or
 - **Set pieces** on a rotation (calm ~260 m, chase ~640 m, boss ~900 m, then every 350 m at +15% intensity).
 
 ### Modes
-Grow (endless, with Sapling / Oak / Ancient stakes) · Quest map (5 worlds × 4 hand-made levels, 60 stars) · Zen · Sprint · Hardcore · Looking-glass · Storm Rush · Daily tree · Weekly tree · Duel links · **Live race**.
+Grow (endless, with Sapling / Oak / Ancient stakes; Oak and Ancient add fork-choice gates: a safe lane or a sunny lane behind thorns) · Quest map (5 worlds × 4 hand-made levels, 60 stars) · Zen · Sprint · Hardcore · Looking-glass · Storm Rush · Daily tree · Weekly tree · Duel links · **Live race**.
 
-### v3 game feel
+### Game feel
 A pure, deterministic feel layer (`src/feel.js`) on top of the sim:
 
 | System | What it does |
@@ -78,10 +105,10 @@ A pure, deterministic feel layer (`src/feel.js`) on top of the sim:
 | Choice lanes | split gates offer sap on one side, gold seeds on the other |
 | Boss finisher · death reading | a glowing weak point after phase 3; one line on why the run ended |
 
-The v3 layer never moves a course hazard and draws from its own random stream, so the course RNG sequence is unchanged. Rendering adds juice on top: hit-stop, trauma-based screen shake, haptics, one-tap retry and a last-moment replay card.
+The feel layer never moves a course hazard and draws from its own random stream, so the course RNG sequence is unchanged. Rendering adds juice on top: hit-stop, trauma-based screen shake, haptics, one-tap retry and a last-moment replay card.
 
 ### Live race
-Tap **Live**, send the link, and both players grow the **same 90-second tree** at the same time, each seeing the other as a ghost vine. Peer-to-peer over WebRTC ([PeerJS](https://peerjs.com/) 1.5.5, loaded only when a race starts). If no connection is made in ~8 s, the same course plays as a duel link. No accounts, nothing stored on a server.
+Tap **Live race** on Home (always there), send the link, and both players grow the **same 90-second tree** at the same time, each seeing the other as a ghost vine. Peer-to-peer over WebRTC ([PeerJS](https://peerjs.com/) 1.5.5, loaded only when a race starts). If no connection is made in ~8 s, the same course plays as a duel link. No accounts, nothing stored on a server.
 
 ### Accessibility
 - **Calm mode** turns off shake, flashes, vibration and interface motion; on automatically with `prefers-reduced-motion`.
@@ -144,7 +171,7 @@ flowchart LR
 - **One sim, many modes.** Modes, stakes, quest levels, daily/weekly trees and races are the same simulation with a few rules changed, so the headless bot measures balance on exactly the code players run.
 - **Registry-driven art.** Entities carry `kind` + a registry `skin` id (`starry.trap.crowflock`); a missing id renders a clean vector placeholder instead of crashing.
 - **Two canvases.** Pixi (WebGL) draws the world under a 2D canvas that keeps traps, HUD and text. On context loss or no WebGL, the full Canvas2D renderer takes over automatically.
-- **Lazy everything.** Worlds, music, the story, the race library and shop sections load on demand.
+- **Lazy everything.** Worlds, music, the story episodes, the race library and shop sections load on demand.
 
 ## Project structure
 
@@ -215,7 +242,7 @@ Bot difficulty is measured, not guessed: on Oak the weak / average / expert bots
 
 | Metric | Budget | Measured |
 |---|---|---|
-| First load (gzip transfer) | ≤ 700 KB | **351 KB** (`tests/extra.mjs`, 2.0 integration) |
+| First load (gzip transfer) | ≤ 700 KB | checked by `tests/extra.mjs` (see FINAL test log) |
 | Lazy world | 200–350 KB each | loaded on demand |
 | Draw calls (phone) | ≤ 25 | **10–12** (Starry River, 390×844 @ DPR 2) |
 | Live particles (phone) | ≤ 300 | 260–300, capped per quality tier |
@@ -239,7 +266,7 @@ Daily tree, weekly tree, quest levels, challenge and duel links, and live races 
 
 - [x] 2.0 "Living Masterpieces": 7 painted worlds, world traps, rides, bosses, adaptive audio
 - [x] Pixi WebGL renderer with automatic Canvas2D fallback
-- [ ] v3: game-feel layer and new home screen (in preview)
+- [x] Game-feel layer, new home screen, living backdrops, story episodes (Forkwood 1.0)
 - [ ] Vite build with per-world code splitting and hashed assets
 - [ ] PWA: web manifest, service worker, offline play, install prompt
 - [ ] Performance budget test in CI (draw calls, texture bytes, first load)
@@ -263,7 +290,7 @@ Design, code and art direction: **Huynh Dieu Thanh** ([@thanhdicode](https://git
 | Item | Origin | License |
 |---|---|---|
 | Code | own work | MIT |
-| World paintings, sprites, UI kit (`assets/v2/`) | AI-assisted from our own prompts and art direction, post-processed by our own pipeline (`art-src/`); masters emulated in technique only | MIT (with the game) |
+| World paintings, story panels, sprites, UI kit (`assets/v2/`, `assets/v3/`, `assets/story/`) | AI-assisted from our own prompts and art direction, post-processed by our own pipeline (`art-src/`); masters emulated in technique only | MIT (with the game) |
 | Music and sound (`assets/v2/*/audio/`) | composed and synthesised by our own code; no samples | MIT (with the game) |
 | v1 fallback SFX | Kenney Impact / Interface Sounds | CC0 |
 | Fonts: Baloo 2, Nunito, Lexend, Be Vietnam Pro, Bricolage Grotesque, Plus Jakarta Sans, Cormorant Garamond, Fraunces, JetBrains Mono | Google Fonts sources, self-hosted subsets | SIL OFL 1.1 (texts in `assets/fonts/`) |
@@ -288,7 +315,8 @@ Code released under the [MIT License](LICENSE). © 2026 Huynh Dieu Thanh. Fonts 
 - **Chơi ngay:** https://ducvuathuduc.github.io/treetop-forkwood/ (không cần cài đặt, không tài khoản, không quảng cáo).
 - **Đua trực tiếp** với bạn bè qua đường link (WebRTC, ngang hàng), cùng một cây 90 giây.
 - **Công bằng:** cây hằng ngày, hằng tuần, màn quest, link thách đấu và đua dùng cùng một seed cho mọi người; bùa, kỹ năng và boost đều tắt.
-- **Hiệu năng:** lần tải đầu 351 KB (gzip), 10–12 draw call trên điện thoại; tự hạ chất lượng khi máy chậm.
+- **Cốt truyện manga 8 tập** (mở đầu + 1 tập cho mỗi thế giới), xem lại trong mục Story.
+- **Hiệu năng:** tải nhẹ, tranh và nhạc tải khi cần; tự hạ chất lượng khi máy chậm.
 - **Chế độ êm dịu (Calm mode)** tắt rung, nháy sáng và chuyển động; tự bật khi máy đặt giảm chuyển động.
 - **Chạy cục bộ:** `npm run serve` rồi mở `http://localhost:8080`; kiểm thử: `npm test`.
 

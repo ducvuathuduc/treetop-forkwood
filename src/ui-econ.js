@@ -39,26 +39,37 @@ export function wordCard(S) {
 }
 
 /** The second-chance prompt. Returns { offer(sim, n, onYes, onNo) }. */
-export function createRevive({ getSave, sound, isCalm }) {
+export function createRevive({ getSave, sound, isCalm, ads }) {
+  // META-V2: second chance = gems (primary, cost doubles) or one rewarded ad per run (ads adapter)
   const el = document.getElementById('revive');
-  let timer = 0, raf = 0, done = null;
-  function close(yes) { if (!done) return; clearTimeout(timer); cancelAnimationFrame(raf); el.classList.remove('show'); el.setAttribute('aria-hidden', 'true'); const f = done; done = null; f(yes); }
-  el.querySelector('#rv-yes').addEventListener('click', () => close(true));
+  let timer = 0, raf = 0, done = null, t0 = 0, T = 4000, paused = false;
+  function close(yes, via) { if (!done) return; clearTimeout(timer); cancelAnimationFrame(raf); el.classList.remove('show'); el.setAttribute('aria-hidden', 'true'); const f = done; done = null; f(yes, via); }
+  el.querySelector('#rv-yes').addEventListener('click', () => close(true, 'gems'));
   el.querySelector('#rv-no').addEventListener('click', () => close(false));
+  const adBtn = el.querySelector('#rv-ad');
+  if (adBtn) adBtn.addEventListener('click', async () => {
+    if (!ads || adBtn.disabled) return;
+    paused = true; clearTimeout(timer); adBtn.disabled = true; adBtn.querySelector('.lbl').textContent = 'Playing ad…';
+    const r = await ads.watch().catch(() => ({ status: 'skipped' }));
+    if (r && r.status === 'rewarded') close(true, 'ad');
+    else { adBtn.querySelector('.lbl').textContent = r && r.status === 'unavailable' ? 'Ads coming soon' : 'No ad right now'; paused = false; t0 = performance.now() - T * 0.5; timer = setTimeout(() => close(false), T * 0.5); raf = requestAnimationFrame(tick); }
+  });
+  const bar = el.querySelector('.rv-bar i');
+  function tick(now) { if (paused) return; const k = Math.min(1, (now - t0) / T); bar.style.transform = `scaleX(${1 - k})`; if (k < 1) raf = requestAnimationFrame(tick); }
   return {
     get open() { return !!done; },
-    /** n = second chances already used this run. cb(yes) */
+    /** n = second chances already used this run. cb(yes, via: 'gems' | 'ad') */
     offer(n, cb) {
-      const S = getSave(), cost = E.reviveCost(n);
-      if (n >= E.MAX_REVIVES || S.econ.gems < cost) return false;
-      done = cb;
+      const S = getSave(), cost = E.reviveCost(n), gemsOk = n < E.MAX_REVIVES && S.econ.gems >= cost, adOk = !!(ads && ads.allowed());
+      if (n >= E.MAX_REVIVES || (!gemsOk && !adOk)) return false;
+      done = cb; paused = false;
       el.querySelector('#rv-cost').innerHTML = `${GEM_ICON}${cost}`;
+      el.querySelector('#rv-yes').hidden = !gemsOk;
       el.querySelector('#rv-have').textContent = `you have ${S.econ.gems}`;
       el.querySelector('#rv-next').textContent = n + 1 < E.MAX_REVIVES ? `next one costs ${E.reviveCost(n + 1)}` : 'last one this run';
+      if (adBtn) { adBtn.hidden = !adOk; adBtn.disabled = false; adBtn.querySelector('.lbl').textContent = 'Continue free'; }
       el.classList.add('show'); el.setAttribute('aria-hidden', 'false');
-      const bar = el.querySelector('.rv-bar i'), T = 4000, t0 = performance.now();
-      const tick = (now) => { const k = Math.min(1, (now - t0) / T); bar.style.transform = `scaleX(${1 - k})`; if (k < 1) raf = requestAnimationFrame(tick); };
-      raf = requestAnimationFrame(tick);
+      t0 = performance.now(); raf = requestAnimationFrame(tick);
       timer = setTimeout(() => close(false), T);
       if (sound && sound.near) sound.near();
       return true;

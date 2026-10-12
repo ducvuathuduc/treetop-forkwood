@@ -1,0 +1,56 @@
+{
+ "fresco": {
+  "sky.p": [
+   "fresco.layer.sky.p.webp",
+   195516,
+   60,
+   1080,
+   1920
+  ],
+  "sky.p.avif": [
+   "fresco.layer.sky.p.avif",
+   109690,
+   44
+  ],
+  "sky.d": [
+   "fresco.layer.sky.d.webp",
+   323112,
+   64,
+   2560,
+   1440
+  ],
+  "sky.d.avif": [
+   "fresco.layer.sky.d.avif",
+   174182,
+   44
+  ],
+  "far.p": [
+   "fresco.layer.far.p.webp",
+   56776,
+   80,
+   1080,
+   1216
+  ],
+  "far.d": [
+   "fresco.layer.far.d.webp",
+   122176,
+   76,
+   2560,
+   1216
+  ],
+  "side.p": [
+   "fresco.layer.side.p.webp",
+   67212,
+   88,
+   1080,
+   812
+  ],
+  "side.d": [
+   "fresco.layer.side.d.webp",
+   112140,
+   88,
+   2560,
+   978
+  ]
+ }
+}

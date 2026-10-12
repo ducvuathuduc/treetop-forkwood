@@ -686,3 +686,22 @@ body.calm *, body.calm *::before, body.calm *::after { animation: none !importan
    Every glass element over the live canvas re-blurs it each frame; Safari 26 draws CSS blur on the CPU. */
 html.q-noblur { --blur: none; --glass: rgba(12,18,24,.74); }
 html.q-noblur .map-badge { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(12,18,24,.78); }
+
+/* Forkwood 1.0: first-launch title gate (one tap: unlocks audio, then the prologue) */
+.fw-gate { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 24px; text-align: center; cursor: pointer;
+  background: radial-gradient(ellipse at 50% 35%, rgba(255, 214, 120, .35), transparent 60%), linear-gradient(#173040, #0c1418 70%); color: #fbf6e9; }
+.fw-gate-in { display: grid; justify-items: center; gap: 14px; max-width: 520px; }
+.fw-gate .logo { margin: 0; font-size: clamp(54px, 16vw, 104px); color: #fbf6e9; text-shadow: 0 4px 24px rgba(0,0,0,.45); }
+.fw-gate .fw-tag { margin: 0; font: 700 clamp(17px, 4.6vw, 22px)/1.4 var(--ui); color: #f1e6c8; }
+.fw-gate .fw-git { margin: 0 0 -4px; display: inline-block; padding: 3px 10px; border-radius: 6px; background: #0f1a12; color: #7ee08a; font: 600 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .02em; }
+.fw-gate .fw-begin { margin-top: 10px; animation: fw-pulse 1.6s ease-in-out infinite; }
+.fw-gate .fw-ver { margin: 6px 0 0; font: 700 13px/1.3 var(--ui); opacity: .7; letter-spacing: .04em; }
+@keyframes fw-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .fw-gate .fw-begin { animation: none; } }
+/* Forkwood 1.0: on phones "Grow again" sits right under the height + goals, never below the fold */
+@media (max-width: 720px) {
+  #over .over-right > * { order: 2; }
+  #over .over-right > #over-kicker, #over .over-right > #over-stars, #over .over-right > #over-height, #over .over-right > #over-goal, #over .over-right > #over-world { order: 0; }
+  #over .over-right > .row:not(.small) { order: 1; margin-top: 6px; }
+  #over .over-right > .row.small, #over .over-right > .row.small ~ * { order: 3; }
+}

@@ -51,10 +51,12 @@ for (let seed = 1; seed <= SEEDS; seed++) {
     if (b.gapW < 2 * TIP_R + 150 || b.amp * b.w > 90 || b.base - b.amp - b.gapW / 2 < 0 || b.base + b.amp + b.gapW / 2 > W) { p.slide++; console.log('unfair slider', seed, b.gapW, b.amp * b.w); }
   }
   // graft medallions: one fork-width apart, nothing dangerous around them
-  for (let i = 0; i < c.tokens.length; i += 2) {
+  // V2-MECH: graft gates have 2 medallions, Growth Ring gates 3 (each pair one fork-width apart)
+  const byGate = new Map(); for (const t of c.tokens) { if (!byGate.has(t.gate)) byGate.set(t.gate, []); byGate.get(t.gate).push(t); }
+  for (const g of byGate.values()) {
     stats.tokens++;
-    const a = c.tokens[i], b = c.tokens[i + 1];
-    const spaced = b && Math.abs(Math.abs(b.x - a.x) - 2 * FORK_SPREAD) < 1 && a.y === b.y;
+    const a = g[0], b = g[1];
+    const spaced = b && g.every((t, i) => i === 0 || (Math.abs(Math.abs(t.x - g[i - 1].x) - 2 * FORK_SPREAD) < 1 && t.y === a.y));
     const clear = !c.brambles.some((r) => Math.abs(r.y - a.y) < 200) && !c.columns.some((k) => k.y0 > a.y - 200 && k.y1 < a.y + 200) && !c.beetles.some((e) => Math.abs(e.y - a.y) < 160);
     if (!spaced || !clear) { p.token++; console.log('graft gate unfair', seed, spaced, clear); }
   }
@@ -63,7 +65,7 @@ for (let seed = 1; seed <= SEEDS; seed++) {
   for (const e of c.log) {
     stats.chunks[e.id] = (stats.chunks[e.id] || 0) + 1;
     if (e.tier >= 0) stats.tiers[e.tier]++;
-    if (e.role === 'rest' || e.role === 'graft') { since = 0; stats.rests++; } else if (e.m > 18) since++;
+    if (['rest', 'graft', 'ring', 'reward', 'setpiece'].includes(e.role)) { since = 0; stats.rests++; } else if (e.m > 18) since++; // V2-MECH: ring gates, reward beats and set pieces are breathers too
     if (since > 5) { p.rest++; console.log('no rest beat for 6 chunks', seed, e.m); since = 0; }
     if ((e.tier === 3 && e.m < 300) || (e.tier === 2 && e.m < 60)) { p.tier++; console.log('tier too early', seed, e.id, e.m); }
   }

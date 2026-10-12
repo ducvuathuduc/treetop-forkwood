@@ -1,0 +1,162 @@
+{
+ "sky.z4.p": {
+  "file": "meadow/meadow.layer.sky.z4.p.webp",
+  "avif": "meadow/meadow.layer.sky.z4.p.avif",
+  "bytes": 165334,
+  "bytesAvif": 41055,
+  "q": 84,
+  "qAvif": 30,
+  "w": 1080,
+  "h": 1920
+ },
+ "sky.z4.d": {
+  "file": "meadow/meadow.layer.sky.z4.d.webp",
+  "avif": "meadow/meadow.layer.sky.z4.d.avif",
+  "bytes": 336290,
+  "bytesAvif": 97632,
+  "q": 88,
+  "qAvif": 42,
+  "w": 2560,
+  "h": 1440
+ },
+ "far.p": {
+  "file": "meadow/meadow.layer.far.p.webp",
+  "avif": "meadow/meadow.layer.far.p.avif",
+  "bytes": 26174,
+  "bytesAvif": 13983,
+  "q": 88,
+  "qAvif": 24,
+  "w": 1080,
+  "h": 1216
+ },
+ "far.d": {
+  "file": "meadow/meadow.layer.far.d.webp",
+  "avif": "meadow/meadow.layer.far.d.avif",
+  "bytes": 55702,
+  "bytesAvif": 31628,
+  "q": 84,
+  "qAvif": 24,
+  "w": 2560,
+  "h": 1216
+ },
+ "far.night.p": {
+  "file": "meadow/meadow.layer.far.night.p.webp",
+  "avif": "meadow/meadow.layer.far.night.p.avif",
+  "bytes": 24828,
+  "bytesAvif": 13592,
+  "q": 88,
+  "qAvif": 24,
+  "w": 1080,
+  "h": 1104
+ },
+ "far.night.d": {
+  "file": "meadow/meadow.layer.far.night.d.webp",
+  "avif": "meadow/meadow.layer.far.night.d.avif",
+  "bytes": 58482,
+  "bytesAvif": 34551,
+  "q": 84,
+  "qAvif": 24,
+  "w": 2560,
+  "h": 1104
+ },
+ "side.p": {
+  "file": "meadow/meadow.layer.side.p.webp",
+  "avif": "meadow/meadow.layer.side.p.avif",
+  "bytes": 84468,
+  "bytesAvif": 36597,
+  "q": 40,
+  "qAvif": 24,
+  "w": 1080,
+  "h": 634
+ },
+ "side.d": {
+  "file": "meadow/meadow.layer.side.d.webp",
+  "avif": "meadow/meadow.layer.side.d.avif",
+  "bytes": 119944,
+  "bytesAvif": 49481,
+  "q": 40,
+  "qAvif": 24,
+  "w": 2560,
+  "h": 822
+ },
+ "side.z1.p": {
+  "file": "meadow/meadow.layer.side.z1.p.webp",
+  "avif": "meadow/meadow.layer.side.z1.p.avif",
+  "bytes": 79372,
+  "bytesAvif": 37714,
+  "q": 40,
+  "qAvif": 24,
+  "w": 1080,
+  "h": 760
+ },
+ "side.z1.d": {
+  "file": "meadow/meadow.layer.side.z1.d.webp",
+  "avif": "meadow/meadow.layer.side.z1.d.avif",
+  "bytes": 94330,
+  "bytesAvif": 51972,
+  "q": 48,
+  "qAvif": 24,
+  "w": 2560,
+  "h": 942
+ },
+ "side.z2.p": {
+  "file": "meadow/meadow.layer.side.z2.p.webp",
+  "avif": "meadow/meadow.layer.side.z2.p.avif",
+  "bytes": 43282,
+  "bytesAvif": 22045,
+  "q": 76,
+  "qAvif": 30,
+  "w": 1080,
+  "h": 753
+ },
+ "side.z2.d": {
+  "file": "meadow/meadow.layer.side.z2.d.webp",
+  "avif": "meadow/meadow.layer.side.z2.d.avif",
+  "bytes": 94386,
+  "bytesAvif": 42435,
+  "q": 88,
+  "qAvif": 42,
+  "w": 2560,
+  "h": 976
+ },
+ "side.z3.p": {
+  "file": "meadow/meadow.layer.side.z3.p.webp",
+  "avif": "meadow/meadow.layer.side.z3.p.avif",
+  "bytes": 38786,
+  "bytesAvif": 23206,
+  "q": 88,
+  "qAvif": 48,
+  "w": 1080,
+  "h": 689
+ },
+ "side.z3.d": {
+  "file": "meadow/meadow.layer.side.z3.d.webp",
+  "avif": "meadow/meadow.layer.side.z3.d.avif",
+  "bytes": 59994,
+  "bytesAvif": 44533,
+  "q": 88,
+  "qAvif": 60,
+  "w": 2560,
+  "h": 894
+ },
+ "side.z4.p": {
+  "file": "meadow/meadow.layer.side.z4.p.webp",
+  "avif": "meadow/meadow.layer.side.z4.p.avif",
+  "bytes": 44420,
+  "bytesAvif": 19976,
+  "q": 88,
+  "qAvif": 42,
+  "w": 1080,
+  "h": 667
+ },
+ "side.z4.d": {
+  "file": "meadow/meadow.layer.side.z4.d.webp",
+  "avif": "meadow/meadow.layer.side.z4.d.avif",
+  "bytes": 66712,
+  "bytesAvif": 40672,
+  "q": 88,
+  "qAvif": 54,
+  "w": 2560,
+  "h": 865
+ }
+}

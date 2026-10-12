@@ -1,3 +1,4 @@
+import { WORLDS as V2_WORLDS } from './worlds-meta.js'; // V2-INT: legacy map slot -> v2 world
 // P8-MAPS: selectable map themes. A map is a whole look for the climb: three
 // plates (sky / far / side, assets/art/m-*-<id>.webp, ~25-45 KB each set,
 // loaded only when the map is picked), a palette for each of the five height
@@ -14,6 +15,7 @@
 const K = ['top', 'bot', 'mass', 'mid', 'lite', 'deep', 'fog', 'ray', 'acc', 'crit', 'cloud'];
 const P = (s) => Object.fromEntries(s.trim().split(/\s+/).map((h, i) => [K[i], h]));
 
+import { UNLOCK_ALL_MAPS } from './flags.js'; // V3.2
 export const MAPS = [
   {
     id: 'forkwood', name: 'Forkwood', place: 'The Grove', country: 'Forkwood', code: 'FW',
@@ -108,6 +110,15 @@ export const MAPS = [
     paper: '#f3eee6',
   },
 ];
+// V2-INT fix: the v1 maps are retired; each legacy slot (ownership, prices, ids in saves) now IS the v2
+// world that took it over, so every label, stamp and postcard reads the world (EN/VI), never Phong Nha &co.
+for (const w of V2_WORLDS) {
+  const m = MAPS.find((x) => x.id === w.legacy); if (!m) continue;
+  const [t0, t1, t2, t3] = w.tones;
+  Object.assign(m, { v1name: m.name, world: w.id, name: w.name, nameVi: w.nameVi, place: w.nameVi, country: w.medium, code: '', tale: null, flavour: w.blurb,
+    painting: `assets/v2/${w.id}/ui/${w.id}.ui.painting.s.webp`, swatch: [t0, t1, t3],
+    stamp: { ...m.stamp, ink: t3, bg: [t0, t1], accent: t1, word: w.nameVi.toUpperCase(), postmark: `${w.name.toUpperCase()} · FORKWOOD` } });
+}
 export const MAP = Object.fromEntries(MAPS.map((m) => [m.id, m]));
 export const DEFAULT_MAP = 'forkwood';
 /** Ids unlocked for every player from the start (classic + one new). */
@@ -147,6 +158,7 @@ const listeners = new Set();
  */
 export function setOwnership({ owned, level, grant } = {}) { ownership = owned || null; if (level) levelOf = level; granter = grant || null; emit(); }
 export function ownedIds() {
+  if (UNLOCK_ALL_MAPS) return new Set(MAPS.map((m) => m.id)); // V3.2: every map open (flags.js)
   const o = new Set(DEFAULT_UNLOCKED);
   for (const id of (ownership ? ownership() : ls.get(LS_OWN, [])) || []) o.add(id);
   for (const m of MAPS) if (m.unlock.level && levelOf() >= m.unlock.level) o.add(m.id);

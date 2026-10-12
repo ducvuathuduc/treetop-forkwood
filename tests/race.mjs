@@ -43,7 +43,7 @@ async function waitState(p, want, ms = 15000) {
 
 /** Full race between two pages: host creates, guest opens the link, both ready, race, finish, rematch. */
 async function raceFlow(tag, host, guest, hostUrl, extra) {
-  await host.goto(hostUrl); await sleep(900);
+  await host.goto(hostUrl + (hostUrl.includes('?') ? '&' : '?') + 'unlock=all'); await sleep(900); // META-V2: Live race unlocks at level 8
   const lazy = await host.evaluate(() => performance.getEntriesByType('resource').filter((r) => /race|peerjs/.test(r.name)).map((r) => r.name));
   ok(lazy.length === 0, `[${tag}] race code and PeerJS are not part of the first load (${lazy.join(', ') || 'none'})`);
   await host.click('#btn-race');

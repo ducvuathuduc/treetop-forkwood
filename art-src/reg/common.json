@@ -1,0 +1,1618 @@
+[
+{
+"id": "icon.pickup.lantern",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 119,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+0,
+0,
+119,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P1"
+},
+{
+"id": "icon.pickup.dewbubble",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+109,
+296,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P2"
+},
+{
+"id": "icon.pickup.shears",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 128,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+119,
+0,
+128,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P3"
+},
+{
+"id": "icon.pickup.prism",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 129,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+247,
+0,
+129,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P4"
+},
+{
+"id": "icon.pickup.twinseed",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 124,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+376,
+0,
+124,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P5"
+},
+{
+"id": "icon.pickup.hourglass",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 98,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+0,
+148,
+98,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P6"
+},
+{
+"id": "icon.pickup.acornrain",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 123,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+98,
+148,
+123,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P7"
+},
+{
+"id": "icon.pickup.goldenleaf",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 146,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+257,
+296,
+148,
+146
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P8"
+},
+{
+"id": "icon.pickup.leafsail",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 136,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+221,
+148,
+136,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "P9"
+},
+{
+"id": "icon.pickup.sunlight",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 116,
+"h": 116,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+0,
+444,
+116,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "pollen",
+"notes": "sunlight mote / pollen (reward gold)"
+},
+{
+"id": "icon.pickup.ink2",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+357,
+148,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "ink",
+"notes": "Ink x2 = paint tube"
+},
+{
+"id": "icon.pickup.saprush",
+"file": "common/common.pickups.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 109,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+0,
+296,
+109,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "rush"
+},
+{
+"id": "fx.dewdrop",
+"file": "common/common.pickups.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 50,
+"h": 68,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.pickups",
+"rects": [
+[
+116,
+444,
+50,
+68
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "vehicle.hummingbird.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 173,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+668,
+212,
+212,
+173
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V1"
+},
+{
+"id": "vehicle.bamboorocket.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 182,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+0,
+212,
+212,
+182
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V2"
+},
+{
+"id": "vehicle.dandelion.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 172,
+"h": 212,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+0,
+0,
+172,
+212
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V4"
+},
+{
+"id": "vehicle.mushroom.bounce",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 183,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+808,
+0,
+212,
+183
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V3"
+},
+{
+"id": "vehicle.stagstrider.walk",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 182,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+212,
+212,
+212,
+182
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V5"
+},
+{
+"id": "vehicle.papercrane.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 165,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+212,
+394,
+212,
+165
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V6"
+},
+{
+"id": "vehicle.beanstalk.ride",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 244,
+"h": 174,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+424,
+212,
+244,
+174
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V7"
+},
+{
+"id": "vehicle.swiftlet.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 198,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+596,
+0,
+212,
+198
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V8"
+},
+{
+"id": "vehicle.morpho.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 203,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+172,
+0,
+212,
+203
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V9"
+},
+{
+"id": "vehicle.goldengoose.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 172,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+0,
+394,
+212,
+172
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "V10"
+},
+{
+"id": "vehicle.kite.fly",
+"file": "common/common.vehicles.webp",
+"type": "sprite",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 203,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.vehicles",
+"rects": [
+[
+384,
+0,
+212,
+203
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "extra",
+"notes": "spare ride skin (fits ukiyo/lacquer)"
+},
+{
+"id": "icon.cur.acorn",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 105,
+"h": 116,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+148,
+720,
+105,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.cur.gem",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 84,
+"h": 116,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+253,
+720,
+84,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.cur.acornpile",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 129,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+268,
+572,
+148,
+129
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.cur.gempile",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 140,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+120,
+572,
+148,
+140
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.cur.acornheap",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 120,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+0,
+720,
+148,
+120
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.cur.gemheap",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 110,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+337,
+720,
+148,
+110
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.boost.ridetoken",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 145,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+0,
+424,
+145,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.drop.seedpod",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 138,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+145,
+424,
+138,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.drop.knothollow",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 2,
+"fps": 0,
+"w": 202,
+"h": 212,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+0,
+0,
+202,
+212
+],
+[
+202,
+0,
+202,
+212
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"anim": "closed,open"
+},
+{
+"id": "icon.drop.chest",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 2,
+"fps": 0,
+"w": 193,
+"h": 212,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+0,
+212,
+193,
+212
+],
+[
+193,
+212,
+193,
+212
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"anim": "closed,open"
+},
+{
+"id": "icon.boost.magnet",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 143,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+283,
+424,
+143,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.boost.headstart",
+"file": "common/common.currency.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 120,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.currency",
+"rects": [
+[
+0,
+572,
+120,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "icon.skill.sparrow",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+0,
+0,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S1"
+},
+{
+"id": "icon.skill.squirrel",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+144,
+0,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S2"
+},
+{
+"id": "icon.skill.owl",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+288,
+0,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S3"
+},
+{
+"id": "icon.skill.fox",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+0,
+148,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S4"
+},
+{
+"id": "icon.skill.snail",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+144,
+148,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S5"
+},
+{
+"id": "icon.skill.moth",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+288,
+148,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S6"
+},
+{
+"id": "icon.skill.frog",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+0,
+296,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S7"
+},
+{
+"id": "icon.skill.beetle",
+"file": "common/common.skills.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 144,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.skills",
+"rects": [
+[
+144,
+296,
+144,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "S8"
+},
+{
+"id": "icon.ring.deepsap",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 147,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+233,
+0,
+147,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R1"
+},
+{
+"id": "icon.ring.quickmerge",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+380,
+0,
+148,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R2"
+},
+{
+"id": "icon.ring.magnetroots",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+528,
+0,
+148,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R3"
+},
+{
+"id": "icon.ring.thickbark",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+676,
+0,
+148,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R4"
+},
+{
+"id": "icon.ring.luckyclover",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+824,
+0,
+148,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R5"
+},
+{
+"id": "icon.ring.ridecraft",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+564,
+276,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R6"
+},
+{
+"id": "icon.ring.emberheart",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+712,
+276,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R7"
+},
+{
+"id": "icon.ring.echofork",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+860,
+276,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R8"
+},
+{
+"id": "icon.ring.sunwise",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+0,
+424,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R9"
+},
+{
+"id": "icon.ring.acornsense",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+148,
+424,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R10"
+},
+{
+"id": "icon.ring.thorndancer",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+296,
+424,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R11"
+},
+{
+"id": "icon.ring.crowfriend",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+444,
+424,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "R12"
+},
+{
+"id": "icon.ring.dewring",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+592,
+424,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "filler"
+},
+{
+"id": "icon.ring.graft",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 148,
+"h": 147,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+740,
+424,
+148,
+147
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "graft"
+},
+{
+"id": "icon.knot.brittlebark",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 141,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+0,
+276,
+141,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "K1"
+},
+{
+"id": "icon.knot.thirst",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 141,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+141,
+276,
+141,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "K2"
+},
+{
+"id": "icon.knot.restlesscrow",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 141,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+282,
+276,
+141,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "K3"
+},
+{
+"id": "icon.knot.thornfall",
+"file": "common/common.rings.webp",
+"type": "icon",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 141,
+"h": 148,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+423,
+276,
+141,
+148
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "K4"
+},
+{
+"id": "ui.ring.card",
+"file": "common/common.rings.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 233,
+"h": 276,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+0,
+0,
+233,
+276
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "ring offer card; medallion socket centre at (0.5,0.2)"
+},
+{
+"id": "ui.ring.pip",
+"file": "common/common.rings.webp",
+"type": "ui",
+"world": null,
+"frames": 3,
+"fps": 0,
+"w": 68,
+"h": 67,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "common.rings",
+"rects": [
+[
+888,
+424,
+68,
+67
+],
+[
+956,
+424,
+68,
+67
+],
+[
+0,
+571,
+68,
+67
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"anim": "I,II,III"
+}
+]

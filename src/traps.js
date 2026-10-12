@@ -9,6 +9,7 @@
 // in a gentle "intro" version on its own, with a hint label.
 // Shipped: twig, pulse, door, gust, sap, lure, twins, tide, crow (mist dropped).
 import { clamp } from './rng.js';
+import { trapLabel, trapSkin } from './world-mech.js'; // V2-MECH: world names and skins
 
 const W = 560, TIP_R = 9, FORK_SPREAD = 78;
 export const WARN_MIN = 0.8;
@@ -49,7 +50,8 @@ const rnd = (s) => s.rng();
 function intro(s, id, y) {
   if (s.trapSeen[id]) return false;
   s.trapSeen[id] = true;
-  s.traps.push({ kind: 'label', id, y, shown: false });
+  const L = s.world && trapLabel(s.world, id); // V2-MECH: the world's own name for it
+  s.traps.push({ kind: 'label', id, y, shown: false, name: L ? L.label : TRAPS[id].name, hint: L ? L.hint : TRAPS[id].hint, skin: s.world ? trapSkin(s.world, id) : null });
   return true;
 }
 const seen = (s, id) => !!s.trapSeen[id];
@@ -310,9 +312,9 @@ export function trapsUpdate(s, dt, slow, A) {
     // P8-ECON: a gust about to blow on the band you are in (or about to enter)
     if (tr.kind === 'gust') { const g = gustState(tr), near = s.cy < tr.y0 + 260 && s.cy > tr.y1; if (g.st === 'warn' && near && !tr.warned) { tr.warned = true; A.emit(s, 'trapWarn', { trap: 'gust', x: s.cx, y: s.cy, t: g.left, dir: tr.dir }); } if (g.st !== 'warn') tr.warned = false; }
     if (tr.kind === 'label' && !tr.shown && s.cy < tr.y + 760) {
-      tr.shown = true; A.emit(s, 'trapintro', { id: tr.id, name: TRAPS[tr.id].name, hint: TRAPS[tr.id].hint, y: tr.y });
+      tr.shown = true; A.emit(s, 'trapintro', { id: tr.id, name: tr.name || (TRAPS[tr.id] || {}).name, hint: tr.hint || (TRAPS[tr.id] || {}).hint, y: tr.y, skin: tr.skin });
     } else if (tr.kind === 'tide') {
-      if (!tr.done && tr.top == null && s.cy < tr.y0 - 30) { tr.top = s.cy + 320; tr.v = TIDE_K * Math.max(150, s.speed); A.emit(s, 'tide', {}); A.emit(s, 'trapWarn', { trap: 'tide', x: s.cx, y: tr.top, t: (tr.top - s.cy) / Math.max(1, Math.max(150, s.speed) - tr.v) }); }
+      if (!tr.done && tr.top == null && s.cy < tr.y0 - 30) { tr.top = s.cy + 320; tr.v = (tr.k || TIDE_K) * Math.max(150, s.speed); A.emit(s, 'tide', {}); A.emit(s, 'trapWarn', { trap: 'tide', x: s.cx, y: tr.top, t: (tr.top - s.cy) / Math.max(1, Math.max(150, s.speed) - tr.v) }); }
       if (tr.top != null) {
         if (s.cy < tr.y1) tr.done = true;
         tr.top += tr.done ? 420 * dt : -tr.v * tdt;
@@ -325,17 +327,18 @@ export function trapsUpdate(s, dt, slow, A) {
       // pecked (sap, combo, staged sunlight and 5% of your points); a forked pair
       // straddles the lane, and a single tip can swerve out of it.
       if (tr.st === 'perch' && s.cy < tr.y) {
-        tr.st = 'warn'; tr.t = CROW_WARN; tr.x = s.cx; tr.yy = s.cy; tr.lane = CROW_LANE;
-        A.emit(s, 'crow', { x: s.cx, y: s.cy, lane: CROW_LANE, t: CROW_WARN });
-        A.emit(s, 'trapWarn', { trap: 'crow', x: s.cx, y: s.cy, t: CROW_WARN, lane: CROW_LANE });
+        const cf = A.ringCrow ? A.ringCrow(s) : 0; // V2-MECH: Crow Friend marks the lane 0.3 s earlier
+        tr.st = 'warn'; tr.t = CROW_WARN + (cf ? 0.3 : 0); tr.t0 = tr.t; tr.x = s.decoy > 0 ? s.decoyX : s.cx; tr.yy = s.cy; tr.lane = CROW_LANE;
+        A.emit(s, 'crow', { x: tr.x, y: s.cy, lane: CROW_LANE, t: tr.t });
+        A.emit(s, 'trapWarn', { trap: 'crow', x: tr.x, y: s.cy, t: tr.t, lane: CROW_LANE, skin: tr.skin });
       } else if (tr.st === 'warn') {
         tr.t -= tdt; tr.yy = s.cy;
-        if (CROW_WARN - tr.t < CROW_TRACK) tr.x += clamp(s.cx - tr.x, -400 * dt, 400 * dt);
+        if ((tr.t0 || CROW_WARN) - tr.t < CROW_TRACK) tr.x += clamp((s.decoy > 0 ? s.decoyX : s.cx) - tr.x, -400 * dt, 400 * dt);
         if (tr.t <= 0) {
           const R = A.tipR(s);
           let ti = -1;
           for (let i = 0; i < s.tips.length; i++) if (Math.abs(s.tips[i].x - tr.x) < CROW_LANE + R - 3) ti = i;
-          if (ti >= 0 && !(s.invuln > 0) && !(s.pu.rush > 0)) {
+          if (ti >= 0 && !(s.invuln > 0) && !(s.pu.rush > 0) && !(s.decoy > 0) && !s.ride) {
             let lost = 0; for (const t of s.tips) { lost += t.staged; t.staged = 0; }
             s.commits -= lost; s.crowSteals = (s.crowSteals || 0) + 1;
             const pts = Math.min(400, Math.floor(s.score * CROW_SCORE)); s.score -= pts;
@@ -344,8 +347,11 @@ export function trapsUpdate(s, dt, slow, A) {
             tr.st = 'stole';
             A.emit(s, 'crowsteal', { x: s.cx, y: s.cy, lost, pts, sap: Math.round(sap0 - s.sap) });
           } else {
-            tr.st = 'foiled'; const bonus = A.addScore(s, 30 * s.mult); s.crowFoils = (s.crowFoils || 0) + 1;
-            A.emit(s, 'crowfoil', { x: s.cx, y: s.cy, bonus });
+            if (ti >= 0 && s.ride && !(s.invuln > 0)) A.hit(s, ti, CROW_DMG, 'crow'); // a ride takes the peck instead
+            const cf = A.ringCrow ? A.ringCrow(s) : 0;
+            tr.st = 'foiled'; const bonus = A.addScore(s, 30 * s.mult * (1 + cf)); s.crowFoils = (s.crowFoils || 0) + 1;
+            const ac = A.acorns ? A.acorns(s, s.econ ? (cf ? 5 * cf : 2) : 0, s.cx, s.cy, true) : 0; // V2-MECH foil drop (2, or 5/10/15 with Crow Friend)
+            A.emit(s, 'crowfoil', { x: s.cx, y: s.cy, bonus, acorns: ac });
           }
           tr.t = 0;
         }

@@ -4,16 +4,17 @@ import { createSim, step, W, TIP_R, FORK_SPREAD, PX_PER_M } from '../src/sim.js'
 
 const SEEDS = Number(process.env.N || 300);
 const MAX_LATERAL = 0.62; // reachable x per unit of height between gates (see reachableX)
-let problems = 0, gates = 0, splits = 0;
+let problems = 0, gates = 0, splits = 0, choices = 0, minis = 0; // V3.2: fork-choice gates + early-showcase mini-boss
 for (let seed = 1; seed <= SEEDS; seed++) {
-  const s = createSim({ seed, tutorial: true, demo: true });
+  const s = createSim({ seed, tutorial: true, demo: true, early: seed % 2 === 0, choices: seed % 2 === 1 }); // choice gates only on Oak+ (odd seeds here) // V3.2: every 2nd seed runs the early showcase schedule
   const seen = new Set();
   const all = [];
   // fly straight up with no collisions by keeping the ghost invulnerable
   while (-s.cy / PX_PER_M < 1200) {
     s.invuln = 10; step(s, 1 / 30, { targetX: W / 2 });
-    for (const b of s.brambles) if (!seen.has(b)) { seen.add(b); all.push({ b, beetles: s.beetles.slice(), frosts: s.frosts.slice() }); }
+    for (const b of s.brambles) if (!seen.has(b)) { seen.add(b); if (b.choice) choices++; all.push({ b, beetles: s.beetles.slice(), frosts: s.frosts.slice() }); }
   }
+  minis += s.spList.some((sp) => sp.mini) || (s.dir.spI >= 2 && s.early) ? 1 : 0;
   all.sort((p, q) => q.b.y - p.b.y);
   let prev = null;
   for (const { b, beetles, frosts } of all) {
@@ -36,5 +37,5 @@ for (let seed = 1; seed <= SEEDS; seed++) {
     prev = { b };
   }
 }
-console.log(`checked ${SEEDS} seeds: ${gates} gates, ${splits} splits, ${problems} problems`);
+console.log(`checked ${SEEDS} seeds: ${gates} gates, ${splits} splits (${choices} fork-choice), early mini-boss on ${minis} seeds, ${problems} problems`);
 process.exit(problems ? 1 : 0);

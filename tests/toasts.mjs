@@ -22,7 +22,7 @@ for (const [name, opts] of [['iphone13', devices['iPhone 13']], ['small', { view
     const o = await p.evaluate(() => {
       const ts = [...document.querySelectorAll('.toast')].map((e) => e.getBoundingClientRect());
       const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && e.offsetParent !== null; };
-      const targets = [...document.querySelectorAll('button, a.btn, .dock, #metabar')].filter(vis).filter((e) => !e.closest('#toasts'));
+      const targets = [...document.querySelectorAll('button, a.btn, .dock, #metabar')].filter(vis).filter((e) => !e.closest('#toasts') && e.id !== 'hub-frame'); // V2-INT: the hero painting is a big tap target, not a control a toast can hide
       let worst = 0, who = '';
       for (const t of ts) for (const e of targets) { const r = e.getBoundingClientRect(); const ox = Math.min(t.right, r.right) - Math.max(t.left, r.left), oy = Math.min(t.bottom, r.bottom) - Math.max(t.top, r.top); if (ox > 0 && oy > 0 && ox * oy > worst) { worst = ox * oy; who = (e.id || e.className || e.textContent).toString().slice(0, 30); } }
       return { n: ts.length, worst: Math.round(worst), who, top: ts.length ? Math.round(ts[0].top) : 0 };

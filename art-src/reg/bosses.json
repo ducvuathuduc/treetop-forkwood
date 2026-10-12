@@ -1,0 +1,298 @@
+[
+{
+"id": "meadow.boss.crowking",
+"file": "meadow/meadow.boss.webp",
+"type": "anim",
+"world": "meadow",
+"frames": 2,
+"fps": 0,
+"w": 532,
+"h": 434,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "meadow.boss",
+"rects": [
+[
+0,
+0,
+532,
+434
+],
+[
+0,
+434,
+532,
+434
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "The Crow King. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+"anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+},
+{
+"id": "starry.boss.mistral",
+"file": "starry/starry.boss.webp",
+"type": "anim",
+"world": "starry",
+"frames": 2,
+"fps": 0,
+"w": 532,
+"h": 510,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "starry.boss",
+"rects": [
+[
+0,
+0,
+532,
+510
+],
+[
+0,
+510,
+532,
+510
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "The Night Mistral. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+"anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+},
+{
+"id": "fresco.boss.stonecherub",
+"file": "fresco/fresco.boss.webp",
+"type": "anim",
+"world": "fresco",
+"frames": 2,
+"fps": 0,
+"w": 532,
+"h": 493,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "fresco.boss",
+"rects": [
+[
+0,
+0,
+532,
+493
+],
+[
+0,
+493,
+532,
+493
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "The Stone Cherub. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+"anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+},
+{
+"id": "ukiyo.boss.onikite",
+"file": "ukiyo/ukiyo.boss.webp",
+"type": "anim",
+"world": "ukiyo",
+"frames": 2,
+"fps": 0,
+"w": 532,
+"h": 461,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "ukiyo.boss",
+"rects": [
+[
+0,
+0,
+532,
+461
+],
+[
+0,
+461,
+532,
+461
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "The Oni Kite. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+"anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+},
+{
+"id": "ukiyo.boss.fx.wavearc",
+"file": "ukiyo/ukiyo.boss.webp",
+"type": "fx",
+"world": "ukiyo",
+"frames": 1,
+"fps": 0,
+"w": 212,
+"h": 167,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "ukiyo.boss",
+"rects": [
+[
+532,
+461,
+212,
+167
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "lilies.boss.heron",
+"file": "lilies/lilies.boss.webp",
+"type": "anim",
+"world": "lilies",
+"frames": 2,
+"fps": 0,
+"w": 532,
+"h": 486,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lilies.boss",
+"rects": [
+[
+0,
+0,
+532,
+486
+],
+[
+0,
+486,
+532,
+486
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "The Heron Matriarch. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+"anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+},
+{
+"id": "gilded.boss.peacock",
+"file": "gilded/gilded.boss.webp",
+"type": "anim",
+"world": "gilded",
+"frames": 2,
+"fps": 0,
+"w": 532,
+"h": 469,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "gilded.boss",
+"rects": [
+[
+0,
+0,
+532,
+469
+],
+[
+0,
+469,
+532,
+469
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "The Golden Peacock. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+"anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+},
+{
+"id": "gilded.boss.fx.shard",
+"file": "gilded/gilded.boss.webp",
+"type": "fx",
+"world": "gilded",
+"frames": 1,
+"fps": 0,
+"w": 68,
+"h": 116,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "gilded.boss",
+"rects": [
+[
+532,
+469,
+68,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+},
+{
+"id": "lacquer.boss.carpdragon",
+"file": "lacquer/lacquer.boss.webp",
+"type": "anim",
+"world": "lacquer",
+"frames": 2,
+"fps": 0,
+"w": 532,
+"h": 226,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lacquer.boss",
+"rects": [
+[
+384,
+0,
+532,
+226
+],
+[
+0,
+371,
+532,
+226
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"notes": "The Carp Dragon. Cut-out motion in code: idle bob 6px @0.5Hz ease-in-out sine + 2% breathe; wind-up = lerp to frame1 over 0.25s with 4% squash, hold through the 1.2s telegraph, release with 8% stretch; hurt = 3-frame white flash (code tint), defeat = drop + fade.",
+"anim": "frame0 = idle/hover, frame1 = attack wind-up (anticipation pose)"
+},
+{
+"id": "lacquer.boss.fx.coil",
+"file": "lacquer/lacquer.boss.webp",
+"type": "fx",
+"world": "lacquer",
+"frames": 1,
+"fps": 0,
+"w": 384,
+"h": 371,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lacquer.boss",
+"rects": [
+[
+0,
+0,
+384,
+371
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)"
+}
+]

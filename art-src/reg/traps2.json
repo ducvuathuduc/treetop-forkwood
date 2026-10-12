@@ -1,0 +1,794 @@
+[
+{
+"id": "meadow.trap.dewweb",
+"file": "meadow/meadow.traps2.webp",
+"type": "sprite",
+"world": "meadow",
+"frames": 2,
+"fps": 0,
+"w": 189,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "meadow.traps2",
+"rects": [
+[
+0,
+0,
+189,
+196
+],
+[
+189,
+0,
+189,
+196
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "web",
+"notes": "dew orb web; tear = split along threads",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "meadow.trap.squirrel",
+"file": "meadow/meadow.traps2.webp",
+"type": "sprite",
+"world": "meadow",
+"frames": 2,
+"fps": 0,
+"w": 175,
+"h": 180,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "meadow.traps2",
+"rects": [
+[
+0,
+196,
+175,
+180
+],
+[
+175,
+196,
+175,
+180
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "cone",
+"notes": "throws an acorn at the locked circle",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "meadow.trap.seesaw",
+"file": "meadow/meadow.traps2.webp",
+"type": "sprite",
+"world": "meadow",
+"frames": 2,
+"fps": 0,
+"w": 340,
+"h": 111,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "meadow.traps2",
+"rects": [
+[
+0,
+376,
+340,
+111
+],
+[
+0,
+487,
+340,
+111
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "seesaw",
+"notes": "fallen branch rope bridge (replaces the off-theme railway crossing); drawn stretched over the solid span",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "starry.trap.swallows",
+"file": "starry/starry.traps2.webp",
+"type": "sprite",
+"world": "starry",
+"frames": 2,
+"fps": 0,
+"w": 179,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "starry.traps2",
+"rects": [
+[
+0,
+0,
+179,
+196
+],
+[
+179,
+0,
+179,
+196
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "bats",
+"notes": "swooping swallow",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "starry.trap.fallingstar",
+"file": "starry/starry.traps2.webp",
+"type": "sprite",
+"world": "starry",
+"frames": 2,
+"fps": 0,
+"w": 165,
+"h": 180,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "starry.traps2",
+"rects": [
+[
+0,
+196,
+165,
+180
+],
+[
+165,
+196,
+165,
+180
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "icicle",
+"notes": "haloed impasto star falling (tail up)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "fresco.trap.censer",
+"file": "fresco/fresco.traps2.webp",
+"type": "sprite",
+"world": "fresco",
+"frames": 2,
+"fps": 0,
+"w": 121,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "fresco.traps2",
+"rects": [
+[
+0,
+0,
+121,
+196
+],
+[
+121,
+0,
+121,
+196
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "pendulum",
+"notes": "swinging thurible",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "fresco.trap.belfrybats",
+"file": "fresco/fresco.traps2.webp",
+"type": "sprite",
+"world": "fresco",
+"frames": 2,
+"fps": 0,
+"w": 196,
+"h": 99,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "fresco.traps2",
+"rects": [
+[
+0,
+196,
+196,
+99
+],
+[
+0,
+295,
+196,
+99
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "bats",
+"notes": "belfry bat",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "ukiyo.trap.pinebough",
+"file": "ukiyo/ukiyo.traps2.webp",
+"type": "sprite",
+"world": "ukiyo",
+"frames": 2,
+"fps": 0,
+"w": 340,
+"h": 116,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "ukiyo.traps2",
+"rects": [
+[
+0,
+0,
+340,
+116
+],
+[
+0,
+116,
+340,
+116
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "seesaw",
+"notes": "pine bough",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "ukiyo.trap.oarsweep",
+"file": "ukiyo/ukiyo.traps2.webp",
+"type": "sprite",
+"world": "ukiyo",
+"frames": 2,
+"fps": 0,
+"w": 320,
+"h": 75,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "ukiyo.traps2",
+"rects": [
+[
+0,
+444,
+320,
+75
+],
+[
+0,
+519,
+320,
+75
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "pecker",
+"notes": "sweeping oar (tiled along the span)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "ukiyo.trap.rocks",
+"file": "ukiyo/ukiyo.traps2.webp",
+"type": "sprite",
+"world": "ukiyo",
+"frames": 2,
+"fps": 0,
+"w": 280,
+"h": 106,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "ukiyo.traps2",
+"rects": [
+[
+0,
+232,
+280,
+106
+],
+[
+0,
+338,
+280,
+106
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "jaws",
+"notes": "closing sea rocks",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lilies.trap.reedweb",
+"file": "lilies/lilies.traps2.webp",
+"type": "sprite",
+"world": "lilies",
+"frames": 2,
+"fps": 0,
+"w": 196,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lilies.traps2",
+"rects": [
+[
+0,
+0,
+196,
+196
+],
+[
+196,
+0,
+196,
+196
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "web",
+"notes": "reed web",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lilies.trap.turtle",
+"file": "lilies/lilies.traps2.webp",
+"type": "sprite",
+"world": "lilies",
+"frames": 2,
+"fps": 0,
+"w": 153,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lilies.traps2",
+"rects": [
+[
+0,
+196,
+153,
+196
+],
+[
+153,
+196,
+153,
+196
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "jaws",
+"notes": "snapping turtle",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lilies.trap.pollen",
+"file": "lilies/lilies.traps2.webp",
+"type": "sprite",
+"world": "lilies",
+"frames": 2,
+"fps": 0,
+"w": 180,
+"h": 172,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lilies.traps2",
+"rects": [
+[
+306,
+196,
+180,
+172
+],
+[
+0,
+392,
+180,
+172
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "spores",
+"notes": "pollen puff (spins in code)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lilies.trap.weeds",
+"file": "lilies/lilies.traps2.webp",
+"type": "sprite",
+"world": "lilies",
+"frames": 2,
+"fps": 0,
+"w": 320,
+"h": 139,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lilies.traps2",
+"rects": [
+[
+180,
+392,
+320,
+139
+],
+[
+0,
+564,
+320,
+139
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "strangle",
+"notes": "pondweed tendrils (tiled along the span)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "gilded.trap.glare",
+"file": "gilded/gilded.traps2.webp",
+"type": "sprite",
+"world": "gilded",
+"frames": 2,
+"fps": 0,
+"w": 62,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "gilded.traps2",
+"rects": [
+[
+0,
+0,
+62,
+320
+],
+[
+62,
+0,
+62,
+320
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "beam",
+"notes": "gold glare shaft (stretched to the beam)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "gilded.trap.birchbough",
+"file": "gilded/gilded.traps2.webp",
+"type": "sprite",
+"world": "gilded",
+"frames": 2,
+"fps": 0,
+"w": 340,
+"h": 94,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "gilded.traps2",
+"rects": [
+[
+0,
+538,
+340,
+94
+],
+[
+0,
+632,
+340,
+94
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "seesaw",
+"notes": "birch bough",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "gilded.trap.tendrils",
+"file": "gilded/gilded.traps2.webp",
+"type": "sprite",
+"world": "gilded",
+"frames": 2,
+"fps": 0,
+"w": 320,
+"h": 109,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "gilded.traps2",
+"rects": [
+[
+0,
+320,
+320,
+109
+],
+[
+0,
+429,
+320,
+109
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "strangle",
+"notes": "gold spiral tendrils (tiled)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "gilded.trap.flakes",
+"file": "gilded/gilded.traps2.webp",
+"type": "sprite",
+"world": "gilded",
+"frames": 2,
+"fps": 0,
+"w": 189,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "gilded.traps2",
+"rects": [
+[
+124,
+0,
+189,
+196
+],
+[
+313,
+0,
+189,
+196
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "embers",
+"notes": "gold flake cluster with ember core",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lacquer.trap.mosquitonet",
+"file": "lacquer/lacquer.traps2.webp",
+"type": "sprite",
+"world": "lacquer",
+"frames": 2,
+"fps": 0,
+"w": 217,
+"h": 250,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lacquer.traps2",
+"rects": [
+[
+188,
+0,
+217,
+250
+],
+[
+0,
+280,
+217,
+250
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "web",
+"notes": "mosquito net in a lacquer bamboo frame (readable mesh)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lacquer.trap.lanternswing",
+"file": "lacquer/lacquer.traps2.webp",
+"type": "sprite",
+"world": "lacquer",
+"frames": 2,
+"fps": 0,
+"w": 151,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lacquer.traps2",
+"rects": [
+[
+217,
+280,
+151,
+196
+],
+[
+0,
+530,
+151,
+196
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "pendulum",
+"notes": "swinging paper lantern",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lacquer.trap.firecracker",
+"file": "lacquer/lacquer.traps2.webp",
+"type": "sprite",
+"world": "lacquer",
+"frames": 2,
+"fps": 0,
+"w": 88,
+"h": 180,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lacquer.traps2",
+"rects": [
+[
+151,
+530,
+88,
+180
+],
+[
+239,
+530,
+88,
+180
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "cone",
+"notes": "firecracker string",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+},
+{
+"id": "lacquer.trap.screen",
+"file": "lacquer/lacquer.traps2.webp",
+"type": "sprite",
+"world": "lacquer",
+"frames": 2,
+"fps": 0,
+"w": 94,
+"h": 280,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": "lacquer.traps2",
+"rects": [
+[
+0,
+0,
+94,
+280
+],
+[
+94,
+0,
+94,
+280
+]
+],
+"scale": "@2x (draw at w/2 x h/2 CSS px)",
+"mech": "candy",
+"notes": "folding screen panel (drawn on both sides of the candy box)",
+"anim": "still; frames 0..0 normal, frame 1 = frame 0 with baked red-orange (#FF5A2A) warn glow (cross-fade it in over the telegraph)",
+"warnFrames": [
+1
+]
+}
+]

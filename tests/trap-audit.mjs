@@ -71,7 +71,7 @@ audit('Golden lure', 'lure', () => setup('lure', 'lure'),
 audit('Twin beetles', 'twins', () => setup('twins', 'twins'),
   [-22, 22, -26, 26, -18, 18].map((dx) => (s) => { const tw = s.traps.find((q) => q.kind === 'twins'); return { targetX: tw.x + dx }; }),
   [(s) => { const tw = s.traps.find((q) => q.kind === 'twins'); let f = false; return () => { const o = { targetX: tw.x }; if (!f) { o.toggle = true; f = true; } return o; }; }], 4);
-audit('Rising thorns', 'tide', () => setup('tide', 'tide', (s) => { s.R.speed = 0.4; }),
+audit('Rising thorns', 'tide', () => setup('tide', 'tide', (s) => { s.R.speed = 0.32; /* V3.1: was 0.4 before the +25% base climb */ }),
   [hold(W / 2)],
   [(s) => { s.R.speed = 1; return { targetX: W / 2 }; }], 14);
 {

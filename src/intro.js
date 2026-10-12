@@ -63,7 +63,8 @@ if (typeof document !== 'undefined') loadStoryCss();
 /** Play the story once its styles are in (resolves to the same controller playIntroNow returns). */
 export function playIntro(opts = {}) { return loadStoryCss().then(() => playIntroNow(opts)); }
 
-export function playIntroNow({ calm = false, sound = null, onDone = () => {} } = {}) {
+export function playIntroNow({ calm = false, sound = null, onDone = () => {}, beats = BEATS, base = BASE, maxAspect = 0.74, ep = null } = {}) {
+  const HEROSRC = BASE + HERO + '.webp';
   const root = document.createElement('section');
   root.id = 'intro';
   root.className = 'intro mg' + (calm ? ' calm' : '');
@@ -72,9 +73,9 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
     <canvas class="mg-bg" aria-hidden="true"></canvas>
     <div class="mg-shake">
       <div class="mg-page">
-        ${BEATS.map((b, i) => `<figure class="plate" data-i="${i}" data-page="${b.page}"><img src="${BASE}${b.img}.webp" alt="" decoding="async" style="object-position:${b.pos}" />${b.fx ? '<canvas class="mg-fx" aria-hidden="true"></canvas>' : ''}<i class="mg-tone" aria-hidden="true"></i><svg class="mg-border" aria-hidden="true"><polygon class="w"/><polygon class="k"/></svg></figure>`).join('')}
-        ${BEATS.map((b, i) => (b.sfx ? `<b class="mg-sfx${b.sfx.small ? ' small' : ''}" data-i="${i}" aria-hidden="true">${b.sfx.t}</b>` : '')).join('')}
-        <img class="mg-hero" src="${BASE}${HERO}.webp" alt="" decoding="async" aria-hidden="true" />
+        ${beats.map((b, i) => `<figure class="plate" data-i="${i}" data-page="${b.page}"><img src="${base}${b.img}.webp" alt="" decoding="async" style="object-position:${b.pos}" />${b.fx ? '<canvas class="mg-fx" aria-hidden="true"></canvas>' : ''}<i class="mg-tone" aria-hidden="true"></i><svg class="mg-border" aria-hidden="true"><polygon class="w"/><polygon class="k"/></svg></figure>`).join('')}
+        ${beats.map((b, i) => (b.sfx ? `<b class="mg-sfx${b.sfx.small ? ' small' : ''}" data-i="${i}" aria-hidden="true">${b.sfx.t}</b>` : '')).join('')}
+        <img class="mg-hero" src="${HEROSRC}" alt="" decoding="async" aria-hidden="true" />
         <div class="mg-title" aria-hidden="true"><span class="mg-logo">Forkwood</span></div>
         <p class="intro-text" aria-live="polite"></p>
         <button class="mg-grow btn primary" type="button">Grow</button>
@@ -83,10 +84,12 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
     <div class="mg-flash" aria-hidden="true"></div>
     <canvas class="mg-ink" aria-hidden="true"></canvas>
     <div class="intro-ui">
-      <ol class="intro-dots">${BEATS.map(() => '<li></li>').join('')}</ol>
+      <ol class="intro-dots">${beats.map(() => '<li></li>').join('')}</ol>
       <button class="intro-skip" type="button">Skip <span aria-hidden="true">&rsaquo;&rsaquo;</span></button>
     </div>
-    <p class="intro-hint">tap to continue</p>`;
+    <p class="intro-hint">tap to continue</p>
+    ${ep ? `<div class="ep-card" aria-hidden="true"><small>${ep.kicker}</small><strong>${ep.title}</strong><code>${ep.git}</code></div>` : ''}`;
+  if (ep) root.classList.add('ep', 'ep-w-' + ep.world);
   document.body.appendChild(root);
   document.body.classList.add('in-intro');
 
@@ -96,7 +99,7 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
   const sfxEls = [...root.querySelectorAll('.mg-sfx')];
   const bg = $('.mg-bg'), ink = $('.mg-ink');
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  let i = -1, pg = -1, timer = 0, done = false, raf = 0, W = 0, H = 0, PW = 0, PH = 0, wipe = null;
+  let land = false, i = -1, pg = -1, timer = 0, done = false, raf = 0, W = 0, H = 0, PW = 0, PH = 0, wipe = null;
   const later = [];
   const after = (ms, fn) => { later.push(setTimeout(fn, ms)); };
 
@@ -122,12 +125,13 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
     W = innerWidth; H = innerHeight;
     const top = 60, bot = 44, side = 12;
     const aw = W - side * 2, ah = H - top - bot;
-    const a = Math.min(0.74, Math.max(0.5, aw / ah));
+    const a = Math.min(maxAspect, Math.max(0.5, aw / ah));
     if (aw / ah > a) { PH = ah; PW = ah * a; } else { PW = aw; PH = aw / a; }
     PW = Math.round(PW); PH = Math.round(PH);
+    land = PW / PH > 1;
     page.style.cssText = css({ left: Math.round((W - PW) / 2) + 'px', top: Math.round(top + (ah - PH) / 2) + 'px', width: PW + 'px', height: PH + 'px', '--pw': PW + 'px' });
-    BEATS.forEach((b, k) => {
-      const pts = b.poly.map(([x, y]) => [x * PW, y * PH]);
+    beats.forEach((b, k) => {
+      const pts = ((land && b.polyL) || b.poly).map(([x, y]) => [x * PW, y * PH]);
       const x0 = Math.min(...pts.map((p) => p[0])), y0 = Math.min(...pts.map((p) => p[1]));
       const x1 = Math.max(...pts.map((p) => p[0])), y1 = Math.max(...pts.map((p) => p[1]));
       const bw = x1 - x0, bh = y1 - y0, loc = pts.map(([x, y]) => [x - x0, y - y0]);
@@ -145,19 +149,19 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
       if (cv) { cv.width = Math.round(bw * DPR); cv.height = Math.round(bh * DPR); cv._w = bw; cv._h = bh; cv._seed = 0; }
     });
     sfxEls.forEach((el) => {
-      const s = BEATS[+el.dataset.i].sfx;
+      const s = beats[+el.dataset.i].sfx;
       el.style.cssText = css({ [s.l != null ? 'left' : 'right']: (s.l != null ? s.l : s.r) * PW + 'px', top: s.t0 * PH + 'px', '--r': s.rot + 'deg' });
     });
     // the splash hero: as big as fits under the title, bursting out of the bottom border
     $('.mg-hero').style.width = Math.round(Math.min(PW * 0.98, PH * 0.455)) + 'px';
     bg.width = Math.round(W * DPR); bg.height = Math.round(H * DPR);
     ink.width = Math.round(W * DPR); ink.height = Math.round(H * DPR);
-    if (i >= 0) placeCaption(BEATS[i]);
+    if (i >= 0) placeCaption(beats[i]);
     drawBg(true);
   }
 
   function placeCaption(b) {
-    const c = b.cap, st = { width: c.w * PW + 'px' };
+    const c = (land && b.capL) || b.cap, st = { width: c.w * PW + 'px' };
     if (c.c) st.left = ((1 - c.w) / 2) * PW + 'px';
     else if (c.l != null) st.left = c.l * PW + 'px'; else st.right = c.r * PW + 'px';
     if (c.t != null) st.top = c.t * PH + 'px'; else st.bottom = c.b * PH + 'px';
@@ -189,9 +193,9 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
   // ------------------------------------------------------------ beats
   function go(k) {
     if (done) return;
-    if (k >= BEATS.length) { finish('end'); return; }
+    if (k >= beats.length) { finish('end'); return; }
     i = k;
-    const b = BEATS[i];
+    const b = beats[i];
     clearTimeout(timer);
     if (!HOLD) timer = setTimeout(() => go(i + 1), BEAT_MS);
     dots.forEach((d, j) => d.classList.toggle('on', j <= i));
@@ -208,10 +212,10 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
     turn();
   }
   function turn() {
-    const b = BEATS[i], k = i;
+    const b = beats[i], k = i;
     const show = () => {
       plates.forEach((p, j) => {
-        const same = BEATS[j].page === b.page;
+        const same = beats[j].page === b.page;
         p.classList.toggle('on', same && j <= i);
         p.classList.toggle('enter', j === i);
       });
@@ -321,7 +325,7 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
   function drawBg(force) {
     const g = bg.getContext('2d');
     g.setTransform(DPR, 0, 0, DPR, 0, 0);
-    const b = BEATS[Math.max(0, i)];
+    const b = beats[Math.max(0, i)];
     g.fillStyle = '#0B0E12'; g.fillRect(0, 0, W, H);
     // a faint focus burst behind the page; boils on intense beats
     const t = performance.now();
@@ -383,7 +387,7 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
       if (!p.classList.contains('on')) return;
       const cv = p.querySelector('.mg-fx');
       // v1.0.1 PERF: the line work boils at ~11 fps; 30 Hz redraws keep the motion and halve the cost
-      if (cv && now - (cv._t || 0) >= 32) { cv._t = now; drawFx(cv, BEATS[j], now); }
+      if (cv && now - (cv._t || 0) >= 32) { cv._t = now; drawFx(cv, beats[j], now); }
     });
   }
 
@@ -405,6 +409,6 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {} } =
   addEventListener('resize', layout);
   layout();
   raf = requestAnimationFrame(loop);
-  requestAnimationFrame(() => go(0));
+  requestAnimationFrame(() => setTimeout(() => { if (i < 0) go(0); }, ep && !calm ? 1800 : 0));
   return { next: () => go(i + 1), skip: () => finish('skip'), get index() { return i; }, get done() { return done; } };
 }

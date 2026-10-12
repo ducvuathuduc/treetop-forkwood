@@ -1,4 +1,6 @@
 // Forkwood audio. WebAudio only, no library.
+// v2 (Forkwood 2.0 'Living Masterpieces'): see the Sound class at the bottom of this
+// file. The v1.0.1 header below describes the fallback layer it is built on.
 // Music is generated live: an FM "kalimba" voice playing a four-chord loop in
 // the current stage's key, with bass, soft drums and a generated reverb. Its
 // tempo and layers rise as you climb, it closes in (low-pass) when sap runs
@@ -33,7 +35,10 @@ const SPRITE = {
   bark: [2.0419, 1.03], click: [3.0709, 0.26], toggle: [3.3325, 0.39], drop: [3.7189, 0.44], soft: [4.1571, 0.43],
 };
 
-export class Sound {
+// v1.0.1 voice: live synthesis + the generative kalimba score. Kept whole as the
+// fallback layer: Sound (below) prefers the v2 sprites and music stems and drops
+// back to these methods whenever an asset is missing or still loading.
+export class LegacySound {
   constructor() {
     this.ctx = null;
     this.muted = safeGet('forkwood.muted') === '1';
@@ -62,17 +67,20 @@ export class Sound {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
-      this.ctx = new AC({ latencyHint: 'interactive' });
+      this.ctx = this._makeCtx(AC);
       const c = this.ctx;
       this.master = c.createGain();
       this.master.gain.value = this.muted ? 0 : 0.85;
       const comp = c.createDynamicsCompressor();
       comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
-      this.master.connect(comp); comp.connect(c.destination);
+      // V3.2: a fast brick-wall limiter after the glue compressor (the swells and lift never clip)
+      const lim = c.createDynamicsCompressor();
+      lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
+      this.master.connect(comp); comp.connect(lim); lim.connect(c.destination); this.comp = comp; this.limiter = lim;
       // music bus with a low-pass that closes when sap is low
       this.musicLP = c.createBiquadFilter(); this.musicLP.type = 'lowpass'; this.musicLP.frequency.value = 16000; this.musicLP.Q.value = 0.7;
-      this.music = c.createGain(); this.music.gain.value = 0.5;
-      this.music.connect(this.musicLP); this.musicLP.connect(this.master);
+      this.musicBus = c.createGain(); this.musicBus.gain.value = 0.5;
+      this.musicBus.connect(this.musicLP); this.musicLP.connect(this.master);
       this.sfx = c.createGain(); this.sfx.gain.value = 0.85; this.sfx.connect(this.master);
       // generated stereo impulse response: a small wooden room
       this.verb = c.createConvolver();
@@ -87,6 +95,7 @@ export class Sound {
       const sb = c.createBufferSource(); sb.buffer = c.createBuffer(1, 1, 22050); sb.connect(c.destination); sb.start(0);
       this._startPad();
       this._startFrost();
+      this._afterCtx();
       // ZzFX renders the meta sounds once, after the first tap (never on page load)
       import('./vendor/zzfx.js').then(({ ZZFX }) => {
         ZZFX.sampleRate = c.sampleRate;
@@ -104,6 +113,8 @@ export class Sound {
   }
 
   get ready() { return !!this.ctx && this.ctx.state === 'running'; }
+  _makeCtx(AC) { return new AC({ latencyHint: 'interactive' }); }
+  _afterCtx() { /* hook */ }
 
   setMuted(m) {
     this.muted = m;
@@ -195,7 +206,7 @@ export class Sound {
     return true;
   }
 
-  _key() { return ROOTS[this.stage % ROOTS.length]; }
+  _key() { return ROOTS[this.stage % ROOTS.length] + (this.keyLift || 0); } // V3.2: golden hour lift
   _note(deg, oct = 0) {
     const o = Math.floor(deg / 5);
     return mtof(this._key() + 12 * (oct + o) + SCALE[((deg % 5) + 5) % 5]);
@@ -206,7 +217,7 @@ export class Sound {
     const c = this.ctx;
     this.padGain = c.createGain(); this.padGain.gain.value = 0.0001;
     this.padFilter = c.createBiquadFilter(); this.padFilter.type = 'lowpass'; this.padFilter.frequency.value = 650; this.padFilter.Q.value = 0.4;
-    this.padFilter.connect(this.padGain); this.padGain.connect(this.music);
+    this.padFilter.connect(this.padGain); this.padGain.connect(this.musicBus);
     const pv = c.createGain(); pv.gain.value = 0.5; this.padGain.connect(pv); pv.connect(this.verbIn);
     this.padOsc = [];
     for (let i = 0; i < 4; i++) {
@@ -301,15 +312,15 @@ export class Sound {
       const play = this.menu ? (b % 4 === 0 || (b % 8 === 3 && bar % 2 === 1)) : b % 2 === 0 || intensity > 0.3 || this.golden;
       if (play && !(b % 8 === 7 && intensity < 0.5)) {
         const st = tones[pat[(b + bar) % 8]];
-        this.kalimba(mtof(root + 12 + st), { t, vol: 0.045 + 0.025 * intensity, dec: 0.7, dest: this.music, verb: 0.45, bright: 0.7 });
+        this.kalimba(mtof(root + 12 + st), { t, vol: 0.045 + 0.025 * intensity, dec: 0.7, dest: this.musicBus, verb: 0.45, bright: 0.7 });
       }
-      if (this.golden && b % 2 === 1) this.kalimba(mtof(root + 24 + tones[(b * 3) % 6]), { t, vol: 0.03, dec: 0.5, dest: this.music, verb: 0.6, bright: 1.2 });
+      if (this.golden && b % 2 === 1) this.kalimba(mtof(root + 24 + tones[(b * 3) % 6]), { t, vol: 0.03, dec: 0.5, dest: this.musicBus, verb: 0.6, bright: 1.2 });
       // bass on beats 1 and 3
-      if (b % 4 === 0 && !(this.menu && b % 8)) this.tone(mtof(root - 12), { t, dec: 0.32, a: 0.01, vol: (this.menu ? 0.06 : 0.12) + 0.06 * intensity, type: 'triangle', dest: this.music });
+      if (b % 4 === 0 && !(this.menu && b % 8)) this.tone(mtof(root - 12), { t, dec: 0.32, a: 0.01, vol: (this.menu ? 0.06 : 0.12) + 0.06 * intensity, type: 'triangle', dest: this.musicBus });
       // soft kick, then shaker as the tree climbs
-      if (intensity > 0.12 && b % 4 === 0) this.tone(95, { t, dec: 0.16, vol: 0.2 * Math.min(1, intensity * 2), type: 'sine', slide: 0.45, dest: this.music });
-      if (intensity > 0.4 && b % 2 === 1) this.noise({ t, dec: 0.035, vol: 0.035, f0: 9000, f1: 6500, type: 'highpass', dest: this.music });
-      if (mult >= 4 && b % 16 === 14) this.kalimba(mtof(root + 31), { t, vol: 0.03, dec: 0.9, dest: this.music, verb: 0.7 });
+      if (intensity > 0.12 && b % 4 === 0) this.tone(95, { t, dec: 0.16, vol: 0.2 * Math.min(1, intensity * 2), type: 'sine', slide: 0.45, dest: this.musicBus });
+      if (intensity > 0.4 && b % 2 === 1) this.noise({ t, dec: 0.035, vol: 0.035, f0: 9000, f1: 6500, type: 'highpass', dest: this.musicBus });
+      if (mult >= 4 && b % 16 === 14) this.kalimba(mtof(root + 31), { t, vol: 0.03, dec: 0.9, dest: this.musicBus, verb: 0.7 });
       this.nextBeat += spb;
     }
   }
@@ -396,5 +407,321 @@ export class Sound {
   tick(i) { this.kalimba(this._note(i % 10, 1), { vol: 0.035, dec: 0.12, verb: 0.1 }); }
 }
 
+
+
+// =====================================================================================
+// Forkwood 2.0 audio: Web Audio mixer over pre-rendered, own-made assets.
+//
+//   master ─ compressor ─ out
+//     ├─ music bus (volume) ─ duck gain ─ low-pass (low sap) ─ stems calm / chase / boss
+//     └─ sfx bus (volume) ─ sprite voices (+ a small send into the shared room reverb)
+//
+// Assets (all synthesised offline by tools/audio, see work/v2/AUDIO-REPORT.md):
+//   assets/v2/common/audio/audio.json   manifest: sprites, clip offsets, music loops
+//   sfx-ui / sfx-play / sfx-traps       shared sprites (idle / first tap / first trap)
+//   assets/v2/<world>/audio/...         that world's trap+boss sprite and music stems
+// Opus in Ogg where the browser plays it, AAC (m4a) otherwise.
+//
+// Public API (contract): play(id, opts), music(worldId), duck(amount, sec), plus
+// setIntensity(level), prepare(level), onEvents(events), setVolume(bus, v), setMuted(m).
+// Every v1.0.1 method (collect, fork, merge, ...) still works and now plays the v2 cue.
+// =====================================================================================
+
+export const WORLDS = ['meadow', 'starry', 'fresco', 'ukiyo', 'lilies', 'gilded', 'lacquer'];
+const SETTINGS_KEY = 'forkwood.audio';
+const DEFAULTS = { master: 0.85, music: 0.6, sfx: 0.9, muted: false };
+
+export class Sound extends LegacySound {
+  constructor() {
+    super();
+    Sound.current = this;
+    this.settings = { ...DEFAULTS, ...readJSON(SETTINGS_KEY) };
+    if (safeGet('forkwood.muted') === '1') this.settings.muted = true;
+    this.muted = this.settings.muted;
+    this.fmt = pickFormat();
+    this.man = null; // manifest once loaded
+    this._manP = null;
+    this._bytes2 = new Map(); // url → Promise<ArrayBuffer>
+    this.sprites = {}; // group → AudioBuffer
+    this._spriteP = {};
+    this.world = 'meadow';
+    this.level = 'calm';
+    this.stems = null; // the playing world's stems
+    this._stemBuf = {}; // `${world}:${stem}` → Promise<AudioBuffer>
+    this.menuLevel = 1;
+    this.voices = 0;
+    this._last = new Map();
+    this.v2 = null; // null = unknown, true = assets ok, false = fall back to v1 synth music
+    this.installUnlock();
+  }
+
+
+  // ------------------------------------------------------------ context + graph
+  _makeCtx(AC) {
+    // everything we ship is low-passed at 12.5 kHz, so a 32 kHz context loses nothing and
+    // cuts decoded-buffer memory and mixing cost by a third (falls back if refused)
+    try { return new AC({ latencyHint: 'interactive', sampleRate: 32000 }); } catch { return new AC({ latencyHint: 'interactive' }); }
+  }
+
+
+  _afterCtx() {
+    const c = this.ctx;
+    // re-route: music gain → duck → low-pass (built by the base) ; volumes from settings
+    this.musicBus.disconnect();
+    this.duckGain = c.createGain();
+    this.musicBus.connect(this.duckGain); this.duckGain.connect(this.musicLP);
+    this._applyVolumes(0);
+    this._early();
+    this._mixer().then((ok) => (ok ? this._mixerReady() : this._legacyMusic()));
+  }
+
+  /** Start the manifest and the small ui sprite downloading at once, in parallel with the
+   *  mixer module, so the first tap's sounds are ready within a few hundred ms. */
+  _early() {
+    if (this._earlyDone || typeof fetch !== 'function') return;
+    this._earlyDone = true;
+    const get = (u, json) => fetch(u).then((r) => (r.ok ? (json ? r.json() : r.arrayBuffer()) : null)).catch(() => null);
+    const ui = `assets/v2/common/audio/sfx-ui.${this.fmt}`;
+    if (!this._bytes2.has(ui)) this._bytes2.set(ui, get(ui));
+    this._manEarly = get('assets/v2/common/audio/audio.json', true);
+    // decode the ui sprite here too (the mixer reuses this promise instead of decoding again)
+    if (!this._spriteP.ui && this.ctx) {
+      this._spriteP.ui = this._bytes2.get(ui).then((ab) => (ab ? new Promise((res) => {
+        try { const q = this.ctx.decodeAudioData(ab.slice(0), res, () => res(null)); if (q && q.then) q.then(res, () => res(null)); } catch { res(null); }
+      }) : null)).then((b) => { if (b) this.sprites.ui = b; else delete this._spriteP.ui; return b || null; });
+    }
+  }
+
+
+  /** Attach one-shot unlock listeners (iOS needs touchend/click; harmless elsewhere). */
+  installUnlock(target = typeof window !== 'undefined' ? window : null) {
+    if (!target || this._unlockInstalled) return;
+    this._unlockInstalled = true;
+    const evs = ['touchend', 'pointerup', 'click', 'keydown'];
+    const h = () => {
+      this.unlock();
+      if (this.ctx && this.ctx.state === 'running') evs.forEach((e) => target.removeEventListener(e, h, true));
+    };
+    evs.forEach((e) => target.addEventListener(e, h, { capture: true, passive: true }));
+  }
+
+
+  // ------------------------------------------------------------ settings
+  _applyVolumes(tc = 0.05) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, s = this.settings;
+    const set = (p, v) => (tc ? p.setTargetAtTime(v, t, tc) : (p.value = v));
+    set(this.master.gain, s.muted ? 0 : s.master);
+    set(this.musicBus.gain, s.music * this.menuLevel);
+    set(this.sfx.gain, s.sfx);
+  }
+
+
+  setVolume(bus, v) {
+    if (!(bus in DEFAULTS) || bus === 'muted') return;
+    this.settings[bus] = Math.max(0, Math.min(1, +v || 0));
+    writeJSON(SETTINGS_KEY, this.settings);
+    this._applyVolumes();
+  }
+
+
+  getSettings() { return { ...this.settings }; }
+
+
+  setMuted(m) {
+    this.muted = !!m;
+    this.settings.muted = this.muted;
+    writeJSON(SETTINGS_KEY, this.settings);
+    safeSet('forkwood.muted', m ? '1' : '0');
+    this._applyVolumes();
+  }
+
+
+  // the v1 foley sprite (only fetched when the v2 manifest is missing) keeps its own slot;
+  // `buf` stays truthy once any sprite is decoded, for the debug hook and tests
+  get buf() { return this._v1buf || this.sprites.play || this.sprites.ui || null; }
+
+  set buf(b) { this._v1buf = b; }
+
+  sample(name, { t = 0, vol = 0.6, rate = 1, verb = 0 } = {}) {
+    if (!this.ctx || !this._v1buf || !SPRITE[name]) return false;
+    const [off, dur] = SPRITE[name], c = this.ctx;
+    const s = c.createBufferSource(); s.buffer = this._v1buf; s.playbackRate.value = rate * (0.97 + Math.random() * 0.06);
+    const g = c.createGain(); g.gain.value = vol;
+    s.connect(g); this._out(g, this.sfx, verb);
+    s.start(c.currentTime + t, off, dur);
+    return true;
+  }
+
+
+  // v1 music entry points, now driving the stems (or the old generative score on fallback)
+  _legacyMusic() {
+    if (this._padOn || !this.ctx) return;
+    this._padOn = true;
+    super._startPad();
+    if (this.playing) super.start();
+  }
+
+
+  _startPad() { /* deferred: only built if the v2 music cannot load (see _legacyMusic) */ }
+
+
+  startMenu() {
+    this.menuLevel = 0.6;
+    this._applyVolumes(0.4);
+    this.setIntensity('calm');
+    this.menu = true;
+    this.playing = true;
+    if (this.v2 === false) { this._legacyMusic(); if (this.padGain) super.startMenu(); return; }
+    this.music(this.world);
+  }
+
+
+  start() {
+    this.menu = false;
+    this.playing = true;
+    this.menuLevel = 1;
+    this._applyVolumes(0.4);
+    this.setIntensity('calm');
+    this.setLowSap(1);
+    if (this.v2 === false && this.padGain) return super.start();
+    this.music(this.world);
+  }
+
+
+  stop() {
+    this.playing = false;
+    this.menu = false;
+    this.golden = false;
+    if (this._gitLift) { this._gitLift(false); this._gitRelease(0.4); } // V3.2
+    this.setIntensity('calm');
+    this.menuLevel = 0.6;
+    this._applyVolumes(0.6);
+    if (this.v2 === false && this.padGain) super.stop();
+  }
+
+
+  setStage(i) { this.stage = i; }
+
+
+  update(intensity, mult) {
+    if (this._gitTick) this._gitTick(); // V3.2: tips → pans, heartbeat, sunlight
+    if (this.v2 === false && this.padGain) super.update(intensity, mult);
+  }
+
+
+  // ------------------------------------------------------------ v1 methods → v2 cues
+  _p(id, opts, legacy) { if (!this.play(id, opts, true)) legacy(); }
+
+  collect(chain, forked) { this._p('core.collect', { step: Math.min(9, chain - 1), minGap: 0.015 }, () => super.collect(chain, forked)); }
+
+  fork() { this._p('core.fork', {}, () => super.fork()); }
+
+  merge(mult) { this._p('core.merge', { rate: 1 + Math.min(4, mult) * 0.004 }, () => super.merge(mult)); }
+
+  jit() { this._p('core.merge.jit', {}, () => super.jit()); }
+
+  emptyMerge() { this._p('core.merge.empty', {}, () => super.emptyMerge()); }
+
+  revert() { this._p('core.revert', {}, () => super.revert()); }
+
+  hit() { this._p('core.hit', {}, () => super.hit()); }
+
+  near() { this._p('core.near', {}, () => super.near()); }
+
+  dew() { this._p('pickup.dew', {}, () => super.dew()); }
+
+  shield() { this._p('core.shield', {}, () => super.shield()); }
+
+  shieldBreak() { this._p('core.shield.break', {}, () => super.shieldBreak()); }
+
+  stageUp() { this._p('core.stage', {}, () => super.stageUp()); }
+
+  newBest() { this._p('core.newbest', {}, () => super.newBest()); }
+
+  bloom(n) { this._p('core.bloom', {}, () => super.bloom(n)); }
+
+  goldenStart() { this.setGolden(true); this._p('core.golden.start', {}, () => super.goldenStart()); }
+
+  goldenEnd() { this.setGolden(false); this._p('core.golden.end', {}, () => super.goldenEnd()); }
+
+  sprout() { this._p('core.sprout', {}, () => super.sprout()); }
+
+  death() { this._p('core.death', {}, () => super.death()); }
+
+  acorn(n) { this._p('core.acorn', { step: n % 6, minGap: 0.02 }, () => super.acorn(n)); }
+
+  buy() { this._p('ui.purchase', {}, () => super.buy()); }
+
+  equip() { this._p('ui.equip', {}, () => super.equip()); }
+
+  stamp() { this._p('ui.stamp', {}, () => super.stamp()); }
+
+  page() { this._p('ui.page', {}, () => super.page()); }
+
+  sparkle() { this._p('ui.notify', {}, () => super.sparkle()); }
+
+  levelUp() { this._p('ui.levelup', {}, () => super.levelUp()); }
+
+  charged() { this._p('core.charged', {}, () => super.charged()); }
+
+  click() { this._p('ui.click', {}, () => super.click()); }
+
+  toggle() { this._p('ui.toggle', {}, () => super.toggle()); }
+
+  pickup(kind) { this._p(`pickup.${kind}`, {}, () => super.pickup(kind)); }
+
+  puEnd() { this._p('pickup.end', {}, () => super.puEnd()); }
+
+  graft() { this._p('ring.pick', {}, () => super.graft()); }
+
+  synergy() { this._p('ring.synergy', {}, () => super.synergy()); }
+
+  storm() { this._p('core.storm', {}, () => super.storm()); }
+
+  strike() { this._p('core.strike', {}, () => super.strike()); }
+
+  stormEnd() { this._p('core.storm.end', {}, () => super.stormEnd()); }
+
+  graze(n) { this._p('core.graze', { step: Math.min(4, Math.floor(n / 3)) }, () => super.graze(n)); }
+
+  tick(i) { this._p('core.tick', { step: i % 10, minGap: 0.05 }, () => super.tick(i)); }
+
+  // ---------------------------------------------------------------- mixer loading
+  // The v2 mixer (sprites, stems, ducking, events) lives in audio-mixer.js and is imported
+  // after first paint (idle prefetch or the first tap), keeping first load small. install()
+  // copies its methods onto Sound.prototype; until then these stand-ins keep calls safe.
+  _mixer() {
+    if (!this._mixP) this._mixP = import('./audio-mixer.js').then((m) => { m.install(Sound); return true; }).catch(() => false);
+    return this._mixP;
+  }
+  _sfx() { return this._mixer().then((ok) => (ok ? this._sfx() : LegacySound.prototype._sfx.call(this))); }
+  play() { return false; }
+  has() { return false; }
+  duck() {}
+  music(worldId) { if (WORLDS.includes(worldId)) this.world = worldId; this.wantMusic = true; if (this.ctx) this._mixer(); }
+  setIntensity(level = 'calm') { this.level = level; }
+  prepare() {}
+  onEvents() {}
+  handleEvent() {}
+  chestReveal() {}
+  currencyFly() {}
+}
+
+function pickFormat() {
+  try {
+    if (typeof Audio === 'undefined') return 'ogg';
+    const a = new Audio();
+    return a.canPlayType('audio/ogg; codecs="opus"') ? 'ogg' : 'm4a';
+  } catch { return 'ogg'; }
+}
+
+// contract-level helpers bound to the live Sound instance
+export function play(id, opts) { return Sound.current ? Sound.current.play(id, opts) : false; }
+export function music(worldId) { if (Sound.current) Sound.current.music(worldId); }
+export function duck(amount, sec) { if (Sound.current) Sound.current.duck(amount, sec); }
+
 function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function safeSet(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } }
+function readJSON(k) { try { return JSON.parse(safeGet(k) || '{}') || {}; } catch { return {}; } }
+function writeJSON(k, v) { safeSet(k, JSON.stringify(v)); }

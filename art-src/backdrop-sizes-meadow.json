@@ -1,0 +1,54 @@
+{
+ "meadow": {
+  "sky.p": [
+   "meadow.layer.sky.p.webp",
+   132882,
+   80,
+   1080,
+   1920
+  ],
+  "sky.p.avif": [
+   "meadow.layer.sky.p.avif",
+   102482
+  ],
+  "sky.d": [
+   "meadow.layer.sky.d.webp",
+   208956,
+   80,
+   2560,
+   1440
+  ],
+  "sky.d.avif": [
+   "meadow.layer.sky.d.avif",
+   156331
+  ],
+  "far.p": [
+   "meadow.layer.far.p.webp",
+   62752,
+   80,
+   1080,
+   1216
+  ],
+  "far.d": [
+   "meadow.layer.far.d.webp",
+   131102,
+   76,
+   2560,
+   1216
+  ],
+  "side.p": [
+   "meadow.layer.side.p.webp",
+   102868,
+   88,
+   1080,
+   754
+  ],
+  "side.d": [
+   "meadow.layer.side.d.webp",
+   156690,
+   88,
+   2560,
+   1156
+  ]
+ }
+}

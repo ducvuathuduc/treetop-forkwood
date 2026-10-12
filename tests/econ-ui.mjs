@@ -32,7 +32,9 @@ try {
   await page.reload(); await page.waitForTimeout(1400);
   const hasGem = await page.evaluate(() => !!document.querySelector('#gem-n') && document.querySelector('#gem-n').textContent);
   ok(hasGem === '9', `gem chip shows the gem balance (${hasGem})`);
-  await page.click('#btn-wallet'); await page.waitForTimeout(400);
+  await page.click('#btn-wallet'); await page.waitForTimeout(1200);
+  ok(await page.evaluate(() => document.getElementById('room').classList.contains('show') && document.getElementById('room').dataset.room === 'shop'), 'META-V2: the acorn chip (+) opens the new shop room');
+  await page.evaluate(() => { window.forkwood.hub.closeRoom(); window.forkwood.ui.showShop('skins'); }); await page.waitForTimeout(400); // the v1 econ book (boosts, upgrades, pods) stays reachable from the Grove
   await page.screenshot({ path: OUT + 'econ-shop-skins.png' });
   for (const sec of ['boosts', 'upgrades', 'pods', 'gems']) {
     await page.click(`[data-eco="${sec}"]`); await page.waitForTimeout(300);
@@ -42,10 +44,10 @@ try {
   }
   // pod odds are on the page
   await page.click('[data-eco="pods"]'); await page.waitForTimeout(200);
-  const odds = await page.evaluate(() => [...document.querySelectorAll('.odds td + td')].map((t) => parseFloat(t.textContent)).slice(0, 7).reduce((a, b) => a + b, 0));
+  const odds = await page.evaluate(() => [...document.querySelectorAll('details.odds[open] td + td')].map((t) => parseFloat(t.textContent)).reduce((a, b) => a + b, 0)); // V2-MECH: the pod table has 8 rows (Ride Token)
   ok(Math.abs(odds - 100) < 1e-6, `seed pod odds shown in full and add up to 100% (${odds})`);
   const before = await page.evaluate(() => JSON.parse(localStorage.getItem('forkwood.save.v2')).acorns);
-  await page.click('[data-pod]'); await page.waitForTimeout(500);
+  await page.click('#meta [data-pod]'); await page.waitForTimeout(500);
   const after = await page.evaluate(() => JSON.parse(localStorage.getItem('forkwood.save.v2')));
   ok(after.econ.pods === 1 && after.spent >= 300, `buying a seed pod spends acorns and opens it (${before} -> ${after.acorns})`);
   await page.screenshot({ path: OUT + 'econ-pod-open.png' });

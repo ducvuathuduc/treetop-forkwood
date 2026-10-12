@@ -4,6 +4,21 @@
 import { W, FORK_SPREAD, TIP_R, charmReady, PICKUPS } from './sim.js';
 import { mulberry32 } from './rng.js';
 import { trapBot } from './traps.js'; // P6-TRAPS
+import { botPenalty2, botMerge2, anyTrap2Ahead } from './traps2.js'; // V2-MECH
+import { rideBot } from './rides.js';
+import { skillBot } from './skills.js';
+
+// V2-MECH: penalty for a tip at x from the boss attack in flight
+function bossPenalty(s, x, sk) {
+  const a = s.boss && s.boss.atk; if (!a) return 0;
+  const R = TIP_R + 10;
+  if (a.xs && a.t > (a.warn || 1) * (0.55 - sk * 0.45)) for (const lx of a.xs) if (Math.abs(x - lx) < a.lane + R + 6) return 1500;
+  if (a.kind === 'volley' && !a.passed && (x < a.gap - a.gapW / 2 + R || x > a.gap + a.gapW / 2 - R)) return 1500;
+  if (a.kind === 'ring' && Math.abs(x - a.x) < a.r + R + 4) return 1200;
+  if (a.kind === 'plates') for (const p of a.plates) if (!p.broken && Math.abs(x - p.x) < 16 + R + 4) return 1200;
+  if (a.kind === 'orbs') for (const o of a.orbs) if (!o.done && Math.abs(x - o.x) < 14 + R + 10) return 900;
+  return 0;
+}
 
 export function createBot(skill = 0.7, seed = 1) {
   return {
@@ -35,6 +50,10 @@ export function botInput(bot, s) {
   let aim = s.cx;
   if (br) {
     if (forked && br.kind === 'split') aim = br.px;
+    else if (br.lanes) { // V3.2 fork-choice gate / hedge: commit to one lane (a sharp bot takes the rich one)
+      if (bot.lane == null || bot.laneFor !== br.y) { bot.laneFor = br.y; if (bot.laneGate == null || Math.abs(bot.laneGate - br.y) > 400) { bot.laneGate = br.y; bot.lane = r() < sk * 0.8 ? 'rich' : 'safe'; } }
+      aim = forked ? (br.lanes.safe + br.lanes.rich) / 2 : br.lanes[bot.lane];
+    }
     else if (br.kind === 'slide' && sk > 0.45) {
       // lead the drifting gap: where will it be when we get there?
       const t = (y - br.y) / Math.max(80, s.speed);
@@ -58,7 +77,7 @@ export function botInput(bot, s) {
       let dx = Math.abs(o.x - s.cx);
       if (forked) dx = Math.min(Math.abs(o.x - (s.cx - s.spread)), Math.abs(o.x - (s.cx + s.spread)));
       if (dx > dy * 1.2 + 40) continue;
-      const val = o.kind === 'dew' ? (s.sap < 60 ? 3 : 1) : o.kind === 'bark' ? 1.5 : o.kind === 'acorn' ? 0.6 : PICKUPS[o.kind] ? 2.2 : 1;
+      const val = o.kind === 'dew' ? (s.sap < 60 ? 3 : 1) : o.kind === 'bark' ? 1.5 : o.kind === 'acorn' ? 0.6 : o.kind === 'ride' ? 2.6 + sk : o.kind === 'hollow' ? 1.6 : PICKUPS[o.kind] ? 2.2 : 1; // V2-MECH: ride knots, hollows
       const sc = val * 100 - dy * 0.15 - dx * 0.6;
       if (sc > bs) {
         bs = sc;
@@ -110,7 +129,8 @@ export function botInput(bot, s) {
     if (c.y1 > y || c.y0 < y - look) continue;
     if (!colAhead || c.y0 > colAhead.y0) colAhead = c;
   }
-  if (colAhead) {
+  const t2 = anyTrap2Ahead(s, look) || !!(s.boss && s.boss.atk); // V2-MECH: the 15 new traps and boss attacks
+  if (colAhead || t2) {
     // pick the x (for the pair of tips, if forked) that clears every column ahead,
     // weighting the nearest most, and staying close to what we wanted anyway
     const sp = forked ? Math.max(s.spread, FORK_SPREAD * 0.8) : 0, R = TIP_R + 10;
@@ -129,6 +149,7 @@ export function botInput(bot, s) {
           for (let k = 0; k < xs.length; k++) if (Math.sign(xs[k] - c.x) !== Math.sign(cur[k] - c.x)) pen += 3000;
         }
       }
+      if (t2) { const xs = forked ? [cx - sp, cx + sp] : [cx]; for (const tx of xs) pen += botPenalty2(s, tx, sk, look) + bossPenalty(s, tx, sk); }
       for (const b of s.beetles) {
         const dy = y - b.y; if (dy < -10 || dy > 260) continue;
         const t = dy / Math.max(60, s.speed); let px = b.x + b.vx * t;
@@ -141,7 +162,8 @@ export function botInput(bot, s) {
     }
     aim = bestX - s.wind * 0.3 * sk;
     // steer hard when a column is close (a skilled player commits early)
-    if (y - colAhead.y0 < 320) aim = s.cx + (aim - s.cx) * (1 + sk);
+    const urgent = t2 && (botPenalty2(s, s.cx, sk, 260) + bossPenalty(s, s.cx, sk)) > 0;
+    if ((colAhead && y - colAhead.y0 < 320) || urgent) aim = s.cx + (aim - s.cx) * (1 + sk);
   }
   bot.col = colAhead;
 
@@ -149,6 +171,9 @@ export function botInput(bot, s) {
   bot.aim = Math.max(10, Math.min(W - 10, aim + bot.noise));
   out.targetX = bot.aim;
 
+  // V2-MECH: on a ride the tap is the ride's action; the skill rides the charm button
+  if (s.ride) { out.toggle = rideBot(s, sk, r); return out; }
+  if (s.skill && skillBot(s, sk, r)) out.charm = true;
   // charm policy: fire it when it would help right now
   if (charmReady(s) && r() < 0.2 + sk * 0.8) {
     const danger = s.beetles.some((b) => b.y < y && b.y > y - 260) || s.brambles.some((b) => b.y < y && b.y > y - 260);
@@ -157,7 +182,7 @@ export function botInput(bot, s) {
   }
 
   // fork policy
-  const singleGateSoon = tb.merge || s.brambles.some((b) => (b.kind === 'gate' || b.kind === 'slide') && b.y < y && b.y > y - (forked ? 330 : 520)); // P6-TRAPS: tb.merge
+  const singleGateSoon = tb.merge || botMerge2(s, forked ? 330 : 520) || (s.boss && s.boss.atk && s.boss.atk.kind !== 'plates' && s.boss.atk.kind !== 'ring' && s.boss.atk.kind !== 'orbs') || s.brambles.some((b) => (b.kind === 'gate' || b.kind === 'slide') && b.y < y && b.y > y - (forked ? 330 : 520)); // P6-TRAPS: tb.merge
   const colSoon = s.columns.some((c) => c.y1 < y && c.y0 > y - 560);
   const beetleSoon = s.beetles.some((b) => b.y < y && b.y > y - 220);
   if (!forked) {

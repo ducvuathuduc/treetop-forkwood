@@ -1,0 +1,412 @@
+[
+{
+"id": "meadow.trap.crow",
+"atlas": "meadow.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0161,
+"A4_inkring": 0.818,
+"A8_drift1x": 12.52
+},
+{
+"id": "meadow.trap.gust",
+"atlas": "meadow.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1514,
+"A4_inkring": 0.037
+},
+{
+"id": "meadow.trap.crossing",
+"atlas": "meadow.traps",
+"A1_halo": 0.0259,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0439,
+"A4_inkring": 0.858
+},
+{
+"id": "meadow.trap.hornet",
+"atlas": "meadow.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0677,
+"A4_inkring": 0.598,
+"A8_drift1x": 2.46
+},
+{
+"id": "meadow.trap.briar",
+"atlas": "meadow.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0363,
+"A4_inkring": 0.926
+},
+{
+"id": "ATLAS meadow.traps",
+"atlas": "meadow.traps",
+"A9_bytesRGBA": 2703360,
+"file_bytes": 137198,
+"dims": "1024x660"
+},
+{
+"id": "starry.trap.crowflock",
+"atlas": "starry.traps",
+"A1_halo": 0.0099,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0139,
+"A4_inkring": 0.923,
+"A8_drift1x": 4.09
+},
+{
+"id": "starry.trap.crowdive",
+"atlas": "starry.traps",
+"A1_halo": 0.0162,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0264,
+"A4_inkring": 0.944
+},
+{
+"id": "starry.trap.vortex",
+"atlas": "starry.traps",
+"A1_halo": 0.0134,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0453,
+"A4_inkring": 0.991
+},
+{
+"id": "starry.trap.wheatspikes",
+"atlas": "starry.traps",
+"A1_halo": 0.0102,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0677,
+"A4_inkring": 0.944
+},
+{
+"id": "starry.trap.lampsparks",
+"atlas": "starry.traps",
+"A1_halo": 0.0084,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0245,
+"A4_inkring": 0.862
+},
+{
+"id": "ATLAS starry.traps",
+"atlas": "starry.traps",
+"A9_bytesRGBA": 2736128,
+"file_bytes": 173436,
+"dims": "1024x668"
+},
+{
+"id": "fresco.trap.dove",
+"atlas": "fresco.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0367,
+"A4_inkring": 0.496,
+"A8_drift1x": 2.82
+},
+{
+"id": "fresco.trap.cherub",
+"atlas": "fresco.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0463,
+"A4_inkring": 0.468
+},
+{
+"id": "fresco.trap.candlewax",
+"atlas": "fresco.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0321,
+"A4_inkring": 0.496
+},
+{
+"id": "fresco.trap.archgate",
+"atlas": "fresco.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0511,
+"A4_inkring": 0.955
+},
+{
+"id": "fresco.trap.plaster",
+"atlas": "fresco.traps",
+"A1_halo": 0.004,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0624,
+"A4_inkring": 0.068
+},
+{
+"id": "ATLAS fresco.traps",
+"atlas": "fresco.traps",
+"A9_bytesRGBA": 2342912,
+"file_bytes": 96284,
+"dims": "1024x572"
+},
+{
+"id": "ukiyo.trap.wavecrest",
+"atlas": "ukiyo.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0912,
+"A4_inkring": 0.796
+},
+{
+"id": "ukiyo.trap.onikite",
+"atlas": "ukiyo.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0433,
+"A4_inkring": 0.789
+},
+{
+"id": "ukiyo.trap.cormorant",
+"atlas": "ukiyo.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0054,
+"A4_inkring": 1.0,
+"A8_drift1x": 7.61
+},
+{
+"id": "ukiyo.trap.spray",
+"atlas": "ukiyo.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1039,
+"A4_inkring": 0.564
+},
+{
+"id": "ukiyo.trap.whirlpool",
+"atlas": "ukiyo.traps",
+"A1_halo": 0.001,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1422,
+"A4_inkring": 0.634
+},
+{
+"id": "ATLAS ukiyo.traps",
+"atlas": "ukiyo.traps",
+"A9_bytesRGBA": 2883584,
+"file_bytes": 135976,
+"dims": "1024x704"
+},
+{
+"id": "lilies.trap.dragonflyswarm",
+"atlas": "lilies.traps",
+"A1_halo": 0.0006,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0282,
+"A4_inkring": 0.612
+},
+{
+"id": "lilies.trap.dragonfly",
+"atlas": "lilies.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0164,
+"A4_inkring": 0.315,
+"A8_drift1x": 6.05
+},
+{
+"id": "lilies.trap.heron",
+"atlas": "lilies.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0257,
+"A4_inkring": 0.744,
+"A8_drift1x": 8.81
+},
+{
+"id": "lilies.trap.willowlash",
+"atlas": "lilies.traps",
+"A1_halo": 0.0005,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.051,
+"A4_inkring": 0.643
+},
+{
+"id": "lilies.trap.lilysink",
+"atlas": "lilies.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.071,
+"A4_inkring": 0.16
+},
+{
+"id": "ATLAS lilies.traps",
+"atlas": "lilies.traps",
+"A9_bytesRGBA": 2785280,
+"file_bytes": 129186,
+"dims": "1024x680"
+},
+{
+"id": "gilded.trap.goldshards",
+"atlas": "gilded.traps",
+"A1_halo": 0.0057,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0772,
+"A4_inkring": 0.407
+},
+{
+"id": "gilded.trap.mosaiceye",
+"atlas": "gilded.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.1907,
+"A4_inkring": 0.987,
+"A8_drift1x": 0.34
+},
+{
+"id": "gilded.trap.blackbird",
+"atlas": "gilded.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0206,
+"A4_inkring": 1.0,
+"A8_drift1x": 5.57
+},
+{
+"id": "gilded.trap.spiralthorn",
+"atlas": "gilded.traps",
+"A1_halo": 0.0052,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.049,
+"A4_inkring": 0.835,
+"A8_drift1x": 2.96
+},
+{
+"id": "gilded.trap.shard",
+"atlas": "gilded.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0312,
+"A4_inkring": 0.82
+},
+{
+"id": "ATLAS gilded.traps",
+"atlas": "gilded.traps",
+"A9_bytesRGBA": 2506752,
+"file_bytes": 150866,
+"dims": "1024x612"
+},
+{
+"id": "lacquer.trap.lanternfire",
+"atlas": "lacquer.traps",
+"A1_halo": 0.0014,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0213,
+"A4_inkring": 0.44
+},
+{
+"id": "lacquer.trap.koileap",
+"atlas": "lacquer.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0577,
+"A4_inkring": 0.755
+},
+{
+"id": "lacquer.trap.mosquitonet",
+"atlas": "lacquer.traps",
+"A1_halo": 0.0025,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.047,
+"A4_inkring": 0.937
+},
+{
+"id": "lacquer.trap.egret",
+"atlas": "lacquer.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0302,
+"A4_inkring": 0.805,
+"A8_drift1x": 4.96
+},
+{
+"id": "lacquer.fx.embers",
+"atlas": "lacquer.traps",
+"A1_halo": 0.0,
+"A2_spill": 0.0,
+"A3_islands": 0,
+"A6_pad": 10,
+"A7_sharp1x": 0.0202,
+"A4_inkring": 0.0
+},
+{
+"id": "ATLAS lacquer.traps",
+"atlas": "lacquer.traps",
+"A9_bytesRGBA": 2867200,
+"file_bytes": 115040,
+"dims": "1024x700"
+}
+]

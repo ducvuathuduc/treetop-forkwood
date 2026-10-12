@@ -67,7 +67,7 @@ await run('desktop-human', { viewport: { width: 1366, height: 768 } }, async (pa
   // real mouse input, no bot: click to start, steer, click to fork + merge, pause/resume
   await page.goto(base + '?seed=99');
   await sleep(600);
-  await page.mouse.click(683, 420); // v1.0: clear of the Map chip under Grow
+  { const b = await page.locator('#btn-play').boundingBox(); await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); } // META-V2: the hub centre is the painting (opens the gallery); PLAY is the giant button
   await sleep(300);
   if ((await page.evaluate(() => window.forkwood.mode)) !== 'play') errors.push('[desktop-human] click did not start');
   for (let i = 0; i < 10; i++) { await page.mouse.move(600 + i * 15, 500); await sleep(40); }
@@ -113,7 +113,7 @@ await run('mobile', { ...devices['iPhone 13'] }, async (page) => {
   if (!(tgt > x0 + 20)) errors.push(`[mobile] drag did not steer right: ${x0} -> ${tgt}`);
   // a tap forks without yanking the tip toward the tap point
   const before = await page.evaluate(() => window.forkwood.sim.cx);
-  await page.tap('canvas', { position: { x: 30, y: 560 } });
+  await page.tap('canvas#game', { position: { x: 30, y: 560 } }); // v2: #game-gl (WebGL) sits under #game
   await sleep(80); // let the game loop consume the tap before stepping synchronously
   await page.evaluate(() => window.forkwood.advance(0.3, {}));
   const after = await page.evaluate(() => ({ tips: window.forkwood.sim.tips.length, cx: window.forkwood.sim.cx }));

@@ -123,3 +123,86 @@
 .intro.mg.calm.splash .mg-hero { transform: translate(-50%, 0); transition: opacity 500ms linear; }
 .intro.mg.calm.splash .mg-grow { transform: translateX(-50%); }
 /* /P8-STORY */
+
+/* ---------------- Forkwood 1.0: episode title card ---------------- */
+.intro.mg.ep .ep-card { position: absolute; z-index: 8; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(88vw, 520px); padding: 22px 22px 20px; text-align: center;
+  background: var(--paper, #FBF6E9); color: var(--inkc, #111); border: 3px solid var(--inkc, #111); box-shadow: 7px 7px 0 var(--inkc, #111); pointer-events: none;
+  animation: ep-card 2000ms cubic-bezier(.2,1.2,.4,1) both; }
+.intro.mg.ep .ep-card small { display: block; font: 800 13px/1.2 var(--ui); letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+.intro.mg.ep .ep-card strong { display: block; margin: 6px 0 8px; font: 800 clamp(26px, 7vw, 40px)/1.05 var(--display); letter-spacing: -.01em; }
+.intro.mg.ep .ep-card code { display: inline-block; padding: 4px 10px; border-radius: 6px; background: #14181d; color: #9be38f; font: 700 clamp(13px, 3.6vw, 16px)/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+@keyframes ep-card { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.7) rotate(-3deg); } 14% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(1deg); } 22% { transform: translate(-50%, -50%) scale(1); } 82% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -54%); } }
+.intro.mg.ep[data-beat] .ep-card { animation: none; opacity: 0; transition: opacity 200ms; }
+.intro.mg.ep.calm .ep-card { animation: none; display: none; }
+.intro.mg.ep .intro-hint { opacity: .8; }
+
+/* ---------------- Story gallery ---------------- */
+.ep-gallery { position: fixed; inset: 0; z-index: 58; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom));
+  background: rgba(8, 11, 14, .72); opacity: 0; transition: opacity 220ms; }
+.ep-gallery.show { opacity: 1; }
+.epg-card { position: relative; width: min(100%, 760px); max-height: 100%; overflow: auto; overscroll-behavior: contain; padding: 18px 16px 16px; border-radius: 18px;
+  background: #FBF6E9; color: #15130f; border: 3px solid #15130f; box-shadow: 6px 6px 0 #15130f; }
+.epg-card header { padding: 0 44px 10px 4px; }
+.epg-card h2 { margin: 0; font: 800 30px/1.1 var(--display); }
+.epg-card header p { margin: 4px 0 0; font: 600 15px/1.35 var(--ui); color: #4a443a; }
+.epg-x { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #15130f; background: #fff; color: #15130f; font: 800 18px/1 var(--ui); cursor: pointer; }
+.epg-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.epg-ep { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: center; width: 100%; padding: 8px; text-align: left; border-radius: 12px;
+  border: 2px solid #15130f; background: #fff; color: inherit; cursor: pointer; box-shadow: 3px 3px 0 #15130f; transition: transform 120ms; }
+.epg-ep:hover, .epg-ep:focus-visible { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #15130f; }
+.epg-ep img { width: 112px; height: 75px; object-fit: cover; border-radius: 8px; display: block; background: #ddd; }
+.epg-t { min-width: 0; display: grid; gap: 2px; }
+.epg-t small { font: 800 11px/1.2 var(--ui); letter-spacing: .1em; text-transform: uppercase; color: #6b6355; }
+.epg-t b { font: 800 17px/1.2 var(--display); overflow-wrap: anywhere; }
+.epg-t code { font: 700 12px/1.3 ui-monospace, Menlo, Consolas, monospace; color: #2f7d4b; overflow-wrap: anywhere; }
+
+/* ---------------- How to play ---------------- */
+.howto { position: fixed; inset: 0; z-index: 62; display: grid; place-items: center; padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+  background: rgba(8, 11, 14, .7); opacity: 0; transition: opacity 220ms; }
+.howto.show { opacity: 1; } .howto.out { opacity: 0; pointer-events: none; }
+.ht-card { width: min(100%, 420px); padding: 18px 18px 16px; border-radius: 20px; background: #FBF6E9; color: #15130f; border: 3px solid #15130f; box-shadow: 6px 6px 0 #15130f; text-align: center; }
+.ht-kick { margin: 0 0 6px; font: 800 13px/1 var(--ui); letter-spacing: .14em; text-transform: uppercase; color: #6b6355; }
+.ht-stage { position: relative; display: grid; cursor: pointer; }
+.ht-slide { grid-area: 1 / 1; margin: 0; opacity: 0; visibility: hidden; transform: translateX(14px); transition: opacity 220ms, transform 220ms, visibility 0s 220ms; }
+.ht-slide.on { opacity: 1; visibility: visible; transform: none; transition: opacity 220ms, transform 220ms; }
+.ht-slide svg { display: block; width: auto; height: min(30vh, 210px); margin: 0 auto 8px; border-radius: 14px; background: linear-gradient(#bfe3f5, #f5e7c4); overflow: visible; }
+.ht-slide svg path { fill: none; stroke-width: 7; stroke-linecap: round; }
+.ht-slide h3 { margin: 0 0 6px; font: 800 clamp(21px, 6vw, 26px)/1.15 var(--display); }
+.ht-slide p { margin: 0; font: 600 16px/1.4 var(--ui); color: #3b362d; min-height: 4.2em; }
+.ht-dots { display: flex; justify-content: center; gap: 8px; list-style: none; padding: 0; margin: 12px 0; }
+.ht-dots li { width: 9px; height: 9px; border-radius: 50%; background: #cfc6b4; } .ht-dots li.on { background: #2f7d4b; }
+.ht-btns { display: flex; gap: 10px; justify-content: center; }
+.ht-btns .btn { min-width: 0; flex: 1 1 0; max-width: 200px; }
+.ht-tip { fill: #3fae6a; stroke: #15130f; stroke-width: 2; }
+.ht-finger circle { fill: rgba(255,255,255,.85); stroke: #15130f; stroke-width: 2.5; }
+.ht-steer { animation: ht-steer 2.2s ease-in-out infinite; }
+@keyframes ht-steer { 0%, 100% { transform: translateX(-28px); } 50% { transform: translateX(28px); } }
+.ht-path { animation: ht-sway 2.2s ease-in-out infinite; transform-origin: 60px 150px; }
+@keyframes ht-sway { 0%, 100% { transform: skewX(10deg); } 50% { transform: skewX(-10deg); } }
+.ht-l, .ht-r { stroke-dasharray: 100; animation: ht-grow 2.4s ease-out infinite; }
+@keyframes ht-grow { 0%, 20% { stroke-dashoffset: 100; } 60%, 100% { stroke-dashoffset: 0; } }
+.ht-tap { fill: rgba(255,255,255,.7); stroke: #15130f; stroke-width: 2.5; transform-origin: 60px 120px; animation: ht-tap 2.4s ease-out infinite; }
+@keyframes ht-tap { 0%, 12% { transform: scale(1); } 16% { transform: scale(.7); } 22%, 100% { transform: scale(1); } }
+.ht-x2 { font: 900 22px var(--ui); fill: #e8a200; stroke: #15130f; stroke-width: 1; text-anchor: middle; opacity: 0; animation: ht-x2 2.4s infinite; }
+@keyframes ht-x2 { 0%, 70% { opacity: 0; } 78%, 92% { opacity: 1; } 100% { opacity: 0; } }
+.ht-sun circle { fill: #ffd34d; stroke: #e89b00; stroke-width: 3; }
+.ht-sun { animation: ht-sun 2.4s ease-in infinite; transform-origin: 60px 36px; }
+@keyframes ht-sun { 0% { transform: translateY(-30px) scale(1); opacity: 1; } 55% { transform: translateY(4px) scale(1); opacity: 1; } 65% { transform: translateY(4px) scale(1.8); opacity: 0; } 100% { opacity: 0; } }
+.ht-barbg { fill: #e5dccb; stroke: #15130f; stroke-width: 1.5; }
+.ht-bar { fill: #3fae6a; transform-origin: 14px 0; animation: ht-bar 2.4s linear infinite; }
+@keyframes ht-bar { 0% { transform: scaleX(.35); } 58% { transform: scaleX(.25); } 66%, 100% { transform: scaleX(.95); } }
+.ht-thorn path { fill: #6b2a2a; stroke: #15130f; stroke-width: 2; }
+.ht-thorn { animation: ht-thorn 1.2s ease-in-out infinite; transform-origin: 80px 76px; }
+@keyframes ht-thorn { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg) scale(1.08); } }
+.ht-acorn { fill: #9a6233; stroke: #15130f; stroke-width: 2; animation: ht-acorn 1.8s ease-in infinite; }
+@keyframes ht-acorn { 0% { transform: translate(0, 0); } 100% { transform: translate(-30px, 150px); } }
+.ht-dodge { animation: ht-sway 1.8s ease-in-out infinite; transform-origin: 60px 150px; }
+.howto.calm *, .howto.calm { animation: none !important; transition: none !important; }
+@media (max-height: 640px) { .ht-slide svg { height: 22vh; } .ht-slide p { min-height: 0; } }
+.ht-stage { grid-template-columns: minmax(0, 1fr); }
+.ht-slide, .ht-slide figcaption { min-width: 0; }
+.ht-slide p { overflow-wrap: break-word; }
+.ht-btns .btn.ht-skip { background: #fff; color: #15130f; border: 2px solid #15130f; box-shadow: none; }
+.ht-btns .btn.ht-next { color: #0f2a16; }
+.ht-card { overflow: hidden; }
+.ht-slide, .ht-slide.on { transform: none; transition: opacity 200ms, visibility 0s; }

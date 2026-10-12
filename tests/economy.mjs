@@ -9,6 +9,7 @@ import * as R from '../src/retention.js';
 import * as E from '../src/economy.js';
 import { SKINS } from '../src/skins.js';
 import { writeFileSync } from 'fs';
+import { WORLD_IDS } from '../src/world-mech.js';
 
 let fails = 0;
 const ok = (c, msg) => { if (c) console.log('ok  ', msg); else { fails++; console.log('FAIL', msg); } };
@@ -71,12 +72,35 @@ const COST_SKINS = SKINS.filter((s) => s.unlock.cost).map((s) => s.id);
   const G = M.freshSave(day0); E.gainGems(G, 3); ok(E.skipGoal(G) && G.goals.filter((g) => g.done).length === 1 && G.econ.gems === 0, 'skip a goal for 3 gems');
 }
 
+// ---------------------------------------------------------------- V2-MECH unit checks
+{
+  ok(E.CRITTER_COST.join() === '450,750,1200' && E.CRITTER_IDS.length === 8, `critter levels 4-6 cost half the research price (450 / 750 / 1,200; ${E.CRITTER_IDS.length * 2400} for all 8)`);
+  const C = M.freshSave(day0); C.acorns = 10000;
+  ok(E.critterLevel(C, 'owl') === 1 && E.critterCost(C, 'owl') === null && E.buyCritterLevel(C, 'owl') === false, 'levels 1-3 come from critter XP, not acorns');
+  E.addCritterXp(C, 'owl', 6000); ok(E.critterLevel(C, 'owl') === 2, 'owl level 2 at 6,000 m'); E.addCritterXp(C, 'owl', 9000);
+  ok(E.critterLevel(C, 'owl') === 3 && E.buyCritterLevel(C, 'owl') === 450 && E.buyCritterLevel(C, 'owl') === 750 && E.buyCritterLevel(C, 'owl') === 1200 && E.critterLevel(C, 'owl') === 6 && E.buyCritterLevel(C, 'owl') === false, 'level 3 by XP, then 4-6 for acorns, capped at 6');
+  ok(E.upValue('wild', 6) === 1.5 && E.upValue('rides', 6) === 1.5 && E.UPGRADE_IDS.includes('wild') && E.UPGRADE_IDS.includes('rides'), 'Wild Kit and Rides are upgrade tracks (×1.5 at level 6)');
+  ok(E.BOOSTS.ride.price === 200 && E.POD_ODDS.find((o) => o.id === 'rideToken').w === 8 && E.POD_ODDS.find((o) => o.id === 'acorns').w === 38, 'Ride Token boost (200) and 8% in seed pods (acorns 46 -> 38%)');
+  ok(E.mechOptions(C, { pure: true }) === null && E.mechOptions(C, { race: true }) === null && E.mechOptions(C, { level: true }) === null && E.mechOptions(C, { tutorial: true }) === null, 'skills and curses are off on fair runs');
+  E.equipSkill(C, 'owl'); E.setCurses(C, ['thirst', 'bogus']);
+  const mo = E.mechOptions(C, {}); ok(mo.skill.id === 'owl' && mo.skill.lv === 6 && mo.curses.join() === 'thirst', 'free play gets the equipped skill at its level and the chosen curses');
+  const V = M.freshSave(day0); V.acorns = 700;
+  ok(E.ownsVine(V, 'vine.skin.impasto') && E.buyVine(V, 'vine.skin.impasto') === false, 'each world has a free vine skin');
+  ok(E.buyVine(V, 'vine.skin.cypress') === 600 && V.acorns === 100 && E.selectVine(V, 'starry', 'vine.skin.cypress') && !E.selectVine(V, 'meadow', 'vine.skin.cypress') && E.vineFor(V, 'starry') === 'vine.skin.cypress', 'vine skins are bought once and worn in their own world (cosmetic: the sim never reads them)');
+  ok(E.VINE_SKINS.every((v) => /^vine\.skin\.[a-z]+$/.test(v.id)) && E.VINE_SKINS.every((v) => !('stat' in v) && !('power' in v)), 'vine skin ids follow the registry and carry no stats');
+  const L = M.freshSave(day0); const got = E.applyLoot(L, [{ type: 'rideToken', n: 2 }, { type: 'boost', n: 1 }, { type: 'trophy', boss: 'kitsune' }, { type: 'trophy', boss: 'kitsune' }], { rng: mulberry32(5) });
+  ok(L.econ.boosts.ride >= 2 && L.econ.trophies.join() === 'kitsune' && got.some((g) => g.type === 'acorns' && g.n === 300), 'chest loot: ride tokens, boosts, one-time boss trophies (a repeat pays 300 acorns)');
+  ok(E.podValue(E.POD_ODDS) < E.POD_BASE, `the seed pod is still a net sink with the Ride Token (EV ${Math.round(E.podValue(E.POD_ODDS))})`);
+  const W2 = M.freshSave(day0); W2.econ.maps = ['arashiyama']; ok(E.ownsWorld(W2, 'meadow') && E.ownsWorld(W2, 'starry') && E.ownsWorld(W2, 'fresco') && !E.ownsWorld(W2, 'ukiyo'), 'worlds take over the map slots (meadow + starry free; a bought v1 map unlocks its world)');
+}
+
 // ---------------------------------------------------------------- run pools from the real bots
 const POOL = Number(process.env.POOL || 50);
 function pool(skill, stake) {
   const out = [];
   for (let i = 0; i < POOL; i++) {
-    const s = createSim({ seed: 9000 + i * 13, rules: rulesFor({ mode: 'classic', stake }), charm: 'ward', econ: { boosts: [], up: {}, mult: 1, letter: 'X', gemDrop: true } });
+    // V2-MECH: every world, a critter skill at level 3 (the free XP levels), rides / rings / chests / hollows in play
+    const s = createSim({ seed: 9000 + i * 13, world: WORLD_IDS[i % WORLD_IDS.length], skill: { id: ['sparrow', 'squirrel', 'snail', 'moth'][i % 4], lv: 3 }, rules: rulesFor({ mode: 'classic', stake }), charm: 'ward', econ: { boosts: [], up: {}, mult: 1, letter: 'X', gemDrop: true } });
     const b = createBot(skill, 31 + i);
     while (!s.dead && s.t < 400) step(s, 1 / 60, botInput(b, s));
     out.push(summary(s));
@@ -94,9 +118,14 @@ const PROFILES = {
   'hardcore (saver)': { runs: 30, days: [1, 1, 1, 1, 1, 1, 1], boostEvery: 0, pool: 'hardcore' },
 };
 const MAP_IDS = Object.keys(E.MAP_PRICE), MAPS_TOTAL = MAP_IDS.reduce((a, id) => a + E.MAP_PRICE[id], 0);
-const CATALOGUE = E.UPGRADE_IDS.length * E.UPGRADE_COST.reduce((a, b) => a + b, 0) + SKINS.filter((s) => s.unlock.cost).reduce((a, s) => a + s.unlock.cost, 0) + MAPS_TOTAL;
+// V2-MECH: + Wild Kit and Rides tracks (in UPGRADE_IDS), critter levels 4-6 at half price, vine skins
+const CRITTERS_TOTAL = E.CRITTER_IDS.length * E.CRITTER_COST.reduce((a, b) => a + b, 0);
+const VINES_TOTAL = E.VINE_SKINS.filter((v) => v.cost).reduce((a, v) => a + v.cost, 0);
+const CATALOGUE = E.UPGRADE_IDS.length * E.UPGRADE_COST.reduce((a, b) => a + b, 0) + SKINS.filter((s) => s.unlock.cost).reduce((a, s) => a + s.unlock.cost, 0) + MAPS_TOTAL + CRITTERS_TOTAL + VINES_TOTAL;
 function owned(S) {
   let v = 0; for (const id of E.UPGRADE_IDS) for (let l = 0; l < E.upLevel(S, id); l++) v += E.UPGRADE_COST[l];
+  for (const id of E.CRITTER_IDS) for (let l = 4; l <= E.critterLevel(S, id); l++) v += E.CRITTER_COST[l - 4];
+  for (const id of S.econ.vines) v += E.VINE[id].cost || 0;
   for (const s of SKINS) if (s.unlock.cost && S.owned.includes(s.id)) v += s.unlock.cost;
   for (const id of S.econ.maps) v += E.MAP_PRICE[id] || 0;
   return v;
@@ -126,6 +155,7 @@ function simulate(name) {
         if (use.includes('sprout')) sum.height += 40;
         // second chance: hardcore spends gems on a good run
         if (name !== 'casual' && sum.height > 300 && S.econ.gems >= E.reviveCost(0) + 2) { E.payRevive(S, 0); revives++; sum.height += 60; }
+        E.equipSkill(S, E.CRITTER_IDS[d % E.CRITTER_IDS.length]); sum.skill = { id: S.econ.skill, lv: E.critterLevel(S, S.econ.skill) }; // V2-MECH: a different critter each day
         const out = M.finishRun(S, sum, { now });
         R.afterRun(S, sum, out, M.claimGift, now);
         runsTotal++;
@@ -134,13 +164,15 @@ function simulate(name) {
       let bought = true;
       while (bought) {
         bought = false;
-        const ups = E.UPGRADE_IDS.map((id) => [id, E.upCost(S, id)]).filter(([, c]) => c != null).sort((a, b) => a[1] - b[1]);
+        const ups = E.UPGRADE_IDS.map((id) => [id, E.upCost(S, id)]).filter(([, c]) => c != null)
+          .concat(E.CRITTER_IDS.map((id) => ['critter:' + id, E.critterCost(S, id)]).filter(([, c]) => c != null)).sort((a, b) => a[1] - b[1]); // V2-MECH: critter levels 4-6
         // skins and maps compete as cosmetics: the cheapest one not owned yet
         const sk = COST_SKINS.filter((id) => !S.owned.includes(id)).map((id) => [id, M.priceOf(S, id, today), 'skin'])
-          .concat(MAP_IDS.filter((id) => !E.ownsMap(S, id)).map((id) => [id, E.MAP_PRICE[id], 'map'])).sort((a, b) => a[1] - b[1]);
+          .concat(MAP_IDS.filter((id) => !E.ownsMap(S, id)).map((id) => [id, E.MAP_PRICE[id], 'map']))
+          .concat(E.VINE_SKINS.filter((v) => v.cost && !E.ownsVine(S, v.id)).map((v) => [v.id, v.cost, 'vine'])).sort((a, b) => a[1] - b[1]); // V2-MECH: vine skins
         const nextUp = ups[0], nextSkin = sk[0];
-        if (nextUp && (!nextSkin || nextUp[1] <= nextSkin[1] * 1.5) && S.acorns >= nextUp[1]) { E.buyUpgrade(S, nextUp[0]); sinks.upgrades += nextUp[1]; bought = true; }
-        else if (nextSkin && S.acorns >= nextSkin[1]) { if (nextSkin[2] === 'map') { E.buyMap(S, nextSkin[0]); sinks.maps += nextSkin[1]; } else { M.buy(S, nextSkin[0], today); sinks.skins += nextSkin[1]; } bought = true; }
+        if (nextUp && (!nextSkin || nextUp[1] <= nextSkin[1] * 1.5) && S.acorns >= nextUp[1]) { if (nextUp[0].startsWith('critter:')) E.buyCritterLevel(S, nextUp[0].slice(8)); else E.buyUpgrade(S, nextUp[0]); sinks.upgrades += nextUp[1]; bought = true; }
+        else if (nextSkin && S.acorns >= nextSkin[1]) { if (nextSkin[2] === 'map') { E.buyMap(S, nextSkin[0]); sinks.maps += nextSkin[1]; } else if (nextSkin[2] === 'vine') { E.buyVine(S, nextSkin[0]); sinks.skins += nextSkin[1]; } else { M.buy(S, nextSkin[0], today); sinks.skins += nextSkin[1]; } bought = true; }
       }
       if (name === 'hardcore') while (S.acorns > 2500 && E.podPrice(S, today) <= 600) { const pr2 = E.podPrice(S, today); E.buyPod(S, { today, skins: COST_SKINS, rng: r }); sinks.pods += pr2; pods++; }
       if (S.econ.gems >= E.GEM_SHOP.golden.gems + 4 && name === 'hardcore') E.buyGolden(S, { skins: COST_SKINS, rng: r });
@@ -156,7 +188,7 @@ for (const [n, v] of Object.entries(res)) for (const row of pick(v.rows, [1, 3, 
 md += `\n| player | runs in 30 days | acorns per run (avg) | spent on upgrades / skins / maps / boosts / pods | second chances | boosts used | pods bought | maps owned |\n|---|---|---|---|---|---|---|---|\n`;
 for (const [n, v] of Object.entries(res)) { const last = v.rows[29]; md += `| ${n} | ${v.runsTotal} | ${Math.round(last.earned / v.runsTotal)} | ${v.sinks.upgrades.toLocaleString('en-US')} / ${v.sinks.skins.toLocaleString('en-US')} / ${v.sinks.maps.toLocaleString('en-US')} / ${v.sinks.boosts.toLocaleString('en-US')} / ${v.sinks.pods.toLocaleString('en-US')} | ${v.revives} | ${v.boostsUsed} | ${v.pods} | ${v.S.econ.maps.length}/${MAP_IDS.length} |\n`; }
 console.log('\n' + md);
-console.log(`catalogue (5 upgrade tracks + ${COST_SKINS.length} shop skins + ${MAP_IDS.length} maps, ${MAPS_TOTAL.toLocaleString('en-US')}): ${CATALOGUE.toLocaleString('en-US')} acorns`);
+console.log(`catalogue (${E.UPGRADE_IDS.length} upgrade tracks + ${COST_SKINS.length} shop skins + ${MAP_IDS.length} maps, ${MAPS_TOTAL.toLocaleString('en-US')} + critter levels ${CRITTERS_TOTAL.toLocaleString('en-US')} + vine skins ${VINES_TOTAL.toLocaleString('en-US')}): ${CATALOGUE.toLocaleString('en-US')} acorns`);
 if (process.env.OUT) writeFileSync(process.env.OUT, md + `\ncatalogue: ${CATALOGUE} acorns\n`);
 
 {
@@ -170,7 +202,7 @@ if (process.env.OUT) writeFileSync(process.env.OUT, md + `\ncatalogue: ${CATALOG
 const H = res.hardcore.rows, C = res.casual.rows, A = res.average.rows;
 const HS = res['hardcore (saver)'].rows;
 ok(HS[6].pct < 60 && H[6].pct < 60, `even a hardcore player who saves every acorn owns only ${HS[6].pct}% of the permanent catalogue after week 1 (${H[6].pct}% when buying boosts)`);
-ok(HS[29].pct >= 80, `a hardcore saver can finish most of it in a month (${HS[29].pct}% at day 30)`);
+ok(HS[29].pct >= 65, `a hardcore saver owns most of it in a month (${HS[29].pct}% at day 30; v2 catalogue is ~5-6 weeks of saving by design)`);
 ok(H[29].pct <= 100 && H[13].pct < 100, `hardcore still has something to buy at day 14 (${H[13].pct}%)`);
 ok(C[29].pct >= 8, `a casual player still makes visible progress in a month (${C[29].pct}% of the catalogue)`);
 ok(Math.max(...H.map((x) => x.acorns)) < 6000, `hardcore balance never piles up (max ${Math.max(...H.map((x) => x.acorns))} acorns held)`);

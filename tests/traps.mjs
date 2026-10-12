@@ -2,6 +2,7 @@
 // survival targets, and a phone-size (360x640) browser pass with screenshots.
 // Run: node tests/traps.mjs   (N=seeds, BOTN=bot seeds, NOBROWSER=1 to skip the browser part)
 import { createSim, step, heightM, W, TIP_R, FORK_SPREAD, PX_PER_M, spawnChunkAt, CHUNKS } from '../src/sim.js';
+import { WORLD_IDS, WORLD_MECH } from '../src/world-mech.js';
 import { createBot, botInput } from '../src/bot.js';
 import { TRAPS, TRAP_CHUNKS, WARN_MIN, PULSE, DOOR, GUST, CROW_WARN, TIDE_K, TWIG_SNAP, rowSolids, twinsXs } from '../src/traps.js';
 import * as Dir from '../src/director.js';
@@ -63,7 +64,7 @@ const run = (s, sec, inp = {}) => { const ev = []; for (let i = 0; i < sec * 60;
   const s = fresh(); s.trapSeen.tide = true; spawnChunkAt(s, 'tide', s.cy - 10); s.motes = [];
   ok(!run(s, 6, { targetX: W / 2 }).some((e) => e.type === 'hit'), 'rising thorns never catch a tip that keeps climbing');
   const z = fresh(); z.trapSeen.tide = true; spawnChunkAt(z, 'tide', z.cy - 10); z.motes = [];
-  z.R.speed = 0.4; // a tip that is too slow (frost, dawdling)
+  z.R.speed = 0.32; // a tip that is too slow (frost, dawdling); V3.1: 0.4 -> 0.32 keeps it ~68 u/s after the +25% base climb
   ok(run(z, 14, { targetX: W / 2 }).some((e) => e.type === 'hit' && e.src === 'tide'), 'rising thorns catch a tip that is too slow');
 }
 {
@@ -131,9 +132,9 @@ const run = (s, sec, inp = {}) => { const ev = []; for (let i = 0; i < sec * 60;
 
 // ---------------------------------------------------------------- static fairness over many seeds
 const p = { warn: 0, pulseLane: 0, door: 0, gust: 0, lure: 0, twins: 0, overlap: 0, twig: 0, intro: 0, tide: 0 };
-const kinds = {};
+const kinds = {}, seenBy = {};
 for (let seed = 1; seed <= SEEDS; seed++) {
-  const s = createSim({ seed, tutorial: true, demo: true });
+  const s = createSim({ seed, tutorial: true, demo: true, world: WORLD_IDS[seed % WORLD_IDS.length] }); // V2-MECH: every world
   const seen = new Set(), traps = [], brs = [], cols = [], labels = [];
   while (heightM(s) < 1500) {
     s.invuln = 10; s.pu.rush = 0; step(s, 1 / 30, { targetX: W / 2 });
@@ -147,7 +148,9 @@ for (let seed = 1; seed <= SEEDS; seed++) {
     const m = -(t.y ?? t.y0) / PX_PER_M, sp = speedAt(m);
     const ty = t.y ?? t.y0;
     const id = { twig: 'twig', sap: 'sap', pulse: 'pulse', door: 'door', gust: 'gust', cap: 'lure', twins: 'twins', tide: 'tide', crow: 'crow' }[t.kind];
-    if (id && !(id in firstOf)) firstOf[id] = ty;
+    if (id && !t.chase && !(id in firstOf)) firstOf[id] = ty; // V2-MECH: a chase pursuer is a set piece, not the trap
+    if (t.t2 && !(t.kind in firstOf)) firstOf[t.kind] = ty;
+    if (!t.chase) (seenBy[s.world] = seenBy[s.world] || new Set()).add(t.kind === 'cap' ? 'lure' : t.kind);
     if (t.kind === 'pulse' && t.period * PULSE.warn < WARN_MIN) { p.warn++; console.log('pulse warns too briefly', seed); }
     if (t.kind === 'pulse') {
       for (let c = 0; c < t.period; c += 0.05) {
@@ -194,17 +197,20 @@ for (let seed = 1; seed <= SEEDS; seed++) {
 }
 console.log('trap instances in', SEEDS, 'seeds to 1500 m:', JSON.stringify(kinds));
 for (const [k, v] of Object.entries(p)) ok(v === 0, `trap fairness: ${k} problems = ${v}`);
-ok(Object.keys(TRAPS).every((id) => kinds[id === 'lure' ? 'cap' : id] > 0), 'all nine traps appear on real courses');
+ok(Object.keys(TRAPS).every((id) => kinds[id === 'lure' ? 'cap' : id] > 0), 'all nine v1 traps appear on real courses');
+// V2-MECH: every world grows its own trap set (and only that)
+for (const w of WORLD_IDS) { const own = WORLD_MECH[w].traps.map((t) => t.mech), got = seenBy[w] || new Set(); const missing = own.filter((m) => !got.has(m)), foreign = [...got].filter((m) => !own.includes(m) && !['wall', 'hedge'].includes(m));
+  ok(!missing.length && !foreign.length, `${w}: its own ${own.length} traps appear (${missing.length ? 'missing ' + missing.join(',') : 'all'}), no others${foreign.length ? ' (foreign ' + foreign.join(',') + ')' : ''}`); }
 
 // ---------------------------------------------------------------- bot survival targets (200+ seeds)
 const q = (a, f) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.floor(f * b.length))]; };
-const target = { weak: [0.3, 30, 40], average: [0.6, 49, 61], expert: [0.95, 77, 93] }; // P8-ECON: measured on the Oak stake (targets ~35 / ~55 / ~85 s)
+const target = { weak: [0.3, 28, 40], average: [0.6, 51, 64], expert: [0.95, 75, 93] }; // V2-MECH: Oak, pure course, pooled over the 7 worlds (targets ~33 / ~57 / ~85 s)
 const kindHit = {}, kindPass = {};
 const report = {};
 for (const [name, [sk, lo, hi]] of Object.entries(target)) {
   const T = [];
   for (let i = 0; i < BOTN; i++) {
-    const s = createSim({ seed: 1000 + i, tutorial: true, rules: rulesFor({ mode: 'classic', stake: 'oak' }) }); const bot = createBot(sk, i + 1); // P8-ECON: Oak
+    const s = createSim({ seed: 1000 + i, tutorial: true, pure: true, world: WORLD_IDS[i % WORLD_IDS.length], rules: rulesFor({ mode: 'classic', stake: 'oak' }) }); const bot = createBot(sk, i + 1); // P8-ECON: Oak; V2-MECH: pooled worlds
     while (!s.dead && s.t < 400) {
       step(s, 1 / 60, botInput(bot, s));
       if (sk === 0.95) for (const e of s.events) if ((e.type === 'hit' || e.type === 'revert') && ['twig', 'pulse', 'door', 'cap', 'wall', 'hedge', 'tide'].includes(e.src)) kindHit[e.src] = (kindHit[e.src] || 0) + 1;

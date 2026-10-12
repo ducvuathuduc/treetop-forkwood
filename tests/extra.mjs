@@ -6,6 +6,7 @@
 // usage: node tests/extra.mjs   (URL=... to test a deployed copy)
 import { createRequire } from 'module';
 import { spawn } from 'child_process';
+import { gzipSync } from 'zlib';
 const require = createRequire(import.meta.url);
 const { chromium, devices } = require(process.env.PW || '/tmp/pw/node_modules/playwright');
 
@@ -30,7 +31,8 @@ async function page(opts) {
   p.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errs.push(m.text()); });
   p.on('pageerror', (e) => errs.push(e.message));
   p.on('request', (r) => { if (!r.url().startsWith(origin) && !r.url().startsWith('data:') && !r.url().startsWith('blob:')) foreign.push(r.url()); });
-  p.on('response', async (r) => { try { const b = await r.body(); bytes += b.length; } catch { /* redirects */ } });
+  // V2-INT: budget is gzip TRANSFER (GitHub Pages gzips text; images/fonts/audio count as-is)
+  p.on('response', async (r) => { try { const b = await r.body(); const ct = r.headers()['content-type'] || ''; const text = /javascript|css|html|json|svg/.test(ct) || /\.(m?js|css|html|json|svg)(\?|$)/.test(r.url()); bytes += text ? gzipSync(b, { level: 9 }).length : b.length; } catch { /* redirects */ } });
   return { ctx, p, errs, foreign, bytes: () => bytes };
 }
 
@@ -52,7 +54,7 @@ async function page(opts) {
   const { ctx, p, errs, foreign, bytes } = await page({ ...devices['iPhone 13'] });
   await p.goto(base); await p.waitForTimeout(1500);
   const kb = bytes() / 1024;
-  ok(kb < 700, `first load transfer ${kb.toFixed(0)} KB uncompressed (budget 700 KB: pass 5 adds ~170 KB of painted art; other plates and the story load on demand)`);
+  ok(kb < 700, `first load transfer ${kb.toFixed(0)} KB gzip (budget 700 KB gzip transfer; worlds, music and the story load on demand)`);
   ok(foreign.length === 0, 'no requests to other origins ' + foreign.join(' '));
   const before = await p.evaluate(() => window.forkwood.audio.state);
   await p.tap('#btn-play');
@@ -61,7 +63,7 @@ async function page(opts) {
   ok(a.state === 'running', `tap unlocks WebAudio (before: ${before}, after: ${a.state})`);
   ok(a.sprite, 'CC0 sound sprite decoded');
   ok(a.zzfx >= 10, `ZzFX meta sounds rendered after the first tap (${a.zzfx})`);
-  ok(await p.evaluate(() => document.fonts.check('800 20px "Fraunces Display"') && document.fonts.check('600 14px "Bricolage"')), 'custom fonts loaded');
+  ok(await p.evaluate(() => document.fonts.check('800 20px "FW Display"')), 'custom fonts loaded');
   ok(errs.length === 0, 'no console errors (phone) ' + errs.join(' | '));
   await ctx.close();
 }

@@ -1,0 +1,56 @@
+{
+ "lacquer": {
+  "sky.p": [
+   "lacquer.layer.sky.p.webp",
+   171898,
+   84,
+   1080,
+   1920
+  ],
+  "sky.p.avif": [
+   "lacquer.layer.sky.p.avif",
+   105603,
+   56
+  ],
+  "sky.d": [
+   "lacquer.layer.sky.d.webp",
+   243640,
+   84,
+   2560,
+   1440
+  ],
+  "sky.d.avif": [
+   "lacquer.layer.sky.d.avif",
+   156997,
+   56
+  ],
+  "far.p": [
+   "lacquer.layer.far.p.webp",
+   123346,
+   52,
+   1080,
+   1216
+  ],
+  "far.d": [
+   "lacquer.layer.far.d.webp",
+   300878,
+   52,
+   2560,
+   1216
+  ],
+  "side.p": [
+   "lacquer.layer.side.p.webp",
+   104030,
+   84,
+   1080,
+   563
+  ],
+  "side.d": [
+   "lacquer.layer.side.d.webp",
+   149748,
+   76,
+   2560,
+   935
+  ]
+ }
+}

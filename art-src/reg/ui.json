@@ -1,0 +1,578 @@
+[
+{
+"id": "ui.frame.meadow",
+"file": "common/ui/ui.frame.meadow.webp",
+"type": "ui",
+"world": "meadow",
+"frames": 1,
+"fps": 0,
+"w": 653,
+"h": 352,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.frame.starry",
+"file": "common/ui/ui.frame.starry.webp",
+"type": "ui",
+"world": "starry",
+"frames": 1,
+"fps": 0,
+"w": 653,
+"h": 352,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.frame.fresco",
+"file": "common/ui/ui.frame.fresco.webp",
+"type": "ui",
+"world": "fresco",
+"frames": 1,
+"fps": 0,
+"w": 653,
+"h": 351,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.frame.ukiyo",
+"file": "common/ui/ui.frame.ukiyo.webp",
+"type": "ui",
+"world": "ukiyo",
+"frames": 1,
+"fps": 0,
+"w": 654,
+"h": 349,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.frame.lilies",
+"file": "common/ui/ui.frame.lilies.webp",
+"type": "ui",
+"world": "lilies",
+"frames": 1,
+"fps": 0,
+"w": 668,
+"h": 351,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.frame.gilded",
+"file": "common/ui/ui.frame.gilded.webp",
+"type": "ui",
+"world": "gilded",
+"frames": 1,
+"fps": 0,
+"w": 668,
+"h": 353,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.frame.lacquer",
+"file": "common/ui/ui.frame.lacquer.webp",
+"type": "ui",
+"world": "lacquer",
+"frames": 1,
+"fps": 0,
+"w": 670,
+"h": 353,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.frame.default",
+"file": "common/ui/ui.frame.default.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 669,
+"h": 352,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+2,
+2,
+2,
+2
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready; centre opening transparent"
+},
+{
+"id": "ui.button.primary",
+"file": "common/ui/ui.button.primary.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 479,
+"h": 207,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+86,
+86,
+86,
+86
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "ui.button.primary.pressed",
+"file": "common/ui/ui.button.primary.pressed.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 448,
+"h": 196,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+82,
+82,
+82,
+82
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "ui.panel.parchment",
+"file": "common/ui/ui.panel.parchment.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 332,
+"h": 480,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+139,
+139,
+139,
+139
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "ui.button.secondary",
+"file": "common/ui/ui.button.secondary.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 574,
+"h": 187,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+78,
+78,
+78,
+78
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "ui.button.close",
+"file": "common/ui/ui.button.close.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 158,
+"h": 169,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+66,
+66,
+66,
+66
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "ui.bar.track",
+"file": "common/ui/ui.bar.track.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 650,
+"h": 102,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+42,
+42,
+42,
+42
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "ui.plaque",
+"file": "common/ui/ui.plaque.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 250,
+"h": 97,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+40,
+40,
+40,
+40
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "ui.locked.rope",
+"file": "common/ui/ui.locked.rope.webp",
+"type": "ui",
+"world": null,
+"frames": 1,
+"fps": 0,
+"w": 310,
+"h": 166,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"slice9": [
+69,
+69,
+69,
+69
+],
+"notes": "9-slice insets [top,right,bottom,left] px; CSS border-image ready"
+},
+{
+"id": "meadow.ui.painting",
+"file": "meadow/ui/meadow.ui.painting.webp",
+"type": "ui",
+"world": "meadow",
+"frames": 1,
+"fps": 0,
+"w": 504,
+"h": 896,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+},
+{
+"id": "meadow.ui.painting.s",
+"file": "meadow/ui/meadow.ui.painting.s.webp",
+"type": "ui",
+"world": "meadow",
+"frames": 1,
+"fps": 0,
+"w": 180,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+},
+{
+"id": "starry.ui.painting",
+"file": "starry/ui/starry.ui.painting.webp",
+"type": "ui",
+"world": "starry",
+"frames": 1,
+"fps": 0,
+"w": 504,
+"h": 896,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+},
+{
+"id": "starry.ui.painting.s",
+"file": "starry/ui/starry.ui.painting.s.webp",
+"type": "ui",
+"world": "starry",
+"frames": 1,
+"fps": 0,
+"w": 180,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+},
+{
+"id": "fresco.ui.painting",
+"file": "fresco/ui/fresco.ui.painting.webp",
+"type": "ui",
+"world": "fresco",
+"frames": 1,
+"fps": 0,
+"w": 504,
+"h": 896,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+},
+{
+"id": "fresco.ui.painting.s",
+"file": "fresco/ui/fresco.ui.painting.s.webp",
+"type": "ui",
+"world": "fresco",
+"frames": 1,
+"fps": 0,
+"w": 180,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+},
+{
+"id": "ukiyo.ui.painting",
+"file": "ukiyo/ui/ukiyo.ui.painting.webp",
+"type": "ui",
+"world": "ukiyo",
+"frames": 1,
+"fps": 0,
+"w": 504,
+"h": 896,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+},
+{
+"id": "ukiyo.ui.painting.s",
+"file": "ukiyo/ui/ukiyo.ui.painting.s.webp",
+"type": "ui",
+"world": "ukiyo",
+"frames": 1,
+"fps": 0,
+"w": 180,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+},
+{
+"id": "lilies.ui.painting",
+"file": "lilies/ui/lilies.ui.painting.webp",
+"type": "ui",
+"world": "lilies",
+"frames": 1,
+"fps": 0,
+"w": 504,
+"h": 896,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+},
+{
+"id": "lilies.ui.painting.s",
+"file": "lilies/ui/lilies.ui.painting.s.webp",
+"type": "ui",
+"world": "lilies",
+"frames": 1,
+"fps": 0,
+"w": 180,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+},
+{
+"id": "gilded.ui.painting",
+"file": "gilded/ui/gilded.ui.painting.webp",
+"type": "ui",
+"world": "gilded",
+"frames": 1,
+"fps": 0,
+"w": 504,
+"h": 896,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+},
+{
+"id": "gilded.ui.painting.s",
+"file": "gilded/ui/gilded.ui.painting.s.webp",
+"type": "ui",
+"world": "gilded",
+"frames": 1,
+"fps": 0,
+"w": 180,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+},
+{
+"id": "lacquer.ui.painting",
+"file": "lacquer/ui/lacquer.ui.painting.webp",
+"type": "ui",
+"world": "lacquer",
+"frames": 1,
+"fps": 0,
+"w": 504,
+"h": 896,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); hero"
+},
+{
+"id": "lacquer.ui.painting.s",
+"file": "lacquer/ui/lacquer.ui.painting.s.webp",
+"type": "ui",
+"world": "lacquer",
+"frames": 1,
+"fps": 0,
+"w": 180,
+"h": 320,
+"anchor": [
+0.5,
+0.5
+],
+"atlas": null,
+"notes": "Home/gallery framed painting (v13 concept painting, own-made); thumbnail"
+}
+]
