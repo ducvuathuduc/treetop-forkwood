@@ -11,6 +11,7 @@
 // (daily, weekly, quest levels, challenge and duel links, live races), exactly
 // like charms. Pure functions over the save object; no DOM, no Math.random
 // (callers pass a rng, so the browser and node tests behave the same).
+import { UNLOCK_ALL_MAPS } from './flags.js'; // V3.2
 import { mulberry32 } from './rng.js';
 
 const strSeed = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };
@@ -132,7 +133,7 @@ const gainAcorns = (S, n) => { S.acorns += n; S.earned += n; };
 // ------------------------------------------------------------------ maps (v1.0: one-off acorn sinks)
 // Prices match `unlock.cost` in src/maps.js (Forkwood and Phong Nha are free).
 export const MAP_PRICE = { arashiyama: 900, redwoods: 1200, blackforest: 1500, amazon: 1800, beanstalk: 2400 };
-export const ownsMap = (S, id) => !MAP_PRICE[id] || ensureEcon(S).maps.includes(id);
+export const ownsMap = (S, id) => UNLOCK_ALL_MAPS || !MAP_PRICE[id] || ensureEcon(S).maps.includes(id); // V3.2: flags.UNLOCK_ALL_MAPS opens every world
 /** Buy a map with acorns. Returns the price paid, or false. */
 export function buyMap(S, id) {
   const c = MAP_PRICE[id];

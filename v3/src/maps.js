@@ -15,6 +15,7 @@ import { WORLDS as V2_WORLDS } from './worlds-meta.js'; // V2-INT: legacy map sl
 const K = ['top', 'bot', 'mass', 'mid', 'lite', 'deep', 'fog', 'ray', 'acc', 'crit', 'cloud'];
 const P = (s) => Object.fromEntries(s.trim().split(/\s+/).map((h, i) => [K[i], h]));
 
+import { UNLOCK_ALL_MAPS } from './flags.js'; // V3.2
 export const MAPS = [
   {
     id: 'forkwood', name: 'Forkwood', place: 'The Grove', country: 'Forkwood', code: 'FW',
@@ -157,6 +158,7 @@ const listeners = new Set();
  */
 export function setOwnership({ owned, level, grant } = {}) { ownership = owned || null; if (level) levelOf = level; granter = grant || null; emit(); }
 export function ownedIds() {
+  if (UNLOCK_ALL_MAPS) return new Set(MAPS.map((m) => m.id)); // V3.2: every map open (flags.js)
   const o = new Set(DEFAULT_UNLOCKED);
   for (const id of (ownership ? ownership() : ls.get(LS_OWN, [])) || []) o.add(id);
   for (const m of MAPS) if (m.unlock.level && levelOf() >= m.unlock.level) o.add(m.id);
