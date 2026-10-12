@@ -287,7 +287,7 @@ export function feelDeath(s) {
   else if (s.won) { cause = 'finish'; tip = ''; }
   else if (recent.length >= 2) { cause = `${recent.length} hits in ${Math.max(1, Math.round(s.t - recent[0].t))} s`; tip = `${uniq(recent.map((h) => nice(h.src))).slice(0, 3).join(', ')} · each hit costs sap and your combo`; }
   else if (recent.length === 1 && miss < total * 0.5) { cause = `hit by ${nice(recent[0].src)}`; tip = 'it tipped a low sap meter over'; }
-  else { cause = 'ran out of sap'; tip = total ? `caught ${total - miss} of ${total} sunlight in the last 15 s` : 'sunlight is your sap'; }
+  else { cause = 'ran out of sap'; tip = total ? `steer into sunlight: caught ${total - miss} of ${total} in the last 15 s` : 'steer into sunlight: it is your sap'; }
   return { cause, tip, miss, total, hits: recent.length, hitShare: Math.round(hitShare * 100), bestCombo: F.best, bestTier: F.bestTier, flows: F.flows, sigs: F.sigDone, clutches: F.clutches };
 }
 const uniq = (a) => [...new Set(a)];
