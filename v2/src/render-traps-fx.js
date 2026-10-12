@@ -21,6 +21,7 @@
 // (drawImage only, no shadowBlur, no per-frame gradients), capped pools.
 import { rowSolids, pulseState, doorState, gustState, twinsXs, TRAPS, PULSE, DOOR, GUST, CROW_WARN, TWIG_SNAP } from './traps.js';
 import { loadArt, art } from './art.js';
+import { drawWallArt, classicSprite, mechApi } from './render-traps.js'; // V2-INT: classic traps in ART's paint
 
 const W = 560, TAU = Math.PI * 2;
 const INK = '#1a1216', PAPER = '#fff6e6', CORAL = '#f0785a', CORAL_HOT = '#ffb08f';
@@ -342,6 +343,8 @@ let crowAsked = false;
 function crowImg() { if (!crowAsked) { crowAsked = true; loadArt('fx-crow'); } return art('fx-crow'); }
 /** Draw a crow frame. kind 'fly'|'perch', facing 1 = right. Returns false if not loaded. */
 function crowFrame(ctx, kind, i, x, y, facing, s = 1, rot = 0, a = 1) {
+  // V2-INT: the world's painted crow (meadow crow, starry flock, fresco dove, heron, egret...) on the WebGL path
+  if (R_GL && CUR_S) { const S = classicSprite(CUR_S, 'crow'), M = mechApi(); if (S && M) { const n = S.e.rects ? S.e.rects.length - (S.e.warnFrames || []).length : 1; M.blitSprite(ctx, S, kind === 'perch' ? 0 : Math.min(Math.max(0, n - 1), 1 + (i % Math.max(1, n - 1))), x, y - 20 * s, 78 * s, 78 * s, { flip: facing, rot, alpha: a }); return true; } }
   const im = crowImg();
   if (!im) return false;
   const f = CROW[kind][i], k = CROW.scale * s;
@@ -411,6 +414,7 @@ const tipIn = (s, x0, x1, y0, y1) => s.tips.some((t) => t.x > x0 && t.x < x1) &&
 // ---------------------------------------------------------------- traps (under the tree)
 /** Under the tree: every trap body, idle motion, telegraph and attack. */
 export function drawTraps(R, ctx, s, now, topY, botY, calm, fx, cam, ui) {
+  R_GL = !!(R && R.gl); CUR_S = s;
   const wall = CLOCK();
   const dt = Math.min(1 / 20, Math.max(0, wall - (FX.last || wall)));
   FX.last = wall;
@@ -639,6 +643,10 @@ function drawCap(R, ctx, s, tr, now, calm) {
 
 function drawWall(ctx, s, tr, now, calm) {
   const w = tr.x1 - tr.x0, h = tr.y0 - tr.y1;
+  if (R_GL && drawWallArt(ctx, s, tr.x0, tr.y1, tr.x1, tr.y0)) { // V2-INT fix: painted barrier, not the v1 pillar
+    if (tr.kind === 'wall') { const px = tr.x0 < W / 2 ? tr.x0 / 2 : (tr.x1 + W) / 2; warnCross(ctx, px, tr.y1 + 46); }
+    return;
+  }
   ctx.fillStyle = BODY; ctx.strokeStyle = RIM; ctx.lineWidth = 2.5;
   roundRect(ctx, tr.x0, tr.y1, w, h, Math.min(8, w / 2)); ctx.fill(); ctx.stroke();
   // idle: the hooked thorns flex, one after another, like something breathing
@@ -657,7 +665,15 @@ function drawWall(ctx, s, tr, now, calm) {
   }
 }
 
+let R_GL = false, CUR_S = null; // set per frame: true on the WebGL path (painted worlds)
+function warnCross(ctx, px, py) {
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = INK; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(px - 12, py - 12); ctx.lineTo(px + 12, py + 12); ctx.moveTo(px + 12, py - 12); ctx.lineTo(px - 12, py + 12); ctx.stroke();
+  ctx.strokeStyle = CORAL; ctx.lineWidth = 5; ctx.stroke();
+}
 function drawGust(ctx, s, tr, now, calm) {
+  // V2-INT: the world's painted gust (meadow gust, ukiyo spray, starry vortex...) blows from the upwind edge
+  if (R_GL) { const S = classicSprite(s, 'gust'), M = mechApi(); if (S && M) { const g0 = gustState(tr), yc = Math.min(tr.y0 - 40, Math.max(tr.y1 + 40, s.cy - 60)); M.blitSprite(ctx, S, g0.st === 'warn' && S.e.warnFrames ? S.e.warnFrames[0] : 0, tr.dir > 0 ? 46 : W - 46, yc, 96, 96, { flip: tr.dir > 0 ? 1 : -1, alpha: g0.st === 'calm' ? 0.7 : 1 }); } }
   const g = gustState(tr), dir = tr.dir, m = mem(tr);
   if (m.st === 'warn' && g.st === 'gust') ring(dir > 0 ? 40 : W - 40, Math.min(tr.y0, Math.max(tr.y1, s.cy)), 80, PAPER, 0.4, 3);
   m.st = g.st;
@@ -848,23 +864,28 @@ export function drawTrapFx(R, ctx, s, now, px, ui = {}) {
   if (!ui.reveal && s.tips) drawBoosts(ctx, s, now, t, calm);
   // vine flash: the tip blooms white-mint for a beat on a hit
   if (FX.flash > 0) {
-    const k = FX.flash / 0.22, w = FX.flashRep ? 0.4 : 1;
+    const k = clamp01(FX.flash / 0.22), w = FX.flashRep ? 0.4 : 1;
     additive(ctx, MINT_CORE, FX.flashX, FX.flashY, 60 + 40 * (1 - k), 0.9 * k * w);
     additive(ctx, '#ffffff', FX.flashX, FX.flashY, 26, k * w * w);
     if (s.tips) for (const tip of s.tips) additive(ctx, MINT_CORE, tip.x, s.cy, 40, 0.6 * k * w);
   }
+  // V2-INT fix: every hit/flash shape is drawn from a clean state with clamped sizes (no inherited
+  // lineWidth / dash / alpha / composite from trap or ART draws, no NaN/overshoot growth)
+  ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   // impact stars: 8 coral spikes that shoot out and thin
   for (const st of FX.stars) {
-    const k = 1 - st.life / st.max, r0 = 14 + 40 * easeOut(k), r1 = r0 + 34 * (1 - k);
-    ctx.strokeStyle = st.col; ctx.lineCap = 'round'; ctx.lineWidth = 6 * (1 - k) + 1;
+    const k = clamp01(1 - st.life / st.max); if (!(k >= 0)) continue;
+    const r0 = 14 + 40 * easeOut(k), r1 = r0 + 34 * (1 - k);
+    ctx.strokeStyle = st.col; ctx.lineCap = 'round'; ctx.lineWidth = Math.min(7, 6 * (1 - k) + 1);
     ctx.beginPath();
     for (let i = 0; i < 8; i++) { const a = st.rot + i * TAU / 8, l = i % 2 ? 0.7 : 1; ctx.moveTo(st.x + Math.cos(a) * r0, st.y + Math.sin(a) * r0); ctx.lineTo(st.x + Math.cos(a) * r1 * l, st.y + Math.sin(a) * r1 * l); }
     ctx.stroke();
   }
   // rings
   for (const r of FX.rings) {
-    const k = 1 - r.life / r.max, rr = 8 + r.r * easeOut(k);
-    ctx.globalAlpha = (1 - k) * 0.9; ctx.strokeStyle = r.col; ctx.lineWidth = r.w * (1 - k * 0.7) * Math.max(1, px);
+    const k = clamp01(1 - r.life / r.max); if (!(k >= 0)) continue;
+    const rr = Math.min(8 + r.r, 8 + r.r * easeOut(k));
+    ctx.globalAlpha = (1 - k) * 0.9; ctx.strokeStyle = r.col; ctx.lineWidth = Math.min(r.w * 1.5, r.w * (1 - k * 0.7) * Math.max(1, Math.min(2, px)));
     ctx.beginPath(); ctx.arc(r.x, r.y, rr, 0, TAU); ctx.stroke();
   }
   ctx.globalAlpha = 1;
@@ -894,8 +915,8 @@ export function drawTrapFx(R, ctx, s, now, px, ui = {}) {
   ctx.textAlign = 'center'; ctx.lineJoin = 'round'; ctx.textBaseline = 'alphabetic';
   for (const p of FX.pops) {
     const k = 1 - p.life / p.max;
-    const sc = k < 0.16 ? easeBack(k / 0.16) * 1.0 : p.life < 0.25 ? easeOut(p.life / 0.25) : 1;
-    if (sc <= 0.02) continue;
+    const sc = Math.min(1.3, k < 0.16 ? easeBack(k / 0.16) * 1.0 : p.life < 0.25 ? easeOut(p.life / 0.25) : 1);
+    if (!(sc > 0.02)) continue;
     const jit = k < 0.2 && !calm ? Math.sin(t * 90) * 2.5 * (1 - k / 0.2) : 0;
     ctx.save(); ctx.translate(p.x + jit, p.y); ctx.scale(sc, sc); ctx.rotate(p.rot);
     ctx.font = `800 ${p.size}px ${DISPLAY}`;

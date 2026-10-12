@@ -12,6 +12,7 @@ import { THEME, leafColor } from './skins.js';
 import { MAP, selected as selectedMap, zonePalettes } from './maps.js'; // P8-MAPS
 import { ZONES } from './backdrop.js'; // P8-MAPS: classic zone palettes
 import { art } from './art.js'; // P8-MAPS: the map's plates, when already decoded
+import { WORLD as WMETA } from './worlds-meta.js'; // V2-INT fix: the postcard is from the v2 world, not a v1 map
 
 const TAU = Math.PI * 2;
 const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -149,6 +150,13 @@ function drawWindow(ctx, s, sum, map, P) {
   g.addColorStop(1, pals[zTop].top);
   ctx.fillStyle = g; ctx.fillRect(P.x, P.y, P.w, P.h);
   const top = pals[zTop], base = pals[0];
+  if (map.painting) { // V2-INT: the world's own painting fills the window; the tree grows over it
+    const im = map.painting, k = Math.max(P.w / im.naturalWidth, P.h / im.naturalHeight);
+    ctx.drawImage(im, P.x + (P.w - im.naturalWidth * k) / 2, P.y + (P.h - im.naturalHeight * k) / 2, im.naturalWidth * k, im.naturalHeight * k);
+    const fg = ctx.createLinearGradient(0, P.y, 0, P.y + P.h); fg.addColorStop(0, 'rgba(0,0,0,0)'); fg.addColorStop(1, 'rgba(0,0,0,0.18)');
+    ctx.fillStyle = fg; ctx.fillRect(P.x, P.y, P.w, P.h);
+    return P.y + P.h - 96;
+  }
   // sky plate of the map, faint, for its signature (cave skylight, castle, sun...)
   const sky = art(map.plates ? `m-sky-${map.plates}` : 'w-sky-meadow');
   if (sky) { ctx.globalAlpha = zTop >= 3 ? 0.18 : 0.5; const k = Math.max(P.w / sky.naturalWidth, P.h / sky.naturalHeight); ctx.drawImage(sky, P.x + (P.w - sky.naturalWidth * k) / 2, P.y + (P.h - sky.naturalHeight * k) / 2, sky.naturalWidth * k, sky.naturalHeight * k); ctx.globalAlpha = 1; }
@@ -204,13 +212,38 @@ let ST = null;
 export const loadStamps = () => (ST ? Promise.resolve(ST) : import('./stamps.js').then((m) => (ST = m)));
 if (typeof window !== 'undefined') setTimeout(() => loadStamps().catch(() => {}), 2500);
 
+// ---------------------------------------------------------------- V2 world postcard
+// v1 maps (Phong Nha, Arashiyama, Redwoods ...) are retired: the card, stamp and postmark name the
+// painted world you climbed (EN + VI) and show its gallery painting (<world>.ui.painting).
+const PAINT = new Map();
+/** Decode a world's painting for the card (resolves when ready or failed; never rejects). */
+export function preloadPainting(worldId) {
+  if (!worldId || !WMETA[worldId]) return Promise.resolve(null);
+  if (PAINT.has(worldId)) return PAINT.get(worldId).p;
+  const im = new Image(); im.decoding = 'async';
+  const p = new Promise((res) => { im.onload = () => res(im); im.onerror = () => res(null); });
+  im.src = new URL(`../assets/v2/${worldId}/ui/${worldId}.ui.painting.webp`, import.meta.url).href;
+  PAINT.set(worldId, { im, p });
+  return p;
+}
+const painting = (id) => { const e = PAINT.get(id); return e && e.im.complete && e.im.naturalWidth ? e.im : null; };
+/** A v1-map-shaped card description of a v2 world (palettes borrowed from its legacy slot). */
+export function worldCard(worldId) {
+  const w = WMETA[worldId]; if (!w) return null;
+  const legacy = MAP[w.legacy] || MAP.forkwood;
+  const [t0, t1, t2, t3] = w.tones;
+  return { ...legacy, id: w.legacy, world: w.id, name: w.name, nameVi: w.nameVi, place: w.nameVi, country: w.medium, code: '', tale: null, plates: null, painting: painting(w.id),
+    swatch: [t0, t1, t3], paper: '#f3eee4',
+    stamp: { motif: 'painting', ink: t3, bg: [t0, t1], accent: t1, word: w.nameVi.toUpperCase(), postmark: `${w.name.toUpperCase()} · FORKWOOD` } };
+}
+
 export function renderCard(s, sum, meta) {
   const Wc = 1080, Hc = 1350;
   const c = document.createElement('canvas');
   c.width = Wc; c.height = Hc;
   const ctx = c.getContext('2d');
   const reached = stageIndexFor(sum.height);
-  const map = (meta.map && (MAP[meta.map] || meta.map)) || selectedMap() || MAP.forkwood;
+  const map = worldCard(meta.world) || (meta.map && (MAP[meta.map] || meta.map)) || selectedMap() || MAP.forkwood;
   // paper: the postcard skin; the default cream takes the map's own tint
   const CARD = THEME.card;
   const paper = CARD.id === 'card.cream' && map.paper ? map.paper : CARD.paper, CI = CARD.ink;

@@ -217,3 +217,57 @@ export function drawRingIcon(ctx, ringId, x, y, size) {
   return true;
 }
 export { BOSSES };
+
+// ---------------------------------------------------------------- classic v1 hazards in ART's paint (V2-INT fix)
+// Bramble rows (gate/split/slide + pulse/door/cap rails), thorn columns and thorn walls used to keep the v1
+// ink-and-coral vectors on top of the painted worlds. They now repeat the world's painted barrier sprite
+// (meadow briar, starry wheat spikes, fresco arch gate, gilded spiral thorn...). Worlds ART gave no row
+// sprite fall back to the nearest painted thorn row (resolveId by mechanic), never to the v1 vector.
+const BARRIER_MECH = ['pulse', 'door', 'pecker', 'jaws', 'strangle'];
+const barrierCache = new Map();
+function barrier(world) {
+  if (barrierCache.has(world)) { const c = barrierCache.get(world); if (c) return c; }
+  let S = null;
+  for (const m of BARRIER_MECH) { S = spr(`${world}.trap.barrier`, m); if (S && S.e.world === world) break; }
+  if (!S) for (const m of BARRIER_MECH) { S = spr(`${world}.trap.barrier`, m); if (S) break; }
+  if (S) barrierCache.set(world, S);
+  return S;
+}
+/** Painted bramble row over [a,b] at y. false while the art is loading (caller keeps its own look). */
+function rowArt(ctx, S, a, b, y, th = 44) {
+  const w = b - a; if (w < 2) return;
+  const [, , rw, rh] = rectOf(S, 0);
+  const tw = Math.max(28, th * rw / rh), n = Math.max(1, Math.round(w / tw)), step = w / n;
+  ctx.save(); ctx.beginPath(); ctx.rect(a - 2, y - th, w + 4, th * 2); ctx.clip();
+  for (let i = 0; i < n; i++) blit(ctx, S, 0, a + step * (i + 0.5), y, step * 1.04, th, { stretch: true, flip: i % 2 ? -1 : 1 });
+  ctx.restore();
+}
+export function drawBrambleArt(ctx, s, b) {
+  const S = s && barrier(s.world); if (!S) return false;
+  for (const [a, c] of b.solids) rowArt(ctx, S, a, c, b.y);
+  return true;
+}
+/** Thorn column (vertical): the same painted row, turned upright. */
+export function drawColumnArt(ctx, s, c) {
+  if (c.kind === 'bolt') return false;
+  const S = s && barrier(s.world); if (!S) return false;
+  const top = Math.min(c.y0, c.y1), h = Math.abs(c.y0 - c.y1), th = Math.max(30, (c.hw || 12) * 2.6);
+  ctx.save(); ctx.translate(c.x, top + h / 2); ctx.rotate(Math.PI / 2);
+  rowArt(ctx, S, -h / 2, h / 2, 0, th);
+  ctx.restore();
+  return true;
+}
+/** Thorn wall / hedge block: stacked painted rows clipped to the block. */
+export function drawWallArt(ctx, s, x0, y1, x1, y0) {
+  const S = s && barrier(s.world); if (!S) return false;
+  const h = y0 - y1, w = x1 - x0, th = Math.min(44, Math.max(26, w * 0.9));
+  ctx.save(); ctx.beginPath(); ctx.rect(x0 - 4, y1 - 4, w + 8, h + 8); ctx.clip();
+  ctx.translate((x0 + x1) / 2, (y0 + y1) / 2); ctx.rotate(Math.PI / 2);
+  rowArt(ctx, S, -h / 2, h / 2, 0, Math.max(th, w + 10));
+  ctx.restore();
+  return true;
+}
+/** World sprite for a classic trap mechanic (crow, gust, tide ...), or null. */
+export function classicSprite(s, mech) { return s ? spr(`${s.world}.trap.${mech}`, mech) : null; }
+export function blitSprite(ctx, S, i, x, y, w, h, opt) { blit(ctx, S, i, x, y, w, h, opt); }
+export function frameIndex(S, now, ph) { return frameOf(S.e, now, ph); }

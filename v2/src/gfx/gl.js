@@ -257,7 +257,7 @@ export class GLLayer {
   }
   applyRegistry() {
     for (const id of Object.keys(this.tex)) this.regLoad(id);
-    if (this.W) this.setSkin(this.W.vineSkinDefault, true);
+    if (this.W) this.setSkin(this.skinOverride || this.W.vineSkinDefault, true); // V2-INT fix: keep the equipped (Grove) skin once ART's strips arrive
   }
   /** Texture for a registry id: ART sprite > atlas frame > generic placeholder (never throws). */
   sprite(id, t = 0) {

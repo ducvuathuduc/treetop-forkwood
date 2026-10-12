@@ -45,7 +45,7 @@ export function createMapsPanel(opts = {}) {
           <h3>${esc(m.name)}</h3>
           ${m.tale ? `<p class="map-tale">${esc(m.tale)}</p>` : ''}
           <p class="map-flav">${esc(m.flavour)}</p>
-          <p class="map-zones">${(m.zones || ['Meadow', 'Oak forest', 'Snowy pines', 'Storm canopy', 'Starry sky']).map(esc).join('<i></i>')}</p>
+          ${m.world ? '' : `<p class="map-zones">${(m.zones || ['Meadow', 'Oak forest', 'Snowy pines', 'Storm canopy', 'Starry sky']).map(esc).join('<i></i>')}</p>`}
         </div>
         <span class="map-badge">${sel ? 'Selected' : un ? 'Unlocked' : `${LOCK}${m.unlock.cost ? `${ACORN}${m.unlock.cost}` : m.unlock.level ? `Level ${m.unlock.level}` : 'Locked'}`}</span>
       </article>`;
@@ -58,7 +58,7 @@ export function createMapsPanel(opts = {}) {
       const el = track.querySelector(`.map-art[data-src="${k}"]`);
       if (!el || el.dataset.ok) continue;
       const m = MAPS[k];
-      el.style.backgroundImage = `url(${plate(m, 'side')}), url(${plate(m, 'far')}), url(${plate(m, 'sky')})`;
+      el.style.backgroundImage = m.painting ? `url(${m.painting})` : `url(${plate(m, 'side')}), url(${plate(m, 'far')}), url(${plate(m, 'sky')})`; // V2-INT: the world's painting
       el.dataset.ok = '1';
     }
   }

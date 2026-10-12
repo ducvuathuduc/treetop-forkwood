@@ -23,3 +23,9 @@ export function drawRingIcon(ctx, id, x, y, size) { if (!MECH) { loadMech(); ret
 export function drawTrapFx(R, ctx, s, now, px, ui) { if (M) M.drawTrapFx(R, ctx, s, now, px, ui); }
 export function drawTrapFxScreen(R, ctx, cw, ch, ui) { if (M) M.drawTrapFxScreen(R, ctx, cw, ch, ui); }
 export function drawTrapFxHud(R, ctx, ui) { if (M) M.drawTrapFxHud(R, ctx, ui); }
+/** V2-INT: classic hazards painted in the world's ART (false = not loaded yet, keep the v1 look). */
+export function drawBrambleArt(ctx, s, b) { return !!(MECH && MECH.drawBrambleArt(ctx, s, b)); }
+export function drawColumnArt(ctx, s, c) { return !!(MECH && MECH.drawColumnArt(ctx, s, c)); }
+export function drawWallArt(ctx, s, x0, y1, x1, y0) { return !!(MECH && MECH.drawWallArt(ctx, s, x0, y1, x1, y0)); }
+export function classicSprite(s, mech) { return MECH ? MECH.classicSprite(s, mech) : null; }
+export function mechApi() { return MECH; }

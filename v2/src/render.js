@@ -30,7 +30,7 @@ function glow(ctx, col, x, y, r, a) {
 }
 import { backdrop } from './backdrop.js'; // P6-ART
 import quality from './quality.js'; // v1.0.1 PERF
-import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud, drawRingIcon } from './render-traps.js'; import { RINGS } from './rings.js'; // P6-TRAPS / P8-FX
+import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud, drawRingIcon, drawBrambleArt, drawColumnArt } from './render-traps.js'; import { RINGS } from './rings.js'; // P6-TRAPS / P8-FX
 
 const TAU = Math.PI * 2;
 export const INK = '#1e1a16';
@@ -527,7 +527,9 @@ export class Renderer {
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
-    if (!ui.reveal) drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui); // P6-TRAPS (P8: + fx events)
+    // V2-INT fix: trap/ART drawing is isolated (own save/restore, errors contained) so one bad sprite or
+    // state can neither leak a transform/lineWidth into the hit FX nor stop the frame loop
+    if (!ui.reveal) this.safe(ctx, () => drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui)); // P6-TRAPS (P8: + fx events)
     if (!ui.reveal) for (const g of s.tokens) if (!g.taken && g.y > topY - 60 && g.y < botY + 60) this.drawToken(ctx, g, now, s);
     drawTree(ctx, s, now, topY, botY, px);
     if (!ui.reveal) {
@@ -537,7 +539,7 @@ export class Renderer {
       if (ui.ghostM != null) this.drawGhost(ctx, s, ui.ghostM, now);
       if (ui.raceDraw) ui.raceDraw(ctx, s, now); // P6-RACE: live rival branch
       this.drawTips(ctx, s, now, fx, gold);
-      drawTrapFx(this, ctx, s, now, px, ui); // P8-FX: boosts, hit / avoid / pickup effects
+      this.safe(ctx, () => drawTrapFx(this, ctx, s, now, px, ui)); // P8-FX: boosts, hit / avoid / pickup effects
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
     }
     this.drawParticles(ctx, fx, px);
@@ -590,6 +592,7 @@ export class Renderer {
   /** v2 ENGINE: the Canvas2D parts that stay on top of the WebGL layer. */
   drawOverlay(s, cam, fx, ui, o) {
     const { ctx, cw, ch, topY, botY, leftX, rightX, now, camM, px, gold, pad } = o;
+    this.artSim = s; // V2-INT: which world's painted hazards to use
     this._world(ctx);
     for (const w of s.winds) this.drawWind(ctx, w, now, topY, botY);
     if (ui.bestM > 3) this.drawBestLine(ctx, -ui.bestM * PX_PER_M, topY, botY, s.newBest, now, ui.bestLabel);
@@ -598,7 +601,9 @@ export class Renderer {
     for (const fr of s.frosts) if (fr.y + fr.r > topY && fr.y - fr.r < botY) this.drawFrost(ctx, fr, now);
     for (const b of s.brambles) if (b.y > topY - 40 && b.y < botY + 40) this.drawBramble(ctx, b);
     for (const c of s.columns) if (c.y0 > topY - 40 && c.y1 < botY + 40) this.drawColumn(ctx, c, now, ui.calm);
-    if (!ui.reveal) drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui);
+    // V2-INT fix: trap/ART drawing is isolated (own save/restore, errors contained) so one bad sprite or
+    // state can neither leak a transform/lineWidth into the hit FX nor stop the frame loop
+    if (!ui.reveal) this.safe(ctx, () => drawTraps(this, ctx, s, now, topY, botY, ui.calm, fx, cam, ui));
     if (!ui.reveal) for (const g of s.tokens) if (!g.taken && g.y > topY - 60 && g.y < botY + 60) this.drawToken(ctx, g, now, s);
     if (!ui.reveal) {
       for (const m of s.motes) if (m.kind === 'acorn' && m.letter && m.y > topY - 30 && m.y < botY + 30) this.drawMote(ctx, m, now, gold);
@@ -609,7 +614,7 @@ export class Renderer {
         ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(184,255,214,0.55)';
         ctx.beginPath(); ctx.moveTo(s.tips[0].x, s.cy); ctx.quadraticCurveTo(s.cx, s.cy - 34, s.tips[1].x, s.cy); ctx.stroke(); ctx.setLineDash([]);
       }
-      drawTrapFx(this, ctx, s, now, px, ui);
+      this.safe(ctx, () => drawTrapFx(this, ctx, s, now, px, ui));
       if (ui.coach && ui.coach.cue) this.drawTapCue(ctx, s, now);
     }
     this.drawParticles(ctx, fx, px, true);
@@ -631,6 +636,13 @@ export class Renderer {
     this.drawSparks(ctx, fx);
   }
 
+  /** Run a draw step with its own canvas state; an exception is reported once and the frame goes on. */
+  safe(ctx, fn) {
+    ctx.save();
+    try { fn(); } catch (e) { if (!this.safeErr) { this.safeErr = 1; if (typeof console !== 'undefined') console.warn('[forkwood] draw step failed, continuing:', e && e.message); } }
+    ctx.restore();
+    ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
   /** v1.0.1: dim the finished frame (frozen world behind a modal). */
   veil(a) { const ctx = this.ctx; this._screen(ctx); ctx.globalAlpha = 1; ctx.fillStyle = `rgba(8,11,20,${a})`; ctx.fillRect(0, 0, this.cw, this.ch); }
 
@@ -1056,6 +1068,8 @@ export class Renderer {
       ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(b.cx, y, 5, 0, TAU); ctx.fill();
       ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(b.cx, y, 3, 0, TAU); ctx.fill();
     }
+    // V2-INT fix: on the WebGL path the rows are the world's painted barrier (ART), not v1 ink stems
+    if (this.gl && this.artSim && drawBrambleArt(ctx, this.artSim, b)) return;
     for (const [a, c] of b.solids) {
       if (c - a < 2) continue;
       const wy = (x) => b.y + Math.sin(x * 0.09 + b.seed) * 3;
@@ -1152,7 +1166,9 @@ export class Renderer {
       ctx.strokeStyle = '#ffe9e0'; ctx.lineWidth = 3; ctx.stroke();
       return;
     }
-    // thorn column: dark stem, coral-rimmed thorns both sides (no capsule)
+    // thorn column: on the WebGL path the world's painted barrier stood upright (V2-INT fix)
+    if (this.gl && this.artSim && drawColumnArt(ctx, this.artSim, c)) return;
+    // v1 / Canvas2D: dark stem, coral-rimmed thorns both sides (no capsule)
     const wx = (y) => x + Math.sin(y * 0.05 + c.seed) * 4;
     hazardStem(ctx, top, bot, wx, 'v', c.seed || 0);
     return;

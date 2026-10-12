@@ -108,6 +108,9 @@ const store = {
 
 // one save object for everything (meta.js migrates the first build's keys)
 let S = M.loadSave((k) => store.get(k, null));
+// V2-INT fix: unlocks a grower already had before the quest block existed are marked seen once, so the
+// first quest clear doesn't announce Zen, Sprint, Hardcore, Looking-glass, Weekly ... all at once
+try { if (S && S.quest && !S.quest.primed) { Q.primeSeen(S); S.quest.primed = 1; } } catch { /* old save shape */ }
 const persist = (apply = true) => { if (!BOT_MODE) store.set(M.SAVE_KEY, S); if (apply) applyLoadout(S.loadout); };
 // session start: comeback gift, last week's league result, season rollover; a duel answer settles here
 const SESSION = R.startSession(S);
@@ -750,7 +753,7 @@ function showGameOver() {
   const challenge = challengeRun ? { m: CHALLENGE.m, won: CHALLENGE.lvl ? sum.won && sum.score > CHALLENGE.m : sum.height > CHALLENGE.m, pts: !!CHALLENGE.lvl } : null;
   const modeLine = lv ? `Quest ${lv.id} · ${lv.name}${sum.won ? '' : ' · not finished'}` : run.mode === 'weekly' ? `Weekly tree ${weekCode(run.week)} · Oak` : run.mode !== 'classic' && !daily ? MODE[run.mode].name : (!daily && run.stake !== 'sapling' ? `${STAKE[run.stake].name} stake ×${STAKE[run.stake].mult}` : '');
   const cardStars = lv && lastQuest ? { run: lastQuest.runStars || 0, best: lastQuest.stars || 0 } : null;
-  const cardMeta = { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '', map: mapId() }; // P8-MAPS: map
+  const cardMeta = { daily, dailyLabel: dailyLabel(), newBest, url, seed: lv || run.mode === 'weekly' ? null : sim.seed, challenge, level: S.level, printNo: Math.max(1, S.stats.runs), modeLine, stars: cardStars, title: S.quest.title ? Q.TITLE[S.quest.title].name : '', map: mapId(), world: shownWorld || (sim && sim.world) || selectedWorld() }; // P8-MAPS: map; V2-INT fix: the card is from the v2 world
   const paintCard = (SH, cs) => {
     try {
       cardCanvas = SH.renderCard(cs, sum, cardMeta);
@@ -760,8 +763,7 @@ function showGameOver() {
     }
   };
   cardCanvas = null;
-  if (SHARE) paintCard(SHARE, sim);
-  else { const cs = sim; loadShare().then((SH) => paintCard(SH, cs)).catch((e) => console.warn('card module failed', e)); }
+  { const cs = sim; (SHARE ? Promise.resolve(SHARE) : loadShare()).then((SH) => (SH.preloadPainting ? SH.preloadPainting(cardMeta.world).then(() => SH) : SH)).then((SH) => paintCard(SH, cs)).catch((e) => console.warn('card module failed', e)); }
   const toGo = STAGES[TREETOP_IDX].m - sum.height;
   const why = { hit: 'one hit', time: "time's up", sap: 'out of sap', finish: 'finished' }[sum.end] || '';
   $('over-kicker').textContent = challenge ? (challenge.won ? `★ CHALLENGE BEATEN (${challenge.pts ? challenge.m.toLocaleString('en-US') + ' pts' : challenge.m + ' m'})` : challenge.pts ? `CHALLENGE: friend scored ${challenge.m.toLocaleString('en-US')}` : `CHALLENGE: ${challenge.m - sum.height + 1} m short`)
@@ -1134,6 +1136,13 @@ function frame(nowMs) {
   }
   if (!paused) updateFx(dt);
   introUp = document.body.classList.contains('intro-hold');
+  // V2-INT fix: the next frame is booked before drawing, so a draw error can never freeze the game
+  requestAnimationFrame(frame);
+  try { drawFrame(dt); } catch (e) { if (!frameErr) { frameErr = 1; console.warn('[forkwood] frame draw failed, continuing:', e && e.message); } }
+  frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
+}
+let frameErr = 0;
+function drawFrame(dt) {
   if (!introUp) renderer.draw(sim, cam, fx, {
     hud: mode === 'play',
     hints: false,
@@ -1153,8 +1162,6 @@ function frame(nowMs) {
     ghostM: mode === 'play' && CHALLENGE && CHALLENGE.duel && isChallengeRun() ? R.ghostHeight(CHALLENGE.duel, sim.t) : null,
   });
   if (!introUp) SEA.drawOverlay(renderer, sim, SEASON.theme, paused ? 0 : dt, isCalm()); // P6-SEASONS
-  frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
-  requestAnimationFrame(frame);
 }
 
 // testing hooks (used by tests/smoke.mjs)
