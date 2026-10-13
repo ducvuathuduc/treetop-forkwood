@@ -46,7 +46,7 @@ export function createRooms(H) {
         <button class="mz-btn ghost wide" data-act="classic">Classic wardrobe: bark, leaves, sky, postcards</button></section>
       <section class="sec" data-sec="pods"><h3 class="sec-h">Pods</h3><div class="grid pods">${['seed', 'golden'].map(podCard).join('')}</div></section>
       <footer class="shop-foot"><p class="small muted">Prices in USD. Real-money purchases are not open yet: buttons show the real price and tell you when. 1 gem ≈ $0.10 ≈ ${ST.ACORNS_PER_GEM} acorns. Random items only in pods, with odds shown before you buy. Nothing bought changes daily, weekly, quest, race or duel trees.</p><button class="mz-btn ghost" data-act="restore">${MI.restore} Restore purchases</button></footer>`;
-    const go = (id) => { const el = body.querySelector(`[data-sec="${id}"]`); if (el) body.scrollTo({ top: el.offsetTop - 62, behavior: H.isCalm() ? 'auto' : 'smooth' }); body.querySelectorAll('.chip-s').forEach((c) => c.classList.toggle('on', c.dataset.go === id)); };
+    const go = (id) => { const el = body.querySelector(`[data-sec="${id}"]`), bar = body.querySelector('.chips'); if (el) body.scrollTo({ top: Math.max(0, el.offsetTop - (bar ? bar.offsetHeight : 52) - 6), behavior: H.isCalm() ? 'auto' : 'smooth' }); body.querySelectorAll('.chip-s').forEach((c) => c.classList.toggle('on', c.dataset.go === id)); };
     body.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
     bindCommon(body);
     body.querySelector('[data-act="free"]')?.addEventListener('click', (e) => {
@@ -72,7 +72,7 @@ export function createRooms(H) {
       H.persist(false); revealPod(kind, res, b);
     }));
     if (opts.section) requestAnimationFrame(() => go(opts.section));
-    body.onscroll = () => { const secs = [...body.querySelectorAll('[data-sec]')]; let cur = secs[0].dataset.sec; for (const x of secs) if (x.offsetTop - 80 <= body.scrollTop) cur = x.dataset.sec; body.querySelectorAll('.chip-s').forEach((c) => c.classList.toggle('on', c.dataset.go === cur)); };
+    body.onscroll = () => { const secs = [...body.querySelectorAll('[data-sec]')]; let cur = secs[0].dataset.sec; const bh = (body.querySelector('.chips') || {}).offsetHeight || 52; for (const x of secs) if (x.offsetTop - bh - 24 <= body.scrollTop) cur = x.dataset.sec; body.querySelectorAll('.chip-s').forEach((c) => c.classList.toggle('on', c.dataset.go === cur)); };
     body.onscroll();
   }
   function skinCard(v) {
@@ -85,13 +85,13 @@ export function createRooms(H) {
   }
   function podCard(kind) {
     const s = S(), info = ST.POD_INFO[kind], cost = info.cost(s), odds = ST.oddsFor(kind);
-    return `<article class="card pod-card ${kind}"><span class="pod-art ${kind}" aria-hidden="true">${MI.pod}</span><h4>${info.name}</h4>
+    return `<article class="card pod-card k-${kind}"><span class="pod-art k-${kind}" aria-hidden="true">${MI.pod}</span><h4>${info.name}</h4>
       <table class="odds mini">${odds.map((o) => `<tr><td>${esc(o.text)}</td><td>${o.pct}%</td></tr>`).join('')}</table>
       <div class="row"><button class="mz-btn gold" data-pod="${kind}">${cost.acorns ? acornP(cost.acorns) : gemP(cost.gems)}</button><button class="mz-icon" data-odds="${kind}" aria-label="Drop rates">${MI.info}</button></div><p class="small muted">${esc(info.note)}</p></article>`;
   }
   function podText(r) { if (!r) return ''; if (r.acorns) return `+${n0(r.acorns)} acorns`; if (r.gems) return `+${r.gems} gem${r.gems > 1 ? 's' : ''}`; if (r.boosts && r.boosts.length) return r.boosts.map((b) => EC.BOOSTS[b] ? EC.BOOSTS[b].name : b).join(', '); if (r.boost) return EC.BOOSTS[r.boost] ? EC.BOOSTS[r.boost].name : r.boost; if (r.skin) return 'a new skin!'; return r.text || 'a surprise'; }
   function revealPod(kind, res, from) {
-    const card = H.openSheet(`<div class="pod-reveal ${kind}"><span class="pod-art ${kind} open">${MI.pod}</span></div><p class="kick">${ST.POD_INFO[kind].name}</p><h3>${esc(podText(res))}</h3><div class="row"><button class="mz-btn green" data-x>Collect</button></div>`, { cls: 'reveal' });
+    const card = H.openSheet(`<div class="pod-reveal k-${kind}"><span class="pod-art k-${kind} open">${MI.pod}</span></div><p class="kick">${ST.POD_INFO[kind].name}</p><h3>${esc(podText(res))}</h3><div class="row"><button class="mz-btn green" data-x>Collect</button></div>`, { cls: 'reveal' });
     const art = card.querySelector('.pod-art'); motion.popIn(art); setTimeout(() => motion.burst(art, { n: 16 }), 220);
     card.querySelector('[data-x]').addEventListener('click', (e) => { const k = res.gems ? 'gem' : 'acorn'; H.claimFx(e.currentTarget, k, res.gems ? 3 : 8); H.closeSheet(); H.refreshAll(); });
   }

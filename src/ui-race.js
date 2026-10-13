@@ -36,6 +36,8 @@ export function createRaceUI(hooks) {
   let ses = null, myM = 0, shown = { m: 0, cy: 0, xs: [] }, copied = '';
 
   window.addEventListener('pagehide', () => { if (ses) ses.leave(); });
+  // hotfix: Esc / browser Back leave the lobby or the result card (never mid-race)
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && box.classList.contains('show') && (!ses || ses.state !== 'racing')) { e.stopImmediatePropagation(); leave(true); } }, true);
   function open() { box.classList.add('show'); document.body.classList.add('racing-ui'); }
   function close() { box.classList.remove('show'); }
 

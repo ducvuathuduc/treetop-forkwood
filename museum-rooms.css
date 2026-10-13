@@ -249,3 +249,18 @@ body.hub-sheet .tabbar { z-index: 39; }
 @media (max-height: 760px) { :is(#room, #sheet) .gal-frame { max-height: 38vh; } :is(#room, #sheet) .gal-item .ml-blurb { display: none; } }
 .room-body, :is(#room, #sheet) .gallery { position: relative; }
 :is(#room, #sheet) .gallery { gap: 30px; }
+
+/* hotfix 13 Oct: wide-screen shop + back button */
+:is(#room, #sheet) .pod-art.k-golden { color: #6b4a18; background: radial-gradient(circle at 40% 35%, #fff2c0, #e2b04f 70%); box-shadow: inset 0 0 0 2px #8a5f1e; }
+:is(#room, #sheet) .grid.pods { grid-template-columns: repeat(auto-fit, minmax(220px, 300px)); justify-content: center; }
+@media (min-width: 900px) and (min-aspect-ratio: 11/10) { :is(#room, #sheet) .grid:not(.pods) { grid-template-columns: repeat(auto-fit, minmax(190px, 236px)); justify-content: center; } }
+:is(#room, #sheet) .pod-card { min-width: 0; width: auto; position: relative; }
+:is(#room, #sheet) .chips { background: #1f2f24; box-shadow: 0 8px 10px -6px rgba(0,0,0,.45); margin-bottom: 8px; }
+.room-body .sec { scroll-margin-top: 64px; }
+:is(#room, #sheet) .sec > .mz-btn.ghost.wide { margin-top: 12px; color: var(--parch); background: rgba(244,236,216,.06); box-shadow: inset 0 0 0 1.5px rgba(232,185,85,.55); }
+:is(#room, #sheet) .sec > .mz-btn.ghost.wide:hover { background: rgba(244,236,216,.12); }
+@media (min-width: 900px) and (min-aspect-ratio: 11/10) {
+  .room-in { padding-left: calc(var(--tab-w) + env(safe-area-inset-left)); padding-bottom: 0; }
+  .room-body { padding: 0 3vw 40px; }
+  :is(#room, #sheet) .chips { margin-left: -3vw; margin-right: -3vw; padding-left: 3vw; padding-right: 3vw; }
+}

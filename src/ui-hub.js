@@ -121,6 +121,8 @@ export function createHub({ getSave, persist, sound, isCalm, getMode, selectWorl
     if (TABS.includes(id) && id !== 'play' && !G[id]) { toast(GATE_TEXT[id], 'badge'); return; }
     if (id === 'play') { closeRoom(); return; }
     const from = roomId ? TABS.indexOf(roomId) : 2, to = TABS.indexOf(id);
+    // hotfix: one history entry per open room so browser Back / the phone back gesture returns Home
+    try { if (!opts._pop) { const st = history.state && history.state.fwRoom; if (st && roomId) history.replaceState({ ...history.state, fwRoom: id }, ''); else if (!st) history.pushState({ ...(history.state || {}), fwRoom: id }, ''); } } catch { /* ignore */ }
     roomId = id;
     room.classList.add('show'); room.setAttribute('aria-hidden', 'false'); document.body.classList.add('hub-room');
     title.classList.remove('show');
@@ -139,14 +141,20 @@ export function createHub({ getSave, persist, sound, isCalm, getMode, selectWorl
       if (refreshBar) refreshBar();
     });
   }
-  function closeRoom() {
+  function closeRoom(o = {}) {
     if (!roomId) return;
     roomId = null;
+    try { if (!o._pop && history.state && history.state.fwRoom) history.back(); } catch { /* ignore */ }
     room.classList.remove('show'); room.setAttribute('aria-hidden', 'true'); document.body.classList.remove('hub-room');
     if (getMode() === 'title') { title.classList.add('show'); motion.roomIn(title.querySelector('.title-card'), 0); }
     refresh(); if (refreshBar) refreshBar();
   }
-  room.querySelector('.room-back').addEventListener('click', (e) => { e.stopPropagation(); closeRoom(); });
+  room.querySelector('.room-back').addEventListener('click', (e) => { e.stopPropagation(); closeSheet(); closeRoom(); });
+  window.addEventListener('popstate', (e) => {
+    const want = e.state && e.state.fwRoom;
+    if (!want && roomId) { closeSheet(); closeRoom({ _pop: true }); }
+    else if (want && want !== roomId && getMode() === 'title') openRoom(want, { _pop: true });
+  });
   tabbar.addEventListener('click', (e) => { const b = e.target.closest('[data-hub]'); if (!b) return; e.stopPropagation(); sound.unlock(); if (sound.startMenu) sound.startMenu(); openRoom(b.dataset.hub); });
   passBtn.addEventListener('click', (e) => { e.stopPropagation(); openRoom('pass'); });
   offerBtn.addEventListener('click', (e) => { e.stopPropagation(); loadStore().then(() => { const p = ST.PRODUCT[offerBtn.dataset.offer]; if (p) showOffer(p, false); }); });
