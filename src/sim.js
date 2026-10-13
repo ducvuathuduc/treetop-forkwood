@@ -331,7 +331,8 @@ export const heightM = (s) => Math.max(0, -s.cy / PX_PER_M);
 /** Metres used for the look and stage names (quest worlds start in their biome). */
 export const biomeM = (s) => heightM(s) + s.R.biome;
 export const hasGraft = (s, id) => s.grafts.includes(id);
-const tipR = (s) => TIP_R + (hasGraft(s, 'shave') ? 2 : 0);
+export const HIT_R = 6;          // 1.0: forgiving hit radius vs thorns/traps (drawn tip stays TIP_R; catches still use TIP_R)
+const tipR = (s) => HIT_R + (hasGraft(s, 'shave') ? 2 : 0);
 const scoreK = (s) => scoreTierK(s) /* V3-FEEL combo tier */ * (s.pu.ink > 0 ? 2 : 1) * (hasGraft(s, 'crown') ? 1.25 : 1) * s.R.score * (s.knots.length ? knotScoreK(s) : 1);
 /** V2-MECH: max sap (Deep Sap ring raises it). */
 export const sapMax = (s) => s.sapMaxV || SAP_MAX;

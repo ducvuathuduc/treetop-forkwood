@@ -20,15 +20,33 @@
   <meta name="twitter:title" content="Forkwood: grow from twig to treetop" />
   <meta name="twitter:description" content="Fork your branch, merge for combos, don't get reverted. Plays in the browser, desktop and mobile." />
   <meta name="twitter:image" content="https://ducvuathuduc.github.io/treetop-forkwood/og.jpg" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-180.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Forkwood" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2386c8ee'/%3E%3Cpath d='M32 58V34M32 40C22 34 20 24 22 16M32 40c10-6 12-16 10-24' stroke='%236a4329' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='22' cy='16' r='6' fill='%2386d66b'/%3E%3Ccircle cx='42' cy='16' r='6' fill='%2386d66b'/%3E%3Ccircle cx='32' cy='34' r='4' fill='%23fbf6e9'/%3E%3C/svg%3E" />
   <link rel="preload" href="assets/fonts/v3/grandstander-latin-800.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/v3/nunito-latin-900.woff2" as="font" type="font/woff2" crossorigin />
+  <style>/* 1.0 splash: logo + a vine that grows with real asset loading, then fades out */
+    #fw-splash{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;background:radial-gradient(120% 80% at 50% 40%,#1d3a3a,#0f1a1c);pointer-events:none;transition:opacity .5s ease,visibility .5s}
+    #fw-splash.out{opacity:0;visibility:hidden}
+    #fw-splash .in{display:grid;justify-items:center;gap:18px;transform:translateY(-4vh)}
+    #fw-splash .lg{font:900 clamp(42px,12vw,76px)/1 "FW Logo","FW Display",Georgia,serif;color:#f4ecd8;letter-spacing:.01em;text-shadow:0 3px 0 #2c4a2a,0 10px 30px rgba(0,0,0,.4)}
+    #fw-splash .bar{position:relative;width:min(62vw,260px);height:10px}
+    #fw-splash .bar::before{content:"";position:absolute;inset:3px 0;border-radius:4px;background:rgba(244,236,216,.12)}
+    #fw-splash .vine{position:absolute;left:0;top:3px;height:4px;width:4%;border-radius:4px;background:linear-gradient(90deg,#3f8a3a,#86d66b);transition:width .25s ease-out;box-shadow:0 0 10px rgba(134,214,107,.45)}
+    #fw-splash .vine::after{content:"";position:absolute;right:-7px;top:-5px;width:12px;height:8px;border-radius:12px 0;background:#86d66b;transform:rotate(-24deg)}
+    #fw-splash .st{font:700 12px/1 system-ui,sans-serif;color:rgba(244,236,216,.6);letter-spacing:.12em;text-transform:uppercase}
+    @media (prefers-reduced-motion:reduce){#fw-splash,#fw-splash .vine{transition:none}}
+  </style>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="museum.css" />
   <link rel="stylesheet" href="home.css" />
 </head>
 <body class="state-title">
+  <div id="fw-splash" aria-hidden="true"><div class="in"><div class="lg">Forkwood</div><div class="bar"><div class="vine" id="fw-splash-v"></div></div><div class="st">growing…</div></div></div>
   <canvas id="game" aria-label="Forkwood game canvas"></canvas>
 
   <div id="topbar"><!-- P7-UI: Lucide line icons (ISC) -->
@@ -192,6 +210,21 @@
   <div id="press" class="press" aria-hidden="true"><i class="roller"></i></div>
 
   <noscript><p style="position:fixed;inset:0;display:grid;place-items:center;color:#fff6e6;background:#0f1a1c">Forkwood needs JavaScript.</p></noscript>
+  <script>/* 1.0 splash progress: share of the first-load files (about 88: shell, fonts, first world art) actually fetched */
+    (function () {
+      var sp = document.getElementById('fw-splash'), v = document.getElementById('fw-splash-v'), N = 88, n = 0, gone = false, t0 = Date.now();
+      function set(k) { v.style.width = Math.max(4, Math.min(100, k * 100)) + '%'; }
+      function out() { if (gone) return; gone = true; set(1); setTimeout(function () { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 600); }, 180); }
+      try { new PerformanceObserver(function (l) { n += l.getEntries().length; set(Math.min(0.92, n / N)); }).observe({ type: 'resource', buffered: true }); } catch (e) {}
+      function check() {
+        if (gone) return;
+        var ready = window.forkwood && document.readyState === 'complete';
+        if (ready || Date.now() - t0 > 7000) (document.fonts ? document.fonts.ready : Promise.resolve()).then(out); else setTimeout(check, 120);
+      }
+      check();
+    })();</script>
   <script type="module" src="src/main.js"></script>
+  <script>/* 1.0 PWA: offline play after the first visit; relative URL keeps the GitHub Pages subpath scope */
+    if ('serviceWorker' in navigator && location.protocol !== 'file:' && !/[?&](nosw|bot)\b/.test(location.search)) addEventListener('load', () => setTimeout(() => navigator.serviceWorker.register('sw.js').catch(() => {}), 1500));</script>
 </body>
 </html>

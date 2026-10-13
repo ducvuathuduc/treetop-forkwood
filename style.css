@@ -705,3 +705,12 @@ html.q-noblur .map-badge { -webkit-backdrop-filter: none; backdrop-filter: none;
   #over .over-right > .row:not(.small) { order: 1; margin-top: 6px; }
   #over .over-right > .row.small, #over .over-right > .row.small ~ * { order: 3; }
 }
+
+/* 1.0 loading polish: shimmer fills until an image decodes, then a soft fade in; failed images never show the broken icon */
+@keyframes fw-shim { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes fw-fadein { from { opacity: 0; } to { opacity: 1; } }
+img.fw-ld { color: transparent; background: linear-gradient(100deg, rgba(120,104,84,.22) 30%, rgba(255,246,230,.38) 50%, rgba(120,104,84,.22) 70%) 0 0 / 200% 100%; animation: fw-shim 1.3s linear 5; }
+img.fw-in { animation: fw-fadein .4s ease-out; }
+img.fw-err { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { img.fw-ld { animation: none; } img.fw-in { animation: none; } }
+body { background: linear-gradient(#24414f, #5f9ab8 55%, #a9d3e6); } /* until the first painted frame */

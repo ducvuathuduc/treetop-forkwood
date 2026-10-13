@@ -30,6 +30,7 @@ import { updateFeelFx } from './render-feel.js'; import { FT as FEEL_T } from '.
 let hub = null; // META-V2
 import { CONTEST, EARLY_PARAM } from './flags.js'; import { initContest, nearestGoal, showGoal } from './ui-play32.js'; import { EARLY_BEST } from './setpieces.js'; // V3.2 gameplay
 import { applyFont } from './fonts.js'; applyFont(); initContest(); // V3.2: contest build hides League / Pass / Shop / offers // v3 HOME: type pairing (?font=1|2|3) for DOM + canvas text
+import { initImgFade } from './imgfade.js'; initImgFade(); // 1.0: shimmer + fade-in, no broken images
 // v3 HOME: the title demo run (bot growing the vine behind the menu): slowed, 30 fps, camera + fork driven by the home layout
 const DEMO_SPEED = 0.6, DEMO_PREROLL = 5; const DEMO_60 = typeof location !== 'undefined' && /[?&]demo60\b/.test(location.search); // ?demo60 paints the demo every frame
 const demoCam = { scale: 0.9, anchor: 0.62 }; let demoFork = false, demoTick = 0, demoSnap = true;
@@ -461,7 +462,15 @@ function burst(x, y, n, color, speed = 160, size = 4, life = 0.6, kind = 'dot') 
 }
 function ring(x, y, color, size = 60, life = 0.5) { fx.particles.push({ x, y, vx: 0, vy: 0, life, max: life, color, size, kind: 'ring' }); }
 function floater(x, y, text, color = '#f4ecd8', size = 20, life = 0.9) {
-  fx.floaters.push({ x: Math.max(60, Math.min(W - 60, x)), y, text, color, size, life, max: life, vy: -70, rot: size >= 26 ? (Math.random() - 0.5) * 0.12 : 0 });
+  x = Math.max(60, Math.min(W - 60, x));
+  // 1.0: the same label fired twice in a burst (both branches, shield + revive) shows once, refreshed
+  for (const o of fx.floaters) if (o.text === text && o.max - o.life < 0.5 && Math.abs(o.x - x) < 160) { o.life = o.max; return; }
+  // stack instead of overlapping: lift above any live label sitting in the same spot
+  for (let k = 0; k < 6; k++) {
+    const o = fx.floaters.find((q) => q.life > 0.08 && Math.abs(q.x - x) < 110 && Math.abs(q.y - y) < (q.size + size) * 0.62);
+    if (!o) break; y = o.y - (o.size + size) * 0.66;
+  }
+  fx.floaters.push({ x, y, text, color, size, life, max: life, vy: -70, rot: size >= 26 ? (Math.random() - 0.5) * 0.12 : 0 });
   if (fx.floaters.length > 24) fx.floaters.shift();
 }
 // trauma-based shake (Eiserloh, GDC 2016): events add trauma, shake = trauma^2 with smooth noise
@@ -1088,6 +1097,8 @@ export const TAP = { ms: 220, px: 10, holdMs: 450, stillPx: 5, mouseMs: 300, mou
 const isTap = (dt, moved, mouse) => mouse ? moved < TAP.mousePx && dt < TAP.holdMs && (dt < TAP.mouseMs || moved < TAP.stillPx)
   : moved < TAP.px && (dt < TAP.ms || (dt < TAP.holdMs && moved < TAP.stillPx));
 const taps = new Map(); // pointerId -> { t, x, y, moved }
+// 1.0 mobile: any touch anywhere (Grow button, menus) marks the device as touch, so the first-run coach says TAP, not CLICK
+window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' || e.pointerType === 'pen') input.kind = 'touch'; }, { capture: true, passive: true });
 canvas.addEventListener('pointerdown', (e) => {
   sound.unlock();
   input.kind = e.pointerType === 'mouse' ? 'mouse' : 'touch';
@@ -1266,7 +1277,10 @@ const debugEl = params.has('debug') ? (() => { const d = document.createElement(
 let debugT = 0;
 
 let introUp = false, frozen = false; // v1.0.1 PERF: the story covers the screen; don't paint the world under it
+let modalN = 0, modalUp = false;
 function frame(nowMs) {
+  // 1.0 mobile: a hidden tab paints nothing (browsers usually stop rAF, some throttle it instead)
+  if (document.hidden) { last = nowMs; requestAnimationFrame(frame); return; }
   const t0 = performance.now();
   // feed the quality governor real frame intervals while the world is what's on screen
   if (!introUp && !paused && mode === 'play' && document.visibilityState === 'visible') quality.sample(nowMs - last); // v3 HOME: the 30 fps demo must not drag the tier down
@@ -1282,7 +1296,8 @@ function frame(nowMs) {
   const base = renderer.baseScale();
   // v1.0.1: a modal over the title (maps, shop/goals, quests, grove) freezes the demo world:
   // one clean frame (no traps, coins or banners), dimmed, then no redraws until it closes
-  const modal = mode === 'title' && !introUp && !!document.querySelector('#maps.show, #meta.show, #questmap.show, #grove.show, #room.show, #sheet.show, #settings.show'); // v3 HOME: the demo runs behind Home; rooms and sheets freeze it
+  if (mode !== 'title') { modalUp = false; modalN = 0; } else if (modalN-- <= 0) { modalN = 5; modalUp = !!document.querySelector('#maps.show, #meta.show, #questmap.show, #grove.show, #room.show, #sheet.show, #settings.show'); } // 1.0 mobile: selector query every 6th frame, not every frame
+  const modal = mode === 'title' && !introUp && modalUp; // v3 HOME: the demo runs behind Home; rooms and sheets freeze it
   if (modal) {
     if (!frozen) { frozen = true; renderer.draw(sim, cam, fx, { hud: false, hints: false, coach: null, bestM: 0, reveal: true, calm: true, mirror: mirrored(), finishM: 0, clock: null }); renderer.veil(0.45); }
     frameMs = frameMs * 0.95 + (performance.now() - t0) * 0.05;
@@ -1338,7 +1353,7 @@ function frame(nowMs) {
   if (!paused) { updateFx(dt); updateFeelFx(fx, sim, dt); }
   introUp = document.body.classList.contains('intro-hold');
   // v3 HOME: the title demo paints at 30 fps (calm, slowed motion; halves GPU work behind the menu)
-  skipDemo = mode === 'title' && !DEMO_60 && (++demoTick & 1) === 1;
+  skipDemo = mode === 'title' && !DEMO_60 && (quality.phone ? (++demoTick % 3) !== 0 : (++demoTick & 1) === 1); // 1.0 mobile: 20 fps on phones
   // V2-INT fix: the next frame is booked before drawing, so a draw error can never freeze the game
   requestAnimationFrame(frame);
   try { drawFrame(dt); } catch (e) { if (!frameErr) { frameErr = 1; console.warn('[forkwood] frame draw failed, continuing:', e && e.message); } }

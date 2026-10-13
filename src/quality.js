@@ -17,6 +17,12 @@ const WIN = 30;          // frames per measurement window (or WIN_MS, whichever 
 const WIN_MS = 600;
 const SLOW = 18.5;       // median rAF interval (ms) that counts as a slow window
 const FAST = 14.5;       // median that counts as comfortably fast
+// 1.0 PWA/mobile: phones (coarse pointer, small screen) cap the canvas backing store at 1.5x,
+// start Auto one tier down and step down after a single slow window
+export const PHONE = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches && typeof screen !== 'undefined' && Math.min(screen.width, screen.height) <= 820;
+export const DPR_CAP = PHONE ? 1.5 : 3;
+/** Backing-store scale for a canvas: tier dpr, device dpr and the phone cap, whichever is lowest. */
+export const canvasDpr = (tierDpr = 3) => Math.min(tierDpr, DPR_CAP, (typeof window !== 'undefined' && window.devicePixelRatio) || 1);
 const isIOS = typeof navigator !== 'undefined' && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
 function readMode() {
@@ -37,14 +43,15 @@ export const quality = {
   win: [], winT: 0, slowN: 0, fastN: 0, skip: 2, probe: null, upAt: -1e9, changes: 0, log: [],
   get T() { return TIERS[this.tier]; },
   get blur() { return this.mode === 'high' || (this.mode === 'auto' && !isIOS && this.tier < 2); },
-  init() { this.apply(this.mode === 'low' ? 2 : 0, 'init'); return this; },
+  phone: PHONE,
+  init() { this.apply(this.mode === 'low' ? 2 : PHONE && this.mode === 'auto' ? 1 : 0, 'init'); return this; },
   onChange(fn) { this.listeners.push(fn); },
   setMode(m) {
     if (!MODES.includes(m)) return;
     this.mode = m;
     try { localStorage.setItem(KEY, m); } catch {}
     this.ceil = 0; this.probe = null; this.floorLock = null;
-    this.apply(m === 'low' ? 2 : 0, 'mode');
+    this.apply(m === 'low' ? 2 : PHONE && m === 'auto' ? 1 : 0, 'mode');
   },
   cycle() { this.setMode(MODES[(MODES.indexOf(this.mode) + 1) % MODES.length]); return this.mode; },
   label() { return this.mode === 'auto' ? 'Auto' : this.mode === 'high' ? 'High' : 'Smooth'; },
@@ -76,14 +83,14 @@ export const quality = {
     }
     if (med > SLOW) {
       this.fastN = 0;
-      if (++this.slowN >= (med > 30 ? 1 : 2) && this.tier < TIERS.length - 1 && !(this.floorLock != null && this.tier >= this.floorLock)) {
+      if (++this.slowN >= (med > 30 || PHONE ? 1 : 2) && this.tier < TIERS.length - 1 && !(this.floorLock != null && this.tier >= this.floorLock)) {
         if (now - this.upAt < 12000) this.ceil = Math.max(this.ceil, this.tier + 1); // recovery didn't hold
         this.probe = { from: this.tier, med };
         this.apply(this.tier + 1, 'slow ' + med.toFixed(1));
       }
     } else if (med < FAST) {
       this.slowN = 0;
-      if (++this.fastN >= 7 && this.tier > this.ceil) { this.upAt = now; this.apply(this.tier - 1, 'fast ' + med.toFixed(1)); }
+      if (++this.fastN >= (PHONE ? 10 : 7) && this.tier > Math.max(this.ceil, PHONE ? 1 : 0)) { this.upAt = now; this.apply(this.tier - 1, 'fast ' + med.toFixed(1)); }
     } else { this.slowN = 0; this.fastN = 0; }
   },
 };

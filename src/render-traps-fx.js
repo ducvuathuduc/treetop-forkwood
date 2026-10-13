@@ -333,8 +333,8 @@ function stepFx(dt) {
 
 // ---------------------------------------------------------------- crow sprites
 // assets/art/fx-crow.webp: 6 flight frames (anchor = beak tip) + 5 perch frames
-// (rest, look, caw, crouch, take-off; anchor = feet). Made for Forkwood with an
-// image model (see CREDITS.md). Loaded lazily the first time a crow is near.
+// (rest, look, caw, crouch, take-off; anchor = feet). Made for Forkwood
+// (see CREDITS.md). Loaded lazily the first time a crow is near.
 const CROW = {
   fly: [0, 1, 2, 3, 4, 5].map((i) => ({ x: i * 152, y: 0, w: 152, h: 155, ax: 147, ay: 84 })),
   perch: [0, 1, 2, 3, 4].map((i) => ({ x: i * 179, y: 155, w: 179, h: 108, ax: 74, ay: 106 })),
@@ -739,20 +739,53 @@ function drawTide(ctx, s, tr, now, botY, calm) {
   ctx.restore();
 }
 function drawTideBody(ctx, s, tr, now, botY, calm) {
+  // 1.0: a creeping bramble instead of a flat zig-zag: a dark thorny thicket with a twisting
+  // crest stem, hooked thorns and a few leaves, a soft coral glow as it closes in, slow sway.
+  // The crest line (tr.top) is unchanged, so the hazard edge is exactly where it was.
   const TX = 3000; // span the whole screen on wide displays, not just the playfield
   const top = tr.top, gap = top - s.cy, close = !tr.done && gap < 140;
   const k = tr.done ? 0 : clamp01(1 - (gap - 40) / 140);
-  // body: a wall of thorns rising from below, its crest of hooked teeth undulating (idle)
-  ctx.fillStyle = `rgba(${(26 + 34 * k) | 0},18,${(22 + 4 * k) | 0},0.86)`;
-  ctx.beginPath(); ctx.moveTo(-TX, botY + 200); ctx.lineTo(-TX, top + 10);
-  for (let x = -TX; x <= W + TX; x += 24) ctx.lineTo(x + 12, top - 18 - 6 * Math.sin(now * (6 + 6 * k) + x) - 6 * k), ctx.lineTo(x + 24, top + 6);
-  ctx.lineTo(W + TX, botY + 200); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = k > 0.6 && !calm && Math.sin(now * 20) > 0 ? CORAL_HOT : RIM; ctx.lineWidth = 3; ctx.stroke();
-  // inner depth: a second, darker row of teeth a little lower
-  ctx.fillStyle = 'rgba(10,6,8,0.55)';
-  ctx.beginPath(); ctx.moveTo(-TX, top + 60);
-  for (let x = -TX; x <= W + TX; x += 36) ctx.lineTo(x + 18, top + 30 - 5 * Math.sin(now * 4 + x * 0.7)), ctx.lineTo(x + 36, top + 60);
-  ctx.lineTo(W + TX, botY + 200); ctx.lineTo(-TX, botY + 200); ctx.closePath(); ctx.fill();
+  const sway = calm ? 0 : 1, x0 = -TX, x1 = W + TX;
+  const crest = (x) => top - 6 + 5 * Math.sin(x * 0.021 + now * 1.3 * sway) + 3 * Math.sin(x * 0.057 - now * 0.8 * sway);
+  // soft glow under the crest (a wide translucent band, no shadowBlur: cheap on phones)
+  if (k > 0.05) {
+    const gl = ctx.createLinearGradient(0, top - 46, 0, top + 10);
+    gl.addColorStop(0, 'rgba(240,120,90,0)'); gl.addColorStop(1, `rgba(240,120,90,${(0.32 * k).toFixed(3)})`);
+    ctx.fillStyle = gl; ctx.fillRect(x0, top - 46, x1 - x0, 56);
+  }
+  // thicket body: layered gradient, darker with depth
+  const g = ctx.createLinearGradient(0, top - 10, 0, top + 220);
+  g.addColorStop(0, `rgba(${(52 + 30 * k) | 0},34,30,0.92)`); g.addColorStop(0.35, 'rgba(30,20,22,0.94)'); g.addColorStop(1, 'rgba(14,9,12,0.96)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(x0, botY + 200); ctx.lineTo(x0, crest(x0) + 8);
+  for (let x = x0; x <= x1; x += 16) ctx.lineTo(x, crest(x) + 1);
+  ctx.lineTo(x1, botY + 200); ctx.closePath(); ctx.fill();
+  // tangled inner stems (texture)
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(92,60,44,0.55)'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let r = 0; r < 3; r++) {
+    const yy = top + 26 + r * 30;
+    ctx.moveTo(x0, yy);
+    for (let x = x0; x <= x1; x += 40) ctx.quadraticCurveTo(x + 20, yy + (r & 1 ? 12 : -12) * Math.sin(x * 0.05 + r), x + 40, yy + 4 * Math.sin(x * 0.09 + now * 0.6 * sway + r));
+  }
+  ctx.stroke();
+  // crest stem: thick bark stroke + warm highlight
+  ctx.beginPath(); ctx.moveTo(x0, crest(x0));
+  for (let x = x0 + 16; x <= x1; x += 16) ctx.lineTo(x, crest(x));
+  ctx.strokeStyle = '#3a2418'; ctx.lineWidth = 9; ctx.stroke();
+  ctx.strokeStyle = k > 0.6 && !calm && Math.sin(now * 12) > 0 ? CORAL_HOT : 'rgba(176,112,74,0.85)'; ctx.lineWidth = 2.5; ctx.stroke();
+  // hooked thorns + leaves along the crest (only where the camera can see)
+  const vx0 = Math.max(x0, -1100), vx1 = Math.min(x1, W + 1100);
+  for (let x = Math.floor(vx0 / 34) * 34; x <= vx1; x += 34) {
+    const h = hash(x * 0.37), y = crest(x), up = h > 0.5 ? 1 : -1, L = 12 + 9 * h + 4 * k;
+    ctx.fillStyle = h > 0.8 ? '#e9c9a2' : '#d9a37a';
+    ctx.beginPath(); ctx.moveTo(x - 4, y - 2); ctx.quadraticCurveTo(x + up * 2, y - L * 0.7, x + up * 5, y - L); ctx.lineTo(x + 4, y - 2); ctx.closePath(); ctx.fill();
+    if (h < 0.22) { // a leaf
+      ctx.save(); ctx.translate(x + 10, y - 3); ctx.rotate(-0.6 + 0.25 * Math.sin(now * 1.7 * sway + x));
+      ctx.fillStyle = 'rgba(78,112,58,0.9)'; ctx.beginPath(); ctx.ellipse(6, 0, 7, 3.2, 0, 0, TAU); ctx.fill(); ctx.restore();
+    }
+  }
   if (close) {
     // telegraph: rising chevrons over the crest + the glyph right under the tip
     for (let i = 0; i < 3; i++) {
@@ -1033,3 +1066,4 @@ export function drawTrapFxHud(R, ctx, ui = {}) {
     ctx.strokeStyle = `rgba(255,246,230,${(0.8 * k).toFixed(3)})`; ctx.lineWidth = 2; ctx.stroke();
   }
 }
+export const _tidePreview = drawTideBody; // 1.0: lets tools/pwa render the bramble on its own

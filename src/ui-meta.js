@@ -4,6 +4,7 @@
 // the same canvas functions the game uses, so a skin looks identical in the
 // shop and in play.
 import { ICON } from './icons.js';
+import { canvasDpr } from './quality.js'; // 1.0 mobile
 import * as M from './meta.js';
 import { SKINS, SKIN, SLOTS, THEME } from './skins.js';
 import { MAPS as MAP_LIST, MAP as MAP_BY_ID } from './maps.js'; // v1.0: shop filter by map
@@ -33,7 +34,7 @@ function withTheme(slot, item, fn) {
 }
 
 export function drawPreview(cv, item) {
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = canvasDpr(2);
   const w = cv.clientWidth || 96, h = cv.clientHeight || 72;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   const ctx = cv.getContext('2d');
@@ -116,7 +117,7 @@ function skyCol(stops, m) {
 }
 function iconCanvas(draw, size = 44) {
   const cv = document.createElement('canvas');
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = canvasDpr(2);
   cv.width = size * dpr; cv.height = size * dpr; cv.style.width = cv.style.height = size + 'px';
   const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(size / 2, size / 2);
   draw(ctx, size);

@@ -29,7 +29,7 @@ function glow(ctx, col, x, y, r, a) {
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 }
 import { backdrop } from './backdrop.js'; // P6-ART
-import quality from './quality.js'; // v1.0.1 PERF
+import quality, { canvasDpr } from './quality.js'; // v1.0.1 PERF
 import { drawFeelWorld, drawFeelScreen, drawFeelHud } from './render-feel.js'; // V3-FEEL
 import { drawPlay32World, drawSlideArrows } from './render-play32.js'; // V3.2 gameplay
 import { drawTraps, drawTrapFx, drawTrapFxScreen, drawTrapFxHud, drawRingIcon, drawBrambleArt, drawColumnArt } from './render-traps.js'; import { RINGS } from './rings.js'; // P6-TRAPS / P8-FX
@@ -396,7 +396,7 @@ export class Renderer {
   }
 
   resize() {
-    const dpr = Math.min(quality.T.dpr, window.devicePixelRatio || 1); // v1.0.1 PERF: tiered backing resolution
+    const dpr = canvasDpr(quality.T.dpr); // v1.0.1 PERF: tiered backing resolution
     const cw = window.innerWidth, ch = window.innerHeight;
     this.dpr = dpr; this.cw = cw; this.ch = ch;
     this.canvas.width = Math.round(cw * dpr);

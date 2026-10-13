@@ -3,10 +3,11 @@
 // lines boil, ink splashes wipe between pages, and the last page is a splash
 // with the sprout breaking out of the panel border, then the title and Grow.
 // Tap to advance, auto-advance otherwise (under 30 s), Skip always visible.
-// Art: assets/story/*.webp (made for Forkwood with an image model, ~250 KB),
+// Art: assets/story/*.webp (~250 KB),
 // loaded only when the story plays. Reduced motion / calm mode: plain fades,
 // no shake, no flash, no boiling lines, no typewriter.
 
+import { canvasDpr } from './quality.js'; // 1.0 mobile
 // Panel shapes are in page fractions (x right, y down) for a portrait page.
 // cap: where the caption sits (l/r/t/b in page fractions, w width), kind
 // narr = boxed narration, say = speech bubble, title = under the logo.
@@ -98,7 +99,7 @@ export function playIntroNow({ calm = false, sound = null, onDone = () => {}, be
   const plates = [...root.querySelectorAll('.plate')], dots = root.querySelectorAll('.intro-dots li');
   const sfxEls = [...root.querySelectorAll('.mg-sfx')];
   const bg = $('.mg-bg'), ink = $('.mg-ink');
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const DPR = canvasDpr(2); // 1.0 mobile: phones cap at 1.5x
   let land = false, i = -1, pg = -1, timer = 0, done = false, raf = 0, W = 0, H = 0, PW = 0, PH = 0, wipe = null;
   const later = [];
   const after = (ms, fn) => { later.push(setTimeout(fn, ms)); };

@@ -1,6 +1,6 @@
 // Forkwood 1.0: the story in episodes. The Prologue (src/intro.js BEATS) plus one short manga episode per
 // world. Episode N plays the first time a free-play run starts in that world; the Story gallery on Home
-// replays any of them. Art: assets/story/ep/*.webp (made for Forkwood with an image model), lazy-loaded
+// replays any of them. Art: assets/story/ep/*.webp (made for Forkwood), lazy-loaded
 // per episode, never on first load. Text is short so it fits a 390 px phone.
 import { playIntro, loadStoryCss } from './intro.js';
 

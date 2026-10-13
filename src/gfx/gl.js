@@ -14,7 +14,7 @@ import * as PIXI_GL from '../vendor/pixi.mjs';
 // ?renderer=webgpu (experimental, test only): swaps in a separate lazily loaded bundle with WebGPURenderer.
 let PIXI = PIXI_GL;
 import gsap from '../vendor/gsap.mjs';
-import quality from '../quality.js';
+import quality, { canvasDpr, PHONE } from '../quality.js';
 import { WORLDS, WORLD, currentWorld, onWorldChange, loadWorld, preloadNext, zoneAt, loadRegistry, registryEntry, pickVariant, loadBitmap, resolveId, loadLayerBitmap, ZONE_M, dropBitmap } from '../worlds.js';
 import { VINE_SKINS, skinDef, paintStrip, paintGlowStrip } from './skins.js';
 import { buildAtlas, paintPlaceholder } from './atlas.js';
@@ -38,7 +38,8 @@ const zoneProg = (z, m) => { const m0 = ZONE_M[z], m1 = ZONE_M[z + 1]; return Ma
 const PX_PER_M = 30; // sim units per metre (sim.js PX_PER_M); only used for zone lookups of leaves
 
 // particle budgets per quality tier (phone budget <= 300 alive)
-const BUDGET = [{ parts: 300, flow: 220, amb: 40 }, { parts: 260, flow: 180, amb: 34 }, { parts: 200, flow: 130, amb: 26 }, { parts: 150, flow: 90, amb: 18 }];
+const BUDGET = [{ parts: 300, flow: 220, amb: 40 }, { parts: 260, flow: 180, amb: 34 }, { parts: 200, flow: 130, amb: 26 }, { parts: 150, flow: 90, amb: 18 }]
+  .map((b, i) => (PHONE && i >= 1 ? { parts: Math.round(b.parts * (i >= 2 ? 0.6 : 0.8)), flow: Math.round(b.flow * (i >= 2 ? 0.6 : 0.8)), amb: Math.round(b.amb * (i >= 2 ? 0.6 : 0.8)) } : b)); // 1.0 mobile: leaner phone budgets
 // world/skin ids -> ART registry skin ids
 // V2-INT: META store skins and MECH economy skins map onto the 12 strips ART drew
 const SKIN_ALIAS = { 'vine.skin.fresco': 'vine.skin.frescochalk', 'vine.skin.tempera': 'vine.skin.frescochalk', 'vine.skin.plaster': 'vine.skin.frescochalk',
@@ -215,7 +216,7 @@ export class GLLayer {
     this.ready = true;
   }
 
-  res() { return Math.min(quality.T.dpr, window.devicePixelRatio || 1); }
+  res() { return canvasDpr(quality.T.dpr); } // 1.0 mobile: phones cap at 1.5x
 
   fail(why) {
     if (this.failed) return;
@@ -943,7 +944,7 @@ export class GLLayer {
           L.root.visible = a > 0.003 && y0 < ch + 2;
         }
         if (L.fit === 'cover' && L.opaque) { const hy = L.live.hz != null ? (y0 + L.live.hz * sh) / ch : 1.2; groundY = a >= 0.999 ? hy : groundY + (hy - groundY) * a; }
-        if (L.root.visible) this.living.update(L.live, cw, ch, [cw / sw, ch / sh, -x0 / sw, -y0 / sh], tint, a, quality.tier, groundY);
+        if (L.root.visible) this.living.update(L.live, cw, ch, [cw / sw, ch / sh, -x0 / sw, -y0 / sh], tint, a, PHONE && quality.tier >= 2 ? 3 : quality.tier, groundY); // 1.0 mobile: low tier on phones = still painting (one texture read)
         continue;
       }
       if (L.main) {

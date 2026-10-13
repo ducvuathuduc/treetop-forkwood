@@ -36,7 +36,7 @@ A one-touch browser game where your vine is a Git branch: **fork** it in two, **
 
 ## Contents
 
-[Features](#features) · [Controls](#controls) · [Architecture](#architecture) · [Project structure](#project-structure) · [Getting started](#getting-started) · [Testing](#testing) · [Performance budgets](#performance-budgets) · [Fair modes](#deterministic-fair-modes) · [Roadmap](#roadmap) · [Contributing](#contributing) · [Credits](#credits--licenses) · [License](#license)
+[Features](#features) · [Controls](#controls) · [Architecture](#architecture) · [Project structure](#project-structure) · [Getting started](#getting-started) · [Testing](#testing) · [Performance budgets](#performance-budgets) · [Fair modes](#deterministic-fair-modes) · [Contributing](#contributing) · [Credits](#credits--licenses) · [License](#license)
 
 ## Why it is different: Git you can play
 
@@ -196,7 +196,7 @@ flowchart LR
 │   ├── v2/<world>/       # painted layers, trap/boss atlases, music, SFX
 │   ├── v2/common/        # pickups, rides, rings, vines, UI kit, audio manifest
 │   └── fonts/            # self-hosted OFL WOFF2 subsets + licence texts
-├── art-src/              # art pipeline scripts and prompt records
+├── art-src/              # art pipeline scripts
 ├── tools/                # audio composer, perf, feel telemetry, vendor build
 ├── tests/                # Node + Playwright suites
 ├── CREDITS.md  ECONOMY.md  TRAP-EVENTS.md  LICENSE
@@ -262,17 +262,6 @@ Daily tree, weekly tree, quest levels, challenge and duel links, and live races 
 - Cosmetics (vine skins, frames, portraits) never change gameplay.
 - Seed-pod odds are published in full on the pod card. League rivals are simulated "ghost growers" and are labelled as such.
 
-## Roadmap
-
-- [x] 2.0 "Living Masterpieces": 7 painted worlds, world traps, rides, bosses, adaptive audio
-- [x] Pixi WebGL renderer with automatic Canvas2D fallback
-- [x] Game-feel layer, new home screen, living backdrops, story episodes (Forkwood 1.0)
-- [ ] Vite build with per-world code splitting and hashed assets
-- [ ] PWA: web manifest, service worker, offline play, install prompt
-- [ ] Performance budget test in CI (draw calls, texture bytes, first load)
-- [ ] Real-device profiling (iOS Safari, mid-range Android)
-- [ ] WebGPU renderer (currently experimental behind `?renderer=webgpu`)
-
 ## Contributing
 
 Issues and pull requests are welcome.
@@ -285,26 +274,23 @@ Issues and pull requests are welcome.
 
 ## Credits & licenses
 
-Design, code and art direction: **Huynh Dieu Thanh** ([@thanhdicode](https://github.com/thanhdicode)), with AI assistance.
+Third-party code, fonts and sounds used in Forkwood:
 
-| Item | Origin | License |
+| Used | Where | License |
 |---|---|---|
-| Code | own work | MIT |
-| World paintings, story panels, sprites, UI kit (`assets/v2/`, `assets/v3/`, `assets/story/`) | AI-assisted from our own prompts and art direction, post-processed by our own pipeline (`art-src/`); masters emulated in technique only | MIT (with the game) |
-| Music and sound (`assets/v2/*/audio/`) | composed and synthesised by our own code; no samples | MIT (with the game) |
-| v1 fallback SFX | Kenney Impact / Interface Sounds | CC0 |
-| Fonts: Baloo 2, Nunito, Lexend, Be Vietnam Pro, Bricolage Grotesque, Plus Jakarta Sans, Cormorant Garamond, Fraunces, JetBrains Mono | Google Fonts sources, self-hosted subsets | SIL OFL 1.1 (texts in `assets/fonts/`) |
-| PixiJS v8 | vendored | MIT |
-| ZzFX | vendored | MIT |
-| GSAP 3 | vendored, loaded lazily | GreenSock Standard No-Charge License (not OSI) |
-| Lucide icons | inline SVG | ISC |
-| PeerJS 1.5.5 | CDN, live race only | MIT |
+| [PixiJS v8](https://pixijs.com/) | WebGL renderer (`src/vendor/pixi.mjs`) | MIT |
+| [ZzFX](https://github.com/KilledByAPixel/ZzFX) | tiny synth for UI sounds (`src/vendor/zzfx.js`) | MIT |
+| [GSAP 3](https://gsap.com/) | menu animation, loaded lazily (`src/vendor/gsap.mjs`) | GreenSock Standard No-Charge License |
+| [PeerJS 1.5.5](https://peerjs.com/) | Live race (WebRTC), loaded from CDN only when a race starts | MIT |
+| [Lucide icons](https://lucide.dev/) | inline SVG icons | ISC |
+| [Kenney Impact / Interface Sounds](https://kenney.nl/) | fallback sound effects | CC0 |
+| Fonts: Baloo 2, Nunito, Lexend, Be Vietnam Pro, Bricolage Grotesque, Plus Jakarta Sans, Grandstander, Sansita Swashed, Cormorant Garamond, Fraunces, JetBrains Mono ([Google Fonts](https://fonts.google.com/)) | self-hosted subsets in `assets/fonts/` | SIL OFL 1.1 |
 
-Full sources, licence texts and AI disclosure: **[CREDITS.md](CREDITS.md)**.
+Licence texts: [CREDITS.md](CREDITS.md) and `assets/fonts/`.
 
 ## License
 
-Code released under the [MIT License](LICENSE). © 2026 Huynh Dieu Thanh. Fonts keep their OFL licence; Kenney sounds are CC0; GSAP keeps its own licence.
+Code released under the [MIT License](LICENSE). Third-party libraries, fonts and sounds keep their own licences listed above.
 
 ---
 
@@ -320,4 +306,4 @@ Code released under the [MIT License](LICENSE). © 2026 Huynh Dieu Thanh. Fonts 
 - **Chế độ êm dịu (Calm mode)** tắt rung, nháy sáng và chuyển động; tự bật khi máy đặt giảm chuyển động.
 - **Chạy cục bộ:** `npm run serve` rồi mở `http://localhost:8080`; kiểm thử: `npm test`.
 
-Mã nguồn theo giấy phép MIT. Font theo SIL OFL 1.1. Chi tiết nguồn gốc hình ảnh và âm thanh trong [CREDITS.md](CREDITS.md).
+Mã nguồn theo giấy phép MIT. Font theo SIL OFL 1.1. Thư viện, font và âm thanh bên thứ ba ghi trong [CREDITS.md](CREDITS.md).

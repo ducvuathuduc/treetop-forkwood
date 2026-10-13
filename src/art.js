@@ -1,6 +1,6 @@
 // Illustrated layers for the renderer. The world plates (assets/art/w-*.webp:
 // sky / far / side per zone + a particle sheet) are flat layered silhouettes made
-// for Forkwood with an image model (our own output, see CREDITS.md), compressed
+// for Forkwood (see CREDITS.md), compressed
 // to WebP. Legacy woodblock helpers below are kept for tools but not loaded. Everything here is optional: until an image has loaded, the renderer's
 // procedural sky and shapes stand in, so a slow network never blocks play.
 const BASE = 'assets/art/';

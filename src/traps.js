@@ -317,7 +317,10 @@ export function trapsUpdate(s, dt, slow, A) {
       if (!tr.done && tr.top == null && s.cy < tr.y0 - 30) { tr.top = s.cy + 320; tr.v = (tr.k || TIDE_K) * Math.max(150, s.speed); A.emit(s, 'tide', {}); A.emit(s, 'trapWarn', { trap: 'tide', x: s.cx, y: tr.top, t: (tr.top - s.cy) / Math.max(1, Math.max(150, s.speed) - tr.v) }); }
       if (tr.top != null) {
         if (s.cy < tr.y1) tr.done = true;
-        tr.top += tr.done ? 420 * dt : -tr.v * tdt;
+        // 1.0 fairness: the tide follows your CURRENT climb speed (frost, webs and a shell no longer let a
+        // speed-locked tide catch you), never rises faster than 90% of it, and holds still while you are invulnerable
+        if (!tr.done) tr.v = Math.min(0.9, tr.k || TIDE_K) * Math.max(150, s.speed);
+        tr.top += tr.done ? 420 * dt : s.invuln > 0 ? 0 : -tr.v * tdt;
         if (!tr.done && tr.top - s.cy < 3) { A.hit(s, 0, 20, 'tide'); tr.top = s.cy + 220; }
         if (!tr.done) { const gap = tr.top - s.cy; if (gap < 70 && !tr.close) tr.close = true; if (gap > 140 && tr.close) { tr.close = false; A.nearMiss(s, s.cx, s.cy + 40); } }
       }

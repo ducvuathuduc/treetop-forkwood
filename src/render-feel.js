@@ -176,7 +176,7 @@ export function drawFeelHud(ctx, cw, ch, s, fx, now) {
   const small = cw < 520;
   const k = fx.comboShow || 0;
   if (k < 0.02) return;
-  const x = small ? cw - 64 : cw / 2, y = small ? 96 : 66;
+  const x = small ? cw - 64 : cw / 2, y = small ? 96 : 104; // 1.0: wide screens keep the ring clear of the sap bar + status line
   const TIERS = [10, 24, 42, 64, 90];
   const lo = F.tier ? TIERS[F.tier - 1] : 0, hi = TIERS[Math.min(4, F.tier)];
   const prog = F.tier >= 5 ? 1 : Math.max(0, Math.min(1, (F.combo - lo) / (hi - lo)));
